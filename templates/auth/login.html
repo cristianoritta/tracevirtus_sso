@@ -1,0 +1,282 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - {{ APP_NAME }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .left {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .logo-link {
+            margin-bottom: 20px;
+        }
+
+        .left h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .left p {
+            font-size: 14px;
+            margin-bottom: 30px;
+            color: #666;
+        }
+
+        .left form {
+            width: 100%;
+            max-width: 400px;
+            padding: 0 15px;
+        }
+
+        .left form .form-group {
+            margin-bottom: 20px;
+        }
+
+        .left form label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .left form input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .left form button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .left form button i {
+            font-size: 18px;
+        }
+
+        .left form button:hover {
+            background-color: #0056b3;
+        }
+
+        .right {
+            width: 50%;
+            position: relative;
+        }
+
+        .right::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('{% static "img/map3.png" %}') no-repeat center center/cover;
+        }
+
+        .right::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to right, rgba(255,255,255,1) 0%, rgba(255,255,255,0.9) 5%, rgba(255,255,255,0.8) 10%, rgba(255,255,255,0.6) 15%, rgba(255,255,255,0.4) 20%, rgba(255,255,255,0.2) 25%, rgba(255,255,255,0) 30%);
+        }
+
+        .password-toggle {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .password-toggle input {
+            padding-right: 35px;
+            width: 100%;
+        }
+
+        .password-toggle i {
+            position: absolute;
+            right: 10px;
+            top: 35px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .cadastro-link {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .cadastro-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .cadastro-link a:hover {
+            text-decoration: underline;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-top: -15px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .forgot-password a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .right {
+                display: none;
+            }
+            .left {
+                width: 100%;
+                padding: 20px;
+            }
+            
+            .left form {
+                width: 100%;
+                max-width: 90%;
+                padding: 0;
+            }
+
+            .logo-link {
+                margin-bottom: 30px;
+            }
+
+            .left form input,
+            .left form button {
+                width: 100%;
+                font-size: 16px;
+                padding: 12px;
+            }
+
+            .left h1 {
+                font-size: 22px;
+                margin-bottom: 15px;
+            }
+
+            .left p {
+                font-size: 14px;
+                margin-bottom: 25px;
+            }
+
+            .forgot-password,
+            .cadastro-link {
+                font-size: 14px;
+                margin: 15px 0;
+            }
+        }
+
+        @media (max-width: 320px) {
+            .left {
+                padding: 15px;
+            }
+            
+            .left form {
+                max-width: 95%;
+            }
+        }
+
+        .sso-button {
+            width: 100%;
+            max-width: 400px;
+            padding: 15px;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+            margin: 0 15px;
+        }
+
+        .sso-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="left">
+        <a href="http://www.alias.seg.br" class="logo-link">
+            <img src="https://main.new.seg.br/storage/main/logo.png" alt="logo" height="80">
+        </a>
+        <h1>Bem-vindo ao {{ APP_NAME }}</h1>
+        <p>Faça login utilizando sua conta unificada</p>
+        
+        <a href="{% url 'login_sso' %}" class="sso-button">
+            <i class="fas fa-sign-in-alt"></i>
+            Entrar com SSO
+        </a>
+    </div>
+    <div class="right"></div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.all.min.js"></script>
+
+    {% for message in messages %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: '{% if message.tags == "error" %}error{% else %}{% if message.tags == "success" %}success{% else %}{{message.tags}}{% endif %}{% endif %}',
+                title: '{% if message.tags == "error" %}Erro{% elif message.tags == "success" %}Sucesso{% else %}{{message.tags|title}}{% endif %}',
+                text: '{{message}}',
+                timer: 3000,
+                timerProgressBar: true
+            });
+        });
+    </script>
+    {% endfor %}
+</body>
+</html>

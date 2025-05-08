@@ -1,0 +1,44 @@
+<ul class="nk-menu apps-menu">
+    <li class="nk-menu-item">
+        <a href="/galeria" class="nk-menu-link" title="Galeria de indivíduos">
+            <span class="nk-menu-icon">
+                <em class="icon ni ni-users"></em>
+            </span>
+        </a>
+    </li>
+    <li class="nk-menu-item">
+        <a href="/comparar_faces" class="nk-menu-link" title="Comparar faces">
+            <span class="nk-menu-icon">
+                <em class="icon ni ni-swap"></em>
+            </span>
+        </a>
+    </li>
+    <li class="nk-menu-item">
+        <a href="/reconhecimento" class="nk-menu-link" title="Reconhecimento facial">
+            <span class="nk-menu-icon">
+                <i class="icon fa-regular fa-face-viewfinder"></i>
+            </span>
+        </a>
+    </li>
+    <li class="nk-menu-item">
+        <a href="/upload" class="nk-menu-link" title="Enviar novas fotos">
+            <span class="nk-menu-icon">
+                <em class="icon fa-solid fa-images-user"></em>
+            </span>
+        </a>
+    </li>
+
+    {% if request.user.is_superuser %}
+    <li class="nk-menu-hr text-white">
+        <center><small>ADM</small></center>
+    </li>
+    <li class="nk-menu-item">
+        <a href="{% url 'logs' %}" class="nk-menu-link" title="Logs do Sistema">
+            <span class="nk-menu-icon">
+                <em class="icon ni ni-activity"></em>
+            </span>
+        </a>
+    </li>
+
+    {% endif %}
+</ul>

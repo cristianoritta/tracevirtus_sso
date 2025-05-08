@@ -1,0 +1,167 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="nk-block-head nk-block-head-sm" style="margin-top: 20px;">
+    <div class="nk-block-between">
+        <div class="nk-block-head-content">
+            <h4 class="nk-block-title">Logs do Sistema</h4>
+            <div class="nk-block-des text-soft">
+                <p>Histórico de ações realizadas no sistema</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card card-bordered card-preview">
+    <div class="card-inner">
+        <form method="GET" class="row g-3">
+            <div class="col-md">
+                <div class="form-group">
+                    <label class="form-label" for="usuario">Usuário</label>
+                    <select class="form-select js-select2" name="usuario" id="usuario">
+                        <option value="">Selecione</option>
+                        {% for user in usuarios %}
+                            <option value="{{ user.cpf }}" {% if request.GET.usuario == user.cpf %}selected{% endif %}>{{ user.nome_completo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md">
+                <div class="form-group">
+                    <label class="form-label">Rota</label>
+                    <input type="text" class="form-control" name="rota" placeholder="Ex: /admin/logs" value="{{ request.GET.rota|default:'' }}">
+                </div>
+            </div>
+            <div class="col-md">
+                <div class="form-group">
+                    <label class="form-label">Endereço IP</label>
+                    <input type="text" class="form-control" name="ip" placeholder="Ex: 127.0.0.1" value="{{ request.GET.ip|default:'' }}">
+                </div>
+            </div>
+            <div class="col-md">
+                <div class="form-group">
+                    <label class="form-label">Data Inicial</label>
+                    <input type="date" class="form-control" name="data_inicial" value="{{ request.GET.data_inicial|default:'' }}">
+                </div>
+            </div>
+            <div class="col-md">
+                <div class="form-group">
+                    <label class="form-label">Data Final</label>
+                    <input type="date" class="form-control" name="data_final" value="{{ request.GET.data_final|default:'' }}">
+                </div>
+            </div>
+            <div class="col-md-auto align-self-end">
+                <button type="submit" class="btn btn-primary"><em class="icon ni ni-filter"></em><span>Filtrar</span></button>
+            </div>
+        </form>
+    </div>
+
+    {% if logs %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="text-uppercase" width="20%">Usuário</th>
+                <th class="text-uppercase" width="15%">Rota</th>
+                <th class="text-uppercase" width="10%">Endereço IP</th>
+                <th class="text-uppercase" width="5%">Porta</th>
+                <th class="text-uppercase" width="30%">Dispositivo</th>
+                <th class="text-uppercase" width="10%">Data/Hora</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.usuario.nome_completo }}</td>
+                <td>{{ log.log }}</td>
+                <td>{{ log.ip }}</td>
+                <td>{{ log.porta }}</td>
+                <td>{{ log.device }}</td>
+                <td>{{ log.created_at|date:"d/m/Y H:i:s" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card-inner">
+        <div class="alert alert-danger">
+            <p class="mb-0">Nenhum registro de log encontrado.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if paginator.num_pages > 1 %}
+    <div class="card-inner">
+        <div class="g">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if not logs.has_previous %}disabled{% endif %}">
+                    <a class="page-link" href="{% if logs.has_previous %}?page={{ logs.previous_page_number }}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.rota %}&rota={{ request.GET.rota }}{% endif %}{% if request.GET.ip %}&ip={{ request.GET.ip }}{% endif %}{% if request.GET.data_inicial %}&data_inicial={{ request.GET.data_inicial }}{% endif %}{% if request.GET.data_final %}&data_final={{ request.GET.data_final }}{% endif %}{% else %}#{% endif %}" {% if not logs.has_previous %}tabindex="-1" aria-disabled="true"{% endif %}>Anterior</a>
+                </li>
+
+                {% if logs.number|add:'-4' > 1 %}
+                    <li class="page-item"><a class="page-link" href="?page=1{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.rota %}&rota={{ request.GET.rota }}{% endif %}{% if request.GET.ip %}&ip={{ request.GET.ip }}{% endif %}{% if request.GET.data_inicial %}&data_inicial={{ request.GET.data_inicial }}{% endif %}{% if request.GET.data_final %}&data_final={{ request.GET.data_final }}{% endif %}">1</a></li>
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+
+                {% for num in paginator.page_range %}
+                    {% if num > logs.number|add:'-5' and num < logs.number|add:'5' %}
+                        <li class="page-item {% if logs.number == num %}active{% endif %}" {% if logs.number == num %}aria-current="page"{% endif %}>
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.rota %}&rota={{ request.GET.rota }}{% endif %}{% if request.GET.ip %}&ip={{ request.GET.ip }}{% endif %}{% if request.GET.data_inicial %}&data_inicial={{ request.GET.data_inicial }}{% endif %}{% if request.GET.data_final %}&data_final={{ request.GET.data_final }}{% endif %}">
+                                {{ num }}{% if logs.number == num %} <span class="visually-hidden">(current)</span>{% endif %}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if logs.number|add:'4' < paginator.num_pages %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ paginator.num_pages }}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.rota %}&rota={{ request.GET.rota }}{% endif %}{% if request.GET.ip %}&ip={{ request.GET.ip }}{% endif %}{% if request.GET.data_inicial %}&data_inicial={{ request.GET.data_inicial }}{% endif %}{% if request.GET.data_final %}&data_final={{ request.GET.data_final }}{% endif %}">{{ paginator.num_pages }}</a></li>
+                {% endif %}
+
+                <li class="page-item {% if not logs.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{% if logs.has_next %}?page={{ logs.next_page_number }}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.rota %}&rota={{ request.GET.rota }}{% endif %}{% if request.GET.ip %}&ip={{ request.GET.ip }}{% endif %}{% if request.GET.data_inicial %}&data_inicial={{ request.GET.data_inicial }}{% endif %}{% if request.GET.data_final %}&data_final={{ request.GET.data_final }}{% endif %}{% else %}#{% endif %}" {% if not logs.has_next %}tabindex="-1" aria-disabled="true"{% endif %}>Próximo</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+$(document).ready(function() {
+    $('.js-select2').select2({
+        ajax: {
+            url: '{% url "usuarios_ajax" %}',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return {
+                    term: params.term
+                };
+            },
+            processResults: function(data) {
+                return {
+                    results: data.results
+                };
+            },
+            cache: true
+        },
+        minimumInputLength: 2,
+        placeholder: 'Selecione um usuário',
+        language: {
+            inputTooShort: function() {
+                return 'Digite pelo menos 2 caracteres para pesquisar';
+            },
+            noResults: function() {
+                return 'Nenhum usuário encontrado';
+            },
+            searching: function() {
+                return 'Pesquisando...';
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

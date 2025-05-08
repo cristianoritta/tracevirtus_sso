@@ -1,0 +1,92 @@
+id;cargo;id_categoria_instituicao;categoria_instituicao
+1;Agente de Polícia Civil;1;Polícia Civil
+2;Delegado de Polícia Civil;1;Polícia Civil
+3;Escrivão de Polícia Civil;1;Polícia Civil
+4;Inspetor de Polícia Civil;1;Polícia Civil
+5;Investigador de Polícia Civil;1;Polícia Civil
+6;Oficial Investigador de Polícia;1;Polícia Civil
+7;Perito;1;Polícia Civil
+8;Papiloscopista Policial;1;Polícia Civil
+9;Agente de Telecomunicações Policial;1;Polícia Civil
+10;Agente Policial;1;Polícia Civil
+11;Auxiliar de Papiloscopista Policial;1;Polícia Civil
+12;Detetive de Polícia;1;Polícia Civil
+13;Fotógrafo Policial;1;Polícia Civil
+14;Delegado de Polícia Federal;2;Polícia Federal
+15;Perito Criminal Federal;2;Polícia Federal
+16;Escrivão de Polícia Federal;2;Polícia Federal
+17;Agente de Polícia Federal;2;Polícia Federal
+18;Papiloscopista Policial Federal;2;Polícia Federal
+19;Coronel;3;Polícia Militar
+20;Tenente-coronel;3;Polícia Militar
+21;Major;3;Polícia Militar
+22;Capitão;3;Polícia Militar
+23;Primeiro tenente;3;Polícia Militar
+24;Segundo tenente;3;Polícia Militar
+25;Aspirante a oficial;3;Polícia Militar
+26;Subtenente;3;Polícia Militar
+27;Primeiro Sargento;3;Polícia Militar
+28;Segundo Sargento;3;Polícia Militar
+29;Terceiro Sargento;3;Polícia Militar
+30;Cabo;3;Polícia Militar
+31;Soldado;3;Polícia Militar
+32;Policial Rodoviário Federal;4;Polícia Rodoviária Federal
+33;Guarda Municipal;5;Guarda Municipal
+34;Guarda Civil;5;Guarda Municipal
+35;Guarda Civil Metropolitano;5;Guarda Municipal
+36;Marechal;6;Exército Brasileiro
+37;General de Exército;6;Exército Brasileiro
+38;General de Divisão;6;Exército Brasileiro
+39;General de Brigada;6;Exército Brasileiro
+40;Coronel;6;Exército Brasileiro
+41;Tenente-Coronel;6;Exército Brasileiro
+42;Major;6;Exército Brasileiro
+43;Capitão;6;Exército Brasileiro
+44;Primeiro Tenente;6;Exército Brasileiro
+45;Segundo Tenente;6;Exército Brasileiro
+46;Aspirante a Oficial;6;Exército Brasileiro
+47;Subtenente;6;Exército Brasileiro
+48;Primeiro Sargento;6;Exército Brasileiro
+49;Segundo Sargento;6;Exército Brasileiro
+50;Terceiro Sargento;6;Exército Brasileiro
+51;Cabo;6;Exército Brasileiro
+52;Soldado;6;Exército Brasileiro
+53;Almirante;7;Marinha do Brasil
+54;Almirante de Esquadra;7;Marinha do Brasil
+55;Vice-Almirante;7;Marinha do Brasil
+56;Contra-Almirante;7;Marinha do Brasil
+57;Capitão de Mar e Guerra;7;Marinha do Brasil
+58;Capitão de Fragata;7;Marinha do Brasil
+59;Capitão de Corveta;7;Marinha do Brasil
+60;Capitão-Tenente;7;Marinha do Brasil
+61;Primeiro Tenente;7;Marinha do Brasil
+62;Segundo Tenente;7;Marinha do Brasil
+63;Guarda-Marinha;7;Marinha do Brasil
+64;Suboficial;7;Marinha do Brasil
+65;Primeiro Sargento;7;Marinha do Brasil
+66;Segundo Sargento;7;Marinha do Brasil
+67;Terceiro Sargento;7;Marinha do Brasil
+68;Cabo;7;Marinha do Brasil
+69;Marinheiro;7;Marinha do Brasil
+70;Marechal do Ar;8;Força Aéra Brasileira
+71;Tenente-Brigadeiro do Ar;8;Força Aéra Brasileira
+72;Major-Brigadeiro;8;Força Aéra Brasileira
+73;Brigadeiro;8;Força Aéra Brasileira
+74;Coronel;8;Força Aéra Brasileira
+75;Tenente-Coronel;8;Força Aéra Brasileira
+76;Major;8;Força Aéra Brasileira
+77;Capitão;8;Força Aéra Brasileira
+78;Primeiro Tenente;8;Força Aéra Brasileira
+79;Segundo Tenente;8;Força Aéra Brasileira
+80;Aspirante;8;Força Aéra Brasileira
+81;Suboficial;8;Força Aéra Brasileira
+82;Primeiro Sargento;8;Força Aéra Brasileira
+83;Segundo Sargento;8;Força Aéra Brasileira
+84;Terceiro Sargento;8;Força Aéra Brasileira
+85;Cabo;8;Força Aéra Brasileira
+86;Soldado;8;Força Aéra Brasileira
+87;Auditor Fiscal;9;Receita Federal
+88;Analista Tributário;9;Receita Federal
+89;Oficial de Inteligência;10;Abin
+90;Agente de Inteligência;10;Abin
+91;Oficial Técnico de Inteligência;10;Abin

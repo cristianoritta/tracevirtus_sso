@@ -1,0 +1,380 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="nk-block-head nk-block-head-sm">
+    <div class="nk-block-between" style="margin-top: 20px;">
+        <div class="nk-block-head-content">
+            <h3 class="nk-block-title page-title">Meu Perfil</h3>
+            <div class="nk-block-des text-soft">
+                <p>Informações do usuário</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="nk-block">
+    <div class="card">
+        <div class="card-inner">
+            <form action="" method="POST">
+                {% csrf_token %}
+                <div class="nk-block">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-label" for="nome_completo">Nome Completo</label>
+                                <input type="text" class="form-control" id="nome_completo" name="nome_completo" value="{{ usuario.nome_completo }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="cpf">CPF</label>
+                                <input type="text" class="form-control" id="cpf" name="cpf" value="{{ usuario.cpf }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="telefone">Telefone</label>
+                                <input type="tel" class="form-control" id="telefone" name="telefone" value="{{ usuario.telefone }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="email">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ usuario.email }}" required onInput="this.value = this.value.toLowerCase()">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="categoria_instituicao">Categoria da Instituição</label>
+                                <select class="form-select js-select2" id="categoria_instituicao" name="categoria_instituicao" data-search="on">
+                                    <option value="">Selecione uma categoria</option>
+                                    {% for cat in categorias_instituicao %}
+                                        <option value="{{ cat.id }}" {% if usuario.instituicao.categoria_instituicao.id == cat.id %}selected{% endif %}>
+                                            {{ cat.categoria_instituicao }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="instituicao">Instituição</label>
+                                <select class="form-select js-select2" id="instituicao" name="instituicao" 
+                                        data-initial-id="{{ usuario.instituicao.id|default:'' }}" 
+                                        data-initial-text="{{ usuario.instituicao.instituicao|default:'' }}">
+                                    <option value="">Selecione uma instituição</option> 
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label" for="cargo">Cargo</label>
+                                <select class="form-select js-select2" id="cargo" name="cargo" 
+                                        data-initial-id="{{ usuario.cargo.id|default:'' }}" 
+                                        data-initial-text="{{ usuario.cargo.cargo|default:'' }}">
+                                    <option value="">Selecione um cargo</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-label" for="uf">UF</label>
+                                <select class="form-select js-select2" id="uf" name="uf" data-search="on">
+                                    <option value="">Selecione um estado</option>
+                                    {% for uf in choice_ufs %}
+                                        <option value="{{ uf.sigla_uf }}">
+                                            {{ uf.uf }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-label" for="cidade">Cidade</label>
+                                <select class="form-select js-select2" id="cidade" name="cidade" 
+                                        data-initial-id="{{ usuario.cidade.id|default:'' }}" 
+                                        data-initial-text="{{ usuario.cidade.cidade|default:'' }}">
+                                    <option value="">Selecione uma cidade</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-label" for="date_joined">Data de Cadastro</label>
+                                <input type="text" class="form-control" id="date_joined" name="date_joined" value="{{ usuario.created_at|date:'d/m/Y H:i' }}" readonly>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-label" for="date_updated">Data de Atualização</label>
+                                <input type="text" class="form-control" id="date_updated" name="date_updated" value="{{ usuario.updated_at|date:'d/m/Y H:i' }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 text-right">
+                        <button type="submit" class="btn btn-primary"><em class="icon ni ni-save"></em><span>Salvar Alterações</span></button>
+                        <a href="/pagamentos" class="btn btn-secondary"><em class="icon ni ni-money"></em><span>Pagamentos</span></a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+// Funções de formatação
+const formatarCPF = (campo) => {
+    let cpf = campo.value.replace(/\D/g, ''); // Remove tudo que não é dígito
+    if (cpf.length > 0) {
+        // Garante que o CPF tenha 11 dígitos, preenchendo com zeros à esquerda se necessário
+        cpf = cpf.padStart(11, '0');
+        // Limita ao máximo de 11 dígitos (caso o preenchimento gere mais, embora padStart não deva fazer isso)
+        cpf = cpf.substring(0, 11); 
+        // Aplica a máscara xxx.xxx.xxx-xx
+        cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        campo.value = cpf;
+    } else {
+        campo.value = ''; // Limpa o campo se estiver vazio após remover não-dígitos
+    }
+}
+
+const formatarTelefone = (campo) => {
+    let telefone = campo.value.replace(/\D/g, '');
+    if (telefone.length > 0) {
+        telefone = telefone.length <= 10 ? 
+            telefone.substring(0, 10).replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{4})(\d)/, "$1-$2") :
+            telefone.substring(0, 11).replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2");
+        campo.value = telefone;
+    }
+}
+
+function formatarNome(e) {
+    let value = e.target.value;
+    value = value.replace(/[^a-zA-Z\sáéíóúÁÉÍÓÚçÇãõÃÕ]/g, "");
+    let palavras = value.split(" ");
+    let palavrasFormatadas = [];
+    const palavrasMinusculas = ["de", "do", "da", "dos", "das", "e"];
+
+    for (let palavra of palavras) {
+        if (palavrasMinusculas.includes(palavra.toLowerCase())) {
+            palavrasFormatadas.push(palavra.toLowerCase());
+        } else {
+            let palavraFormatada = palavra.charAt(0).toUpperCase() + palavra.slice(1).toLowerCase();
+            palavrasFormatadas.push(palavraFormatada);
+        }
+    }
+
+    let nomeFormatado = palavrasFormatadas.join(" ");
+    e.target.value = nomeFormatado;
+}
+
+// Inicialização após carregamento do DOM
+document.addEventListener('DOMContentLoaded', () => {
+    // Inicializar Select2
+    $('.js-select2').select2();
+
+    // Formatar CPF inicial
+    const cpfInput = document.getElementById('cpf');
+    if (cpfInput) formatarCPF(cpfInput);
+
+    // Adicionar listener para telefone
+    const telefoneInput = document.getElementById('telefone');
+    if (telefoneInput) {
+        formatarTelefone(telefoneInput);
+        telefoneInput.addEventListener("input", (e) => formatarTelefone(e.target));
+    }
+
+    // Formatar nome
+    const camposParaFormatar = ["nome_completo"];
+    camposParaFormatar.forEach(function(campo) {
+        const input = document.getElementById(campo);
+        if (input) {
+            // Formata valor inicial
+            let evento = {target: input};
+            formatarNome(evento);
+            
+            // Formata ao digitar
+            input.addEventListener("input", formatarNome);
+        }
+    });
+
+    // Pré-selecionar UF do usuário
+    const ufSelect = $('#uf');
+    const ufAtual = '{{ usuario.cidade.sigla_uf|default:usuario.uf_residencia|default:"" }}';
+    if (ufAtual) {
+        ufSelect.val(ufAtual).trigger('change');
+    }
+
+    // Pré-selecionar categoria da instituição
+    const categoriaSelect = $('#categoria_instituicao');
+    const categoriaAtual = '{{ usuario.instituicao.categoria_instituicao.id|default:"" }}';
+    if (categoriaAtual) {
+        categoriaSelect.val(categoriaAtual).trigger('change');
+    }
+
+    // Configurar e pré-selecionar instituição
+    const instituicaoSelect = $('#instituicao');
+    const instituicaoId = '{{ usuario.instituicao.id|default:"" }}';
+    const instituicaoNome = '{{ usuario.instituicao.instituicao|default:"" }}';
+    if (instituicaoId && instituicaoNome) {
+        const newOption = new Option(instituicaoNome, instituicaoId, true, true);
+        instituicaoSelect.append(newOption).trigger('change');
+    }
+
+    // Configurar e pré-selecionar cargo
+    const cargoSelect = $('#cargo');
+    const cargoId = '{{ usuario.cargo.id|default:"" }}';
+    const cargoNome = '{{ usuario.cargo.cargo|default:"" }}';
+    if (cargoId && cargoNome) {
+        const newOption = new Option(cargoNome, cargoId, true, true);
+        cargoSelect.append(newOption).trigger('change');
+    }
+
+    // Configurar e pré-selecionar cidade
+    const cidadeSelect = $('#cidade');
+    const cidadeId = '{{ usuario.cidade.id|default:"" }}';
+    const cidadeNome = '{{ usuario.cidade.cidade|default:"" }}';
+    if (cidadeId && cidadeNome) {
+        const newOption = new Option(cidadeNome, cidadeId, true, true);
+        cidadeSelect.append(newOption).trigger('change');
+    }
+
+    // Atualizar instituições quando categoria mudar
+    if (categoriaSelect) {
+        $(categoriaSelect).on('change', function() {
+            const categoriaId = this.value;
+            
+            if (!categoriaId) {
+                instituicaoSelect.empty().append('<option value="">Selecione uma instituição</option>');
+                cargoSelect.empty().append('<option value="">Selecione um cargo</option>');
+                return;
+            }
+
+            // Configurar Select2 com AJAX para instituições
+            instituicaoSelect.select2({
+                ajax: {
+                    url: '{% url "instituicao_ajax" %}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            term: params.term,
+                            categoria_instituicao: categoriaId
+                        };
+                    },
+                    processResults: function(data) {
+                        return data;
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2,
+                placeholder: 'Selecione uma instituição',
+                language: {
+                    inputTooShort: function() {
+                        return 'Digite pelo menos 2 caracteres para pesquisar';
+                    },
+                    noResults: function() {
+                        return 'Nenhuma instituição encontrada';
+                    },
+                    searching: function() {
+                        return 'Pesquisando...';
+                    }
+                }
+            });
+
+            // Configurar Select2 com AJAX para cargos
+            cargoSelect.select2({
+                ajax: {
+                    url: '{% url "cargo_ajax" %}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            term: params.term,
+                            categoria_instituicao: categoriaId
+                        };
+                    },
+                    processResults: function(data) {
+                        return data;
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2,
+                placeholder: 'Selecione um cargo',
+                language: {
+                    inputTooShort: function() {
+                        return 'Digite pelo menos 2 caracteres para pesquisar';
+                    },
+                    noResults: function() {
+                        return 'Nenhum cargo encontrado';
+                    },
+                    searching: function() {
+                        return 'Pesquisando...';
+                    }
+                }
+            });
+        });
+    }
+
+    // Atualizar cidades quando UF mudar
+    if (ufSelect) {
+        $(ufSelect).on('change', function() {
+            const siglaUf = this.value;
+            
+            if (!siglaUf) {
+                cidadeSelect.empty().append('<option value="">Selecione uma cidade</option>');
+                return;
+            }
+
+            // Configurar Select2 com AJAX para cidades
+            cidadeSelect.select2({
+                ajax: {
+                    url: '{% url "cidade_ajax" %}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            term: params.term,
+                            sigla_uf: siglaUf
+                        };
+                    },
+                    processResults: function(data) {
+                        return data;
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2,
+                placeholder: 'Selecione uma cidade',
+                language: {
+                    inputTooShort: function() {
+                        return 'Digite pelo menos 2 caracteres para pesquisar';
+                    },
+                    noResults: function() {
+                        return 'Nenhuma cidade encontrada';
+                    },
+                    searching: function() {
+                        return 'Pesquisando...';
+                    }
+                }
+            });
+        });
+    }
+});
+</script>
+<style>
+    .text-right {
+        text-align: right;
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}

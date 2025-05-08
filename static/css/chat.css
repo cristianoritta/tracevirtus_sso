@@ -1,0 +1,33 @@
+  .message {
+      display: -webkit-box;
+      display: -ms-flexbox;
+      display: flex;
+      -webkit-box-align: end;
+      -ms-flex-align: end;
+      align-items: flex-end;
+      width: 100%;
+  }
+
+  .message.message-out {
+      -webkit-box-orient: horizontal;
+      -webkit-box-direction: reverse;
+      -ms-flex-direction: row-reverse;
+      flex-direction: row-reverse;
+  }
+
+  .message-out .message-text {
+      background: #2787f5;
+      border-radius: .6rem;
+      color: #fff;
+      padding: 5px 15px 5px 15px;
+  }
+
+  #form-ia-container {
+      position: fixed;
+      bottom: 15px;
+      width: 90% !important;
+  }
+
+  body {
+      background-color: #FFFFFF;
+  }

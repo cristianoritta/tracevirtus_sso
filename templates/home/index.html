@@ -1,0 +1,15 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Bem-vindo, {{ request.session.nome_completo|default:'' }}!</h1>
+    
+    <div class="mt-4">
+        <h4>Suas informações:</h4>
+        <ul class="list-unstyled">
+            <li><strong>CPF:</strong> {{ request.session.cpf|default:'' }}</li>
+            <li><strong>Email:</strong> {{ request.session.email|default:'' }}</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
