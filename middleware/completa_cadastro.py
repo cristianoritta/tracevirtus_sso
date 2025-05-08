@@ -13,7 +13,7 @@ class CadastroMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
 
-        excluded_paths = ["/login/", "/login_sso/", "/login_sso/callback/", "/logout_sso", "/admin/", "/usuario/ajax/"]
+        excluded_paths = ["/login/", "/login_sso/", "/login_sso/callback/", "/logout_sso", "/admin/", "/usuarios/ajax/", ]
         try:
             completar_cadastro_url = reverse('completar_cadastro')
             excluded_paths.append(completar_cadastro_url)
