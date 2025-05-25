@@ -36,6 +36,14 @@ $(document).ready(function () {
     $("a[title]").attr("data-bs-trigger", "hover focus");
     $('[data-bs-toggle="popover"], [data-bs-popover="popover"]').popover();
 
+    /**
+     * Tooltip @bootstrap
+     */
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
 
     /**
      * DataTable

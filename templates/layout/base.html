@@ -1,126 +1,129 @@
 <!doctype html>
 <html lang="pt-BR">
 
-    {% load i18n %}
-    {% load static %}
+{% load i18n %}
+{% load static %}
 
-    <head>
-        <meta charset="utf-8">
-        <meta name="author" content="newseg">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <meta name="description" content="{{ APP_NAME }} powered by alias. A data driven security">
-        <link rel="shortcut icon" href="{% static 'img/logo.png' %}">
+<head>
+    <meta charset="utf-8">
+    <meta name="author" content="newseg">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="{{ APP_NAME }} powered by alias. A data driven security">
+    <link rel="shortcut icon" href="{% static 'img/logo.png' %}">
 
-        <!-- CSRF Token -->
-        <meta name="csrf-token" content="{{ csrf_token }}">
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
 
-        <title>{{ APP_NAME }} by NewSeg</title>
+    <title>{{ APP_NAME }} by NewSeg</title>
 
-        <!-- Pace Loading -->
-        <script src="{% static '/vendor/pace/pace.min.js' %}" type="text/javascript"></script>
-        <link href="{% static '/vendor/pace/pace.min.css' %}" rel="stylesheet" type="text/css" />
+    <!-- Pace Loading -->
+    <script src="{% static '/vendor/pace/pace.min.js' %}" type="text/javascript"></script>
+    <link href="{% static '/vendor/pace/pace.min.css' %}" rel="stylesheet" type="text/css" />
 
-        <!-- Core CSS -->
-        <link rel="stylesheet" href="{% static 'vendor/demo3/assets/css/dashlite.css' %}">
-        <link rel="stylesheet" href="{% static 'vendor/demo3/assets/css/theme.css' %}">
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'vendor/demo3/assets/css/dashlite.css' %}">
+    <link rel="stylesheet" href="{% static 'vendor/demo3/assets/css/theme.css' %}">
 
-        <!-- Font Awesome -->
-        <script src="https://kit.fontawesome.com/3323deb3fd.js" crossorigin="anonymous"></script>
+    <!-- Font Awesome -->
+    <script src="https://kit.fontawesome.com/3323deb3fd.js" crossorigin="anonymous"></script>
 
-        <!-- SweetAlert2 -->
-        <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
-        <!-- DataTables -->
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
-        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-        <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-        <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.1/css/dataTables.dataTables.css" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.1/js/dataTables.js"></script>
 
 
-        {% block css %} {% endblock %}
+    {% block css %} {% endblock %}
 
-    </head>
+</head>
 
-    <body class="nk-body npc-default has-apps-sidebar has-sidebar" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-        <div class="nk-app-root">
-            <div class="nk-apps-sidebar is-theme">
-                <div class="nk-apps-brand">
-                    <a href="/" class="logo-link">
-                        <img src="{% static 'img/logo.png' %}" alt="Logo NewSeg">
-                    </a>
-                </div>
-                <div class="nk-sidebar-content" data-simplebar>
-                    <div class="nk-sidebar-menu">
+<body class="nk-body npc-default has-apps-sidebar has-sidebar" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <div class="nk-app-root">
+        <div class="nk-apps-sidebar is-theme">
+            <div class="nk-apps-brand">
+                <a href="/" class="logo-link">
+                    <img src="{% static 'img/logo.png' %}" alt="Logo NewSeg">
+                </a>
+            </div>
+            <div class="nk-sidebar-content" data-simplebar>
+                <div class="nk-sidebar-menu">
 
-                        {% include 'layout/_partials/menu-main.html' %}
+                    {% include 'layout/_partials/menu-main.html' %}
 
-                        <div class="nk-sidebar-profile nk-sidebar-profile-fixed dropdown">
-                            <a href="{% url 'dados_usuario' %}" class="nk-menu-link" title="Meus Dados">
-                                <span class="nk-menu-icon">
-                                    <em class="icon ni ni-user"></em>
-                                </span>
-                            </a>
-                        </div>
-
+                    <div class="nk-sidebar-profile nk-sidebar-profile-fixed dropdown">
+                        <a href="{% url 'dados_usuario' %}" class="nk-menu-link" title="Meus Dados">
+                            <span class="nk-menu-icon">
+                                <em class="icon ni ni-user"></em>
+                            </span>
+                        </a>
                     </div>
+
                 </div>
             </div>
 
-            <div class="nk-main">
-                <div class="pt-5">
-                    <div class="nk-header nk-header-fixed is-light">
-                        <div class="container-fluid">
-                            <div class="nk-header-wrap" style="margin-left: 70px !important;">
-                                <div class="nk-menu-trigger d-xl-none ml-n1">
-                                    <a href="#" class="nk-nav-toggle nk-quick-nav-icon" data-target="sidebarMenu">
-                                        <em class="icon ni ni-menu"></em>
-                                    </a>
-                                </div>
-                                <a href="/home">
-                                    <div class="nk-header-app-name">
-                                        <div class="nk-header-app-logo">
-                                            <div class="user-avatar">
-                                                <span>T.IA</span>
-                                            </div>
-                                        </div>
-                                        <div class="nk-header-app-info">
-                                            <span class="sub-text">ALIAS by NewSeg</span>
-                                            <span class="lead-text">{{ APP_NAME }}</span>
+        </div>
+
+        <div class="nk-main">
+            <div class="nk-wrap">
+                <div class="nk-header nk-header-fixed is-light">
+                    <div class="container-fluid">
+
+                        <div class="nk-header-wrap" style="margin-left: 70px !important;">
+                            <div class="nk-menu-trigger d-xl-none ml-n1">
+                                <a href="#" class="nk-nav-toggle nk-quick-nav-icon" data-target="sidebarMenu">
+                                    <em class="icon ni ni-menu"></em>
+                                </a>
+                            </div>
+                            <a href="/home">
+                                <div class="nk-header-app-name">
+                                    <div class="nk-header-app-logo">
+                                        <div class="user-avatar">
+                                            <span>Trace</span>
                                         </div>
                                     </div>
-                                </a>
+                                    <div class="nk-header-app-info">
+                                        <span class="sub-text">ALIAS by NewSeg</span>
+                                        <span class="lead-text">{{ APP_NAME }}</span>
+                                    </div>
+                                </div>
+                            </a>
 
-                                <div class="nk-header-tools">
-                                    <ul class="nk-quick-nav">
-                                        <li>
-                                            <a class="nk-quick-nav-icon"
-                                                href="https://wa.me/+555121602303?text=Olá, Meu nome é {{request.user.nome_completo}} e gostaria de falar com o suporte do sistema {{APP_NAME}}."
-                                                title="Fale conosco" target="_blank"><em class="icon fab fa-whatsapp"></em></a>
-                                        </li>
-                                        <li>
-                                            <a class="nk-quick-nav-icon"
-                                                href="https://auth.new.seg.br/" title="ALIAS by NewSeg"><i class="icon fa-solid fa-table-cells-large"></i></a>
-                                        </li>
-    
-                                        <li class="dropdown notification-dropdown">
-                                            <a href="#" class="dropdown-toggle nk-quick-nav-icon" data-toggle="dropdown">
-                                                <div class="icon-status">
-                                                    <em class="icon ni ni-bell"></em>
-                                                </div>
-                                            </a>
-                                            <div class="dropdown-menu dropdown-menu-xl dropdown-menu-right">
-                                                <div class="dropdown-head">
-                                                    <span class="sub-title nk-dropdown-title">Notificações</span>
-                                                    <a href="#">Marcar todas como lidas</a>
-                                                </div>
-                                                <div class="dropdown-body">
-                                                    <div class="nk-notification">
-    
-                                                        <div class="nk-notification-item dropdown-inner">
-                                                            Você não tem nenhuma notificação.
-                                                        </div>
-    
-                                                        <!--
+                            <div class="nk-header-tools">
+                                <ul class="nk-quick-nav">
+                                    <li>
+                                        <a class="nk-quick-nav-icon"
+                                            href="https://wa.me/+555121602303?text=Olá, Meu nome é {{request.user.nome_completo}} e gostaria de falar com o suporte do sistema {{APP_NAME}}."
+                                            title="Fale conosco" target="_blank"><em
+                                                class="icon fab fa-whatsapp"></em></a>
+                                    </li>
+                                    <li>
+                                        <a class="nk-quick-nav-icon" href="https://auth.new.seg.br/"
+                                            title="ALIAS by NewSeg"><i
+                                                class="icon fa-solid fa-table-cells-large"></i></a>
+                                    </li>
+
+                                    <li class="dropdown notification-dropdown">
+                                        <a href="#" class="dropdown-toggle nk-quick-nav-icon" data-toggle="dropdown">
+                                            <div class="icon-status">
+                                                <em class="icon ni ni-bell"></em>
+                                            </div>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-xl dropdown-menu-right">
+                                            <div class="dropdown-head">
+                                                <span class="sub-title nk-dropdown-title">Notificações</span>
+                                                <a href="#">Marcar todas como lidas</a>
+                                            </div>
+                                            <div class="dropdown-body">
+                                                <div class="nk-notification">
+
+                                                    <div class="nk-notification-item dropdown-inner">
+                                                        Você não tem nenhuma notificação.
+                                                    </div>
+
+                                                    <!--
                                                                 <div class="nk-notification-item dropdown-inner">
                                                                     <div class="nk-notification-icon">
                                                                         <em class="icon icon-circle bg-primary-dim ni ni-share"></em>
@@ -131,31 +134,33 @@
                                                                     </div>
                                                                 </div>
                                                                 -->
-    
-                                                        <div class="dropdown-foot center">
-                                                            <a href="#">Ver todas</a>
-                                                        </div>
+
+                                                    <div class="dropdown-foot center">
+                                                        <a href="#">Ver todas</a>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </li>
-                                        <li>
-                                            <a class="nk-quick-nav-icon" href="{% url 'logout_sso' %}" title="Sair"><em
-                                                    class="icon ni ni-arrow-to-right"></em></a>
-                                        </li>
-                                    </ul>
-                                </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <a class="nk-quick-nav-icon" href="{% url 'logout_sso' %}" title="Sair"><em
+                                                class="icon ni ni-arrow-to-right"></em></a>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="nk-content" style="margin-top: 0px !important; padding-top: 15px !important;">
-                        <div class="nk-content-inner">
-                            <div class="nk-content-body">
+                {% include 'layout/_partials/menu-vertical.html' %}
 
-                                {% for message in messages %}
-                                <script>
-                                document.addEventListener('DOMContentLoaded', function() {
+                <div class="nk-content" style="margin-top: 0px !important; padding-top: 15px !important;">
+                    <div class="nk-content-inner">
+                        <div class="nk-content-body">
+
+                            {% for message in messages %}
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function () {
                                     Swal.fire({
                                         icon: '{% if message.tags == "error" %}error{% elif message.tags == "warning" %}warning{% elif message.tags == "success" %}success{% else %}{{message.tags}}{% endif %}',
                                         title: '{% if message.tags == "error" %}Erro{% elif message.tags == "warning" %}Atenção{% elif message.tags == "success" %}Sucesso{% elif message.tags == "info" %}Informação{% else %}{{message.tags|title}}{% endif %}',
@@ -165,60 +170,201 @@
                                     });
                                 });
                             </script>
-                                {% endfor %}
+                            {% endfor %}
 
-                                {% block content %}
-                                {% endblock %}
-
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal-->
-            <button type="button" id="open-modal" data-bs-toggle="modal" data-bs-target="#modal"></button>
-            <div class="modal fade" id="modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                <div class="modal-dialog modal-xl">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h1 class="modal-title fs-5">Transcriber IA</h1>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body bg-white" id="modal-body">
+                            {% block content %}
+                            {% endblock %}
 
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
 
-        <!-- Bootstrap -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-            crossorigin="anonymous"></script>
+        <!-- Modal-->
+        <button type="button" id="open-modal" data-bs-toggle="modal" data-bs-target="#modal"></button>
+        <div class="modal fade" id="modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+            aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5">Transcriber IA</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body bg-white" id="modal-body">
 
-        <!-- HTMX -->
-        <script src="https://unpkg.com/htmx.org@1.9.11"
-            integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0"
-            crossorigin="anonymous"></script>
-        <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <!-- Core JS -->
-        <script src="{% static 'vendor/demo3/assets/js/bundle.js' %}"></script>
-        <script src="{% static 'vendor/demo3/assets/js/scripts.js' %}"></script>
+    <!-- Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
 
-        <!-- SweetAlert2 -->
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.11"
+        integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0"
+        crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
 
-        <!-- Marked.js -->
-        <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+    <!-- Core JS -->
+    <script src="{% static 'vendor/demo3/assets/js/bundle.js' %}"></script>
+    <script src="{% static 'vendor/demo3/assets/js/scripts.js' %}"></script>
 
-        <!-- Custom JS -->
-        <script src="{% static 'js/global.js' %}"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-        {% block script %} {% endblock %}
-    </body>
+    <!-- Marked.js -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+
+    <!-- Custom JS -->
+    <script src="{% static 'js/global.js' %}"></script> <!-- HTMX + SweetAlert2 Integration -->
+    <script>
+        // Configuração global do HTMX com SweetAlert2
+        document.addEventListener('DOMContentLoaded', function () {
+            // Interceptar apenas confirmações específicas do HTMX (elementos com hx-confirm)
+            document.body.addEventListener('htmx:confirm', function (evt) {
+                // Só interceptar se o elemento tem hx-confirm explícito
+                if (evt.detail.elt.hasAttribute('hx-confirm')) {
+                    evt.preventDefault();
+                    Swal.fire({
+                        title: 'Confirmar ação',
+                        text: evt.detail.question,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Sim, confirmar!',
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            evt.detail.issueRequest();
+                        }
+                    });
+                }
+            });
+
+
+            // Mostrar loading durante requisições HTMX
+            document.body.addEventListener('htmx:beforeRequest', function (evt) {
+                if (evt.detail.elt.classList.contains('btn')) {
+                    evt.detail.elt.disabled = true;
+                    const originalHTML = evt.detail.elt.innerHTML;
+                    evt.detail.elt.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Processando...';
+                    evt.detail.elt.setAttribute('data-original-html', originalHTML);
+                }
+            });
+
+            // Remover loading após requisições HTMX
+            document.body.addEventListener('htmx:afterRequest', function (evt) {
+                if (evt.detail.elt.classList.contains('btn')) {
+                    evt.detail.elt.disabled = false;
+                    const originalHTML = evt.detail.elt.getAttribute('data-original-html');
+                    if (originalHTML) {
+                        evt.detail.elt.innerHTML = originalHTML;
+                        evt.detail.elt.removeAttribute('data-original-html');
+                    }
+                }
+            });
+
+            // Mostrar mensagens de sucesso com SweetAlert2
+            document.body.addEventListener('htmx:afterSwap', function (evt) {
+                const response = evt.detail.xhr.getResponseHeader('X-Success-Message');
+                if (response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso!',
+                        text: response,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+            });
+
+            // Tratar erros HTMX
+            document.body.addEventListener('htmx:responseError', function (evt) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro!',
+                    text: 'Ocorreu um erro ao processar a solicitação.',
+                    timer: 5000,
+                    timerProgressBar: true
+                });
+            });
+        });
+
+        // Função específica para confirmação de remoção de investigados
+        function confirmarRemocao(url, investigadoNome) {
+            Swal.fire({
+                title: 'Remover Investigado?',
+                text: `Tem certeza que deseja remover ${investigadoNome} do caso?`,
+                icon: 'warning', 
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sim, remover!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Criar e submeter formulário
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = url;
+                    
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+                    if (csrfToken) {
+                        const csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = 'csrfmiddlewaretoken';
+                        csrfInput.value = csrfToken.value;
+                        form.appendChild(csrfInput);
+                    }
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+
+        // Função para mostrar toast de sucesso
+        function showSuccessToast(message) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+            Toast.fire({
+                icon: 'success',
+                title: message
+            });
+        }
+
+        // Função para mostrar toast de erro
+        function showErrorToast(message) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true
+            });
+            Toast.fire({
+                icon: 'error',
+                title: message
+            });
+        }
+    </script>
+    {% block script %} {% endblock %}
+</body>
 
 </html>

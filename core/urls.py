@@ -13,4 +13,6 @@ urlpatterns = [
     path('logout_sso', user_views.logout_sso, name='logout_sso'),
 
     path('usuarios/', include('user.urls')),
+    
+    path('financeira/', include('financeira.urls', namespace='financeira')),
 ]

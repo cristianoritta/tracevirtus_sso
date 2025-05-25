@@ -1,0 +1,139 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="nk-content-inner">
+        <div class="nk-content-body">
+            <div class="nk-block-head nk-block-head-sm">
+                <div class="nk-block-between">
+                    <div class="nk-block-head-content">
+                        <h3 class="nk-block-title page-title">Editar Investigado</h3>
+                        <div class="nk-block-des text-soft">
+                            <p><strong>Caso:</strong> {{ caso.numero }} - {{ caso.nome }}</p>
+                            <p><strong>Investigado:</strong> {{ investigado.cpf_cnpj }} - {{ investigado.nome }}</p>
+                        </div>
+                    </div>
+                    <div class="nk-block-head-content">
+                        <div class="toggle-wrap nk-block-tools-toggle">
+                            <a href="{% url 'investigados' caso.id %}" class="btn btn-icon btn-trigger toggle-expand mr-n1">
+                                <em class="icon ni ni-arrow-left"></em>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nk-block">
+                <div class="card">
+                    <div class="card-inner">
+                        <form method="post" class="form-validate">
+                            {% csrf_token %}
+                            <div class="row g-gs">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">{{ form.nome.label }}</label>
+                                        <div class="form-control-wrap">
+                                            {{ form.nome }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label class="form-label">{{ form.cpf_cnpj.label }}</label>
+                                        <div class="form-control-wrap">
+                                            {{ form.cpf_cnpj }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label class="form-label">{{ form.tipo.label }}</label>
+                                        <div class="form-control-wrap">
+                                            {{ form.tipo }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">{{ form.dados_pessoais.label }}</label>
+                                        <div class="form-control-wrap">
+                                            {{ form.dados_pessoais }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">{{ form.enderecos.label }}</label>
+                                        <div class="form-control-wrap">
+                                            {{ form.enderecos }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">{{ form.observacoes.label }}</label>
+                                        <div class="form-control-wrap">
+                                            {{ form.observacoes }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">Observações específicas deste caso</label>
+                                        <div class="form-control-wrap">
+                                            <textarea name="observacoes_caso" class="form-control" rows="3" placeholder="Observações específicas para este caso">{{ caso_investigado.observacoes }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary">
+                                    <em class="icon ni ni-edit"></em>
+                                    <span>Atualizar Investigado</span>
+                                </button>
+                                <a href="{% url 'investigados' caso.id %}" class="btn btn-outline-light">
+                                    <span>Cancelar</span>
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card com informações adicionais -->
+            <div class="nk-block">
+                <div class="card">
+                    <div class="card-inner">
+                        <div class="card-title-group align-start mb-3">
+                            <div class="card-title">
+                                <h6 class="title">Informações Adicionais</h6>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Data de Inclusão no Caso</label>
+                                    <div class="form-control-wrap">
+                                        <div class="form-control-static">{{ caso_investigado.data_inclusao|date:"d/m/Y H:i" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Tipo de Pessoa</label>
+                                    <div class="form-control-wrap">
+                                        <span class="badge badge-{% if investigado.tipo == 'fisica' %}primary{% else %}info{% endif %}">
+                                            {{ investigado.get_tipo_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

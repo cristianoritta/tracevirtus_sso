@@ -1,0 +1,505 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block css %}
+<style>
+    .container {
+        height: 100vh;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #graph {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+    }
+
+    .controls {
+        margin-bottom: 10px;
+    }
+
+    .btn {
+        padding: 5px 10px;
+        background-color: #1976d2;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .btn:hover {
+        background-color: #1565c0;
+    }
+
+    .legend {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 10px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .icon-controls {
+        position: fixed;
+        top: 120px;
+        right: 32px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 8px;
+        padding: 8px 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .icon-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+        border-radius: 50%;
+    }
+
+    .icon-btn:hover {
+        background: #e3e3e3;
+    }
+
+    .icon-btn svg {
+        width: 28px;
+        height: 28px;
+        fill: #1976d2;
+    }
+
+    .envolvido-modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .envolvido-modal-content {
+        background-color: #fff;
+        margin: 5% auto;
+        padding: 20px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 700px;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
+        position: relative;
+    }
+
+    .envolvido-modal-close {
+        color: #aaa;
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        font-size: 32px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .envolvido-modal-close:hover {
+        color: #d32f2f;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h3>Análise de Vínculos – Caso {{ caso.numero }}</h3>
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #1976d2;"></div>
+            <span>Titular</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #d32f2f;"></div>
+            <span>Beneficiário</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #2e7d32;"></div>
+            <span>Remetente</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #000000;"></div>
+            <span>Outros</span>
+        </div>
+    </div>
+    <div id="graph" style="width: 100%; height: 600px;"></div>
+    <div class="icon-controls">
+        <button id="play-pause-btn" class="icon-btn" title="Iniciar Movimento">
+            <svg id="play-icon" viewBox="0 0 24 24" style="display:block;">
+                <polygon points="8,5 19,12 8,19" />
+            </svg>
+            <svg id="pause-icon" viewBox="0 0 24 24" style="display:none;">
+                <rect x="6" y="5" width="4" height="14" />
+                <rect x="14" y="5" width="4" height="14" />
+            </svg>
+        </button>
+    </div>
+
+    <div id="envolvido-modal" class="envolvido-modal" style="display:none;">
+        <div class="envolvido-modal-content" style="max-width: 60% !important;">
+            <span class="envolvido-modal-close" id="envolvido-modal-close">&times;</span>
+            <div id="envolvido-modal-body">
+                <!-- Conteúdo dinâmico -->
+            </div>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.4.4/d3.min.js"></script>
+<script>
+    // Dados vindos do backend
+    const nodes = {{ nodes| safe }};
+    const links = {{ links| safe }};
+
+    const width = document.getElementById('graph').clientWidth;
+    const height = 600;
+
+    const svg = d3.select("#graph")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    // Grupo para aplicar o zoom
+    const graphGroup = svg.append("g").attr("class", "graph-group");
+
+    // Comportamento de zoom
+    const zoom = d3.zoom()
+        .scaleExtent([0.1, 5])
+        .on("zoom", (event) => {
+            graphGroup.attr("transform", event.transform);
+        });
+    svg.call(zoom);
+
+    let simulation = null;
+    let isMoving = false;
+
+    // Função para obter a cor baseada no tipo de envolvido
+    function getNodeColor(tipo) {
+        switch (tipo) {
+            case 'Titular':
+                return '#1976d2'; // Azul
+            case 'Beneficiário':
+                return '#d32f2f'; // Vermelho
+            case 'Remetente':
+                return '#2e7d32'; // Verde
+            default:
+                return '#000000'; // Preto
+        }
+    }
+
+    // Função para encontrar todos os nós conectados direta ou indiretamente
+    function findConnectedNodes(centerId, depth = 2) {
+        const connectedNodes = new Set([centerId]);
+        const connectedLinks = new Set();
+
+        // Função recursiva para encontrar nós conectados
+        function findConnections(nodeId, currentDepth) {
+            if (currentDepth <= 0) return;
+
+            // Encontra todos os links conectados a este nó
+            links.forEach(link => {
+                if (link.source === nodeId || link.target === nodeId) {
+                    const connectedNode = link.source === nodeId ? link.target : link.source;
+                    if (!connectedNodes.has(connectedNode)) {
+                        connectedNodes.add(connectedNode);
+                        connectedLinks.add(link);
+                        findConnections(connectedNode, currentDepth - 1);
+                    }
+                }
+            });
+        }
+
+        findConnections(centerId, depth);
+        return { nodes: Array.from(connectedNodes), links: Array.from(connectedLinks) };
+    }
+
+    // Função para atualizar o grafo mostrando apenas o nó central e suas conexões diretas
+    function updateGraph(centerId) {
+        // Encontra todos os nós e links conectados
+        const { nodes: connectedNodes, links: connectedLinks } = findConnectedNodes(centerId);
+
+        // Limpa o grupo
+        graphGroup.selectAll("*").remove();
+
+        // Simulação de força
+        simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).id(d => d.id).distance(120))
+            .force("charge", d3.forceManyBody().strength(-400))
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+        // Adiciona todos os links com opacidade reduzida
+        const link = graphGroup.append("g")
+            .selectAll("line")
+            .data(links)
+            .join("line")
+            .attr("stroke", "#bbb")
+            .attr("stroke-opacity", d => {
+                if (d.source === centerId || d.target === centerId) return 1;
+                if (connectedLinks.some(l => l.source === d.source && l.target === d.target)) return 0.8;
+                return 0.2;
+            })
+            .attr("stroke-width", d => {
+                if (d.source === centerId || d.target === centerId) return 2;
+                if (connectedLinks.some(l => l.source === d.source && l.target === d.target)) return 1.5;
+                return 1;
+            });
+
+        // Adiciona todos os nós
+        const node = graphGroup.append("g")
+            .selectAll("circle")
+            .data(nodes)
+            .join("circle")
+            .attr("r", d => {
+                if (d.id === centerId) return 12;
+                if (connectedNodes.includes(d.id)) return 10;
+                return 8;
+            })
+            .attr("fill", d => getNodeColor(d.tipo))
+            .attr("stroke", d => {
+                if (d.id === centerId) return "#fff";
+                if (connectedNodes.includes(d.id)) return "#fff";
+                return "none";
+            })
+            .attr("stroke-width", d => {
+                if (d.id === centerId) return 2;
+                if (connectedNodes.includes(d.id)) return 1;
+                return 0;
+            })
+            .style("cursor", "pointer")
+            .call(drag(simulation));
+
+        // Adiciona todos os rótulos
+        const label = graphGroup.append("g")
+            .selectAll("text")
+            .data(nodes)
+            .join("text")
+            .text(d => d.nome)
+            .attr("font-size", d => {
+                if (d.id === centerId) return 12;
+                if (connectedNodes.includes(d.id)) return 11;
+                return 10;
+            })
+            .attr("dx", 10)
+            .attr("dy", 4)
+            .attr("fill", d => getNodeColor(d.tipo))
+            .attr("font-weight", d => {
+                if (d.id === centerId || connectedNodes.includes(d.id)) return "bold";
+                return "normal";
+            });
+
+        simulation.on("tick", () => {
+            link
+                .attr("x1", d => getNodeById(nodes, d.source).x)
+                .attr("y1", d => getNodeById(nodes, d.source).y)
+                .attr("x2", d => getNodeById(nodes, d.target).x)
+                .attr("y2", d => getNodeById(nodes, d.target).y);
+
+            node
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y);
+
+            label
+                .attr("x", d => d.x)
+                .attr("y", d => d.y);
+        });
+
+        node.on("click", (event, d) => {
+            if (d.id !== centerId) {
+                updateGraph(d.id);
+            }
+        });
+
+        // Inicializa as posições dos nós
+        simulation.tick();
+
+        // Adiciona o evento de duplo clique nos nós após desenhar o grafo
+        addDblClickToNodes();
+    }
+
+    // Função auxiliar para pegar nó pelo id (compatível com d3.forceLink)
+    function getNodeById(nodesArr, id) {
+        if (typeof id === 'object') return id; // d3 pode passar o objeto já
+        return nodesArr.find(n => n.id === id);
+    }
+
+    // Função de drag
+    function drag(simulation) {
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+        return d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended);
+    }
+
+    // Inicializa mostrando todos os nós e conexões
+    function updateGraphAll() {
+        // Limpa o grupo
+        graphGroup.selectAll("*").remove();
+
+        // Simulação de força
+        simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).id(d => d.id).distance(120))
+            .force("charge", d3.forceManyBody().strength(-400))
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+        // Adiciona links
+        const link = graphGroup.append("g")
+            .selectAll("line")
+            .data(links)
+            .join("line")
+            .attr("stroke", "#bbb")
+            .attr("stroke-opacity", 1)
+            .attr("stroke-width", 1);
+
+        // Adiciona nós
+        const node = graphGroup.append("g")
+            .selectAll("circle")
+            .data(nodes)
+            .join("circle")
+            .attr("r", 8)
+            .attr("fill", d => getNodeColor(d.tipo))
+            .attr("stroke", "none")
+            .style("cursor", "pointer")
+            .call(drag(simulation));
+
+        // Adiciona rótulos
+        const label = graphGroup.append("g")
+            .selectAll("text")
+            .data(nodes)
+            .join("text")
+            .text(d => d.nome)
+            .attr("font-size", 10)
+            .attr("dx", 10)
+            .attr("dy", 4)
+            .attr("fill", d => getNodeColor(d.tipo));
+
+        simulation.on("tick", () => {
+            link
+                .attr("x1", d => getNodeById(nodes, d.source).x)
+                .attr("y1", d => getNodeById(nodes, d.source).y)
+                .attr("x2", d => getNodeById(nodes, d.target).x)
+                .attr("y2", d => getNodeById(nodes, d.target).y);
+
+            node
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y);
+
+            label
+                .attr("x", d => d.x)
+                .attr("y", d => d.y);
+        });
+
+        node.on("click", (event, d) => {
+            updateGraph(d.id);
+        });
+
+        // Inicializa as posições dos nós
+        simulation.tick();
+
+        // Adiciona o evento de duplo clique nos nós após desenhar o grafo
+        addDblClickToNodes();
+    }
+
+    // Controle do movimento
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const playIcon = document.getElementById('play-icon');
+    const pauseIcon = document.getElementById('pause-icon');
+    playPauseBtn.addEventListener('click', function () {
+        isMoving = !isMoving;
+        if (simulation) {
+            if (isMoving) {
+                simulation.alpha(0.3).restart();
+                playIcon.style.display = 'none';
+                pauseIcon.style.display = 'block';
+                playPauseBtn.title = 'Pausar Movimento';
+            } else {
+                simulation.stop();
+                playIcon.style.display = 'block';
+                pauseIcon.style.display = 'none';
+                playPauseBtn.title = 'Iniciar Movimento';
+            }
+        }
+    });
+
+    // Adiciona o evento de duplo clique nos nós após desenhar o grafo
+    function addDblClickToNodes() {
+        d3.selectAll('circle').on('dblclick', function (event, d) {
+            showEnvolvidoModal(d.cpf_cnpj);
+            event.stopPropagation();
+        });
+    }
+
+    // Inicializa mostrando todos os nós
+    updateGraphAll();
+
+    function showEnvolvidoModal(cpf_cnpj) {
+        // Mostra o modal e carrega os dados via AJAX
+        const modal = document.getElementById('envolvido-modal');
+        const modalBody = document.getElementById('envolvido-modal-body');
+        modal.style.display = 'block';
+        modalBody.innerHTML = '<div style="text-align:center;padding:30px;">Carregando...</div>';
+        fetch(`/financeira/envolvido_detalhes/${cpf_cnpj}/`)
+            .then(resp => resp.text())
+            .then(html => { modalBody.innerHTML = html; })
+            .catch(() => {
+                modalBody.innerHTML = '<div style="color:red;">Erro ao carregar detalhes.</div>';
+            });
+    }
+
+    // Fecha o modal
+    const modalClose = document.getElementById('envolvido-modal-close');
+    if (modalClose) {
+        modalClose.onclick = function () {
+            document.getElementById('envolvido-modal').style.display = 'none';
+        };
+    }
+
+    window.onclick = function (event) {
+        const modal = document.getElementById('envolvido-modal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    };
+</script>
+{% endblock %}

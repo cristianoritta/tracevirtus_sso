@@ -1,0 +1,125 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="nk-content-inner">
+        <div class="nk-content-body">
+            <div class="nk-block-head nk-block-head-sm">
+                <div class="nk-block-between">
+                    <div class="nk-block-head-content">
+                        <h3 class="nk-block-title page-title">
+                            {% if form.instance.pk %}
+                                Editar Caso
+                            {% else %}
+                                Novo Caso
+                            {% endif %}
+                        </h3>
+                        <div class="nk-block-des text-soft">
+                            <p>
+                                {% if form.instance.pk %}
+                                    Atualize as informações do caso
+                                {% else %}
+                                    Preencha as informações para criar um novo caso
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="nk-block-head-content">
+                        <div class="toggle-wrap nk-block-tools-toggle">
+                            <a href="{% url 'casos' %}" class="btn btn-icon btn-trigger toggle-expand mr-n1" data-target="pageMenu">
+                                <em class="icon ni ni-arrow-left"></em>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nk-block">
+                <div class="card">
+                    <div class="card-inner">
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+                            
+                            <div class="row g-4">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.nome.id_for_label }}">{{ form.nome.label }}</label>
+                                        {{ form.nome }}
+                                        {% if form.nome.errors %}
+                                            <div class="form-note-error">
+                                                {% for error in form.nome.errors %}
+                                                    <span>{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.numero.id_for_label }}">{{ form.numero.label }}</label>
+                                        {{ form.numero }}
+                                        {% if form.numero.errors %}
+                                            <div class="form-note-error">
+                                                {% for error in form.numero.errors %}
+                                                    <span>{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-lg-12">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+                                        {{ form.status }}
+                                        {% if form.status.errors %}
+                                            <div class="form-note-error">
+                                                {% for error in form.status.errors %}
+                                                    <span>{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-lg-12">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.resumo.id_for_label }}">{{ form.resumo.label }}</label>
+                                        {{ form.resumo }}
+                                        {% if form.resumo.errors %}
+                                            <div class="form-note-error">
+                                                {% for error in form.resumo.errors %}
+                                                    <span>{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-lg-12">
+                                    <div class="form-group">
+                                        <button type="submit" class="btn btn-lg btn-primary">
+                                            {% if form.instance.pk %}
+                                                <em class="icon ni ni-edit"></em>
+                                                <span>Atualizar Caso</span>
+                                            {% else %}
+                                                <em class="icon ni ni-plus"></em>
+                                                <span>Criar Caso</span>
+                                            {% endif %}
+                                        </button>
+                                        <a href="{% url 'casos' %}" class="btn btn-lg btn-light">
+                                            <em class="icon ni ni-arrow-left"></em>
+                                            <span>Cancelar</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

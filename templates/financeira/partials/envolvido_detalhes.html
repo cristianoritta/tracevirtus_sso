@@ -1,0 +1,128 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12 p-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Detalhes do Envolvido</h4>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Nome Completo:</strong>
+                            <p>{{ envolvido.nome_envolvido }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Tipo:</strong>
+                            <p>{{ envolvido.tipo_envolvido }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>CPF/CNPJ:</strong>
+                            <p>{{ envolvido.cpf_cnpj_envolvido }}</p>
+                        </div>
+                    </div>
+                    <!-- Abas -->
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="indexador-tab" data-bs-toggle="tab"
+                                data-bs-target="#indexador" type="button" role="tab" aria-controls="ocorrencias"
+                                aria-selected="false">Envolvidos</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="comunicacoes-tab" data-bs-toggle="tab"
+                                data-bs-target="#comunicacoes" type="button" role="tab" aria-controls="comunicacoes"
+                                aria-selected="true">Comunicações</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="ocorrencias-tab" data-bs-toggle="tab"
+                                data-bs-target="#ocorrencias" type="button" role="tab" aria-controls="ocorrencias"
+                                aria-selected="false">Ocorrências</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content mt-3" id="myTabContent">
+                        <!-- Aba Comunicações -->
+                        <div class="tab-pane fade show active" id="comunicacoes" role="tabpanel"
+                            aria-labelledby="comunicacoes-tab">
+                            {% if comunicacoes %}
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>RIF</th>
+                                        <th>Indexador</th>
+                                        <th>Data Operação</th>
+                                        <th>Nome Comunicante</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for comunicacao in comunicacoes %}
+                                    <tr>
+                                        <td>{{ comunicacao.rif__numero }}</td>
+                                        <td>{{ comunicacao.indexador }}</td>
+                                        <td>{{ comunicacao.data_operacao }}</td>
+                                        <td>{{ comunicacao.nome_comunicante }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>A: R$ {{ comunicacao.campo_a }}</td>
+                                        <td>B: R$ {{ comunicacao.campo_b }}</td>
+                                        <td>C: R$ {{ comunicacao.campo_c }}</td>
+                                        <td>D: R$ {{ comunicacao.campo_d }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4">
+                                            <strong>Segmento:</strong> {{ comunicacao.codigo_segmento }}
+                                            <br><strong>Informações Adicionais:</strong>
+                                            <br>{{ comunicacao.informacoes_adicionais }}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}
+                            <p class="text-muted">Nenhuma comunicação encontrada.</p>
+                            {% endif %}
+                        </div>
+                        <!-- Aba Ocorrências -->
+                        <div class="tab-pane fade" id="ocorrencias" role="tabpanel" aria-labelledby="ocorrencias-tab">
+                            {% if ocorrencias %}
+                            <ul class="list-group">
+                                {% for ocorrencia in ocorrencias %}
+                                <li class="list-group-item">
+                                    <strong>Indexador: {{ ocorrencia.indexador }} </strong>
+                                    - {{ ocorrencia.ocorrencia }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="text-muted">Nenhuma ocorrência encontrada.</p>
+                            {% endif %}
+                        </div>
+                        <!-- Aba Indexador -->
+                        <div class="tab-pane fade" id="indexador" role="tabpanel" aria-labelledby="indexador-tab">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Indexador</th>
+                                        <th>Nome</th>
+                                        <th>Tipo</th>
+                                        <th>CPF/CNPJ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for env in envolvidos_mesmos_indexadores %}
+                                    <tr>
+                                        <td>{{ env.indexador }}</td>
+                                        <td>{{ env.nome_envolvido }}</td>
+                                        <td>{{ env.tipo_envolvido }}</td>
+                                        <td>{{ env.cpf_cnpj_envolvido }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="3" class="text-muted">Nenhum outro envolvido.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

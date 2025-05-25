@@ -1,0 +1,66 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="dashboard-title">Lista de Envolvidos</h3>
+            <p class="dashboard-subtitle">Envolvidos do caso: {{ caso.numero }}</p>
+        </div>
+    </div>
+
+    <div class="card card-bordered">
+        <div class="card-inner table-responsive">
+            <table id="envolvidosTable" class="display table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Nº RIF</th>
+                        <th>Indexador</th>
+                        <th>CPF/CNPJ</th>
+                        <th>Nome</th>
+                        <th>Tipo</th>
+                        <th>Agência</th>
+                        <th>Conta</th>
+                        <th>PEP</th>
+                        <th>Pessoa Obrigada</th>
+                        <th>Servidor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in envolvidos %}
+                    <tr>
+                        <td nowrap>{{ e.rif.numero }}</td>
+                        <td width="1%">{{ e.indexador }}</td>
+                        <td>{{ e.cpf_cnpj_envolvido }}</td>
+                        <td>{{ e.nome_envolvido }}</td>
+                        <td>{{ e.tipo_envolvido }}</td>
+                        <td>{{ e.agencia_envolvido }}</td>
+                        <td>{{ e.conta_envolvido }}</td>
+                        <td>{{ e.bit_pep_citado }}</td>
+                        <td>{{ e.bit_pessoa_obrigada_citado }}</td>
+                        <td>{{ e.int_servidor_citado }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function () {
+
+        var table = $('#envolvidosTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json'
+            },
+            pageLength: 10,
+            responsive: true
+        });
+    });
+</script>
+{% endblock %}

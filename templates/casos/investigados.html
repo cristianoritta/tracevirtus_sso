@@ -1,0 +1,231 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container-fluid">
+    <div class="nk-content-inner">
+        <div class="nk-content-body">
+            <div class="nk-block-head nk-block-head-sm">
+                <div class="nk-block-between">
+                    <div class="nk-block-head-content">
+                        <h3 class="nk-block-title page-title">Investigados do Caso</h3>
+                        <div class="nk-block-des text-soft">
+                            <p><strong>Caso:</strong> {{ caso.numero }} - {{ caso.nome }}</p>
+                        </div>
+                    </div>
+                    <div class="nk-block-head-content">
+                        <div class="toggle-wrap nk-block-tools-toggle">
+                            <a href="{% url 'casos' %}" class="btn btn-icon btn-trigger toggle-expand mr-n1">
+                                <em class="icon ni ni-arrow-left"></em>
+                            </a>
+                            <a href="{% url 'adicionar_investigado' caso.id %}"
+                                class="btn btn-primary d-none d-md-inline-flex">
+                                <em class="icon ni ni-user-add"></em>
+                                <span>Adicionar Investigado</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nk-block">
+                <div class="card card-bordered card-stretch">
+                    <div class="card-inner-group">
+                        <div class="card-inner position-relative card-tools-toggle">
+                            <div class="card-title-group">
+                                <div class="card-tools mr-n1">
+                                    <ul class="btn-toolbar gx-1">
+                                        <li>
+                                            <a href="#" class="btn btn-icon search-toggle toggle-search"
+                                                data-target="search">
+                                                <em class="icon ni ni-search"></em>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="card-search search-wrap" data-search="search">
+                                    <div class="card-body">
+                                        <div class="search-content">
+                                            <a href="#" class="search-back btn btn-icon toggle-search"
+                                                data-target="search">
+                                                <em class="icon ni ni-arrow-left"></em>
+                                            </a>
+                                            <input type="text" class="form-control border-transparent form-focus-none"
+                                                placeholder="Pesquisar investigados..." id="search-input">
+                                            <button class="search-submit btn btn-icon">
+                                                <em class="icon ni ni-search"></em>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-inner p-0">
+                            <div class="nk-tb-list nk-tb-ulist">
+                                <div class="nk-tb-item nk-tb-head">
+                                    <div class="nk-tb-col"><span class="sub-text">CPF/CNPJ</span></div>
+                                    <div class="nk-tb-col tb-col-mb"><span class="sub-text">Nome</span></div>
+                                    <div class="nk-tb-col tb-col-md"><span class="sub-text">Tipo</span></div>
+                                    <div class="nk-tb-col tb-col-lg"><span class="sub-text">Data Inclusão</span></div>
+                                    <div class="nk-tb-col nk-tb-col-tools text-right">
+                                        <span class="sub-text">Ações</span>
+                                    </div>
+                                </div>
+
+                                {% for caso_investigado in investigados %}
+                                <div class="nk-tb-item" id="investigado-{{ caso_investigado.investigado.id }}">
+                                    <div class="nk-tb-col">
+                                        <span class="tb-amount">{{ caso_investigado.investigado.cpf_cnpj }}</span>
+                                    </div>
+                                    <div class="nk-tb-col tb-col-mb">
+                                        <div class="user-card">
+                                            <div class="user-info">
+                                                <span class="tb-lead">
+                                                    {{ caso_investigado.investigado.nome|truncatechars:50 }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="nk-tb-col tb-col-md">
+                                        <span
+                                            class="tb-status text-{% if caso_investigado.investigado.tipo == 'fisica' %}primary{% else %}info{% endif %}">
+                                            {{ caso_investigado.investigado.get_tipo_display }}
+                                        </span>
+                                    </div>
+                                    <div class="nk-tb-col tb-col-lg">
+                                        <span class="tb-date">
+                                            {{ caso_investigado.data_inclusao|date:"d/m/Y H:i" }}
+                                        </span>
+                                    </div>
+                                    <div class="nk-tb-col nk-tb-col-tools">
+                                        <ul class="nk-tb-actions gx-1">
+                                            <li class="nk-tb-action-hidden">
+                                                <a href="#" class="btn btn-trigger btn-icon" data-toggle="tooltip"
+                                                    data-placement="top" title="Ver Detalhes"
+                                                    hx-get="{% url 'detalhes_investigado' caso.id caso_investigado.investigado.id %}"
+                                                    hx-target="#modal-detalhes .modal-content" hx-swap="innerHTML"
+                                                    onclick="abrirModalDetalhes()">
+                                                    <em class="icon ni ni-eye"></em>
+                                                </a>
+                                            </li>
+                                            <li class="nk-tb-action-hidden">
+                                                <a href="{% url 'editar_investigado' caso.id caso_investigado.investigado.id %}"
+                                                    class="btn btn-trigger btn-icon" data-toggle="tooltip"
+                                                    data-placement="top" title="Editar">
+                                                    <em class="icon ni ni-edit"></em>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <div class="drodown">
+                                                    <a href="#" class="dropdown-toggle btn btn-icon btn-trigger"
+                                                        data-toggle="dropdown">
+                                                        <em class="icon ni ni-more-h"></em>
+                                                    </a>
+                                                    <div class="dropdown-menu dropdown-menu-right">
+                                                        <ul class="link-list-opt no-bdr">
+                                                            <li>
+                                                                <a href="#"
+                                                                    hx-get="{% url 'detalhes_investigado' caso.id caso_investigado.investigado.id %}"
+                                                                    hx-target="#modal-detalhes .modal-content"
+                                                                    hx-swap="innerHTML" onclick="abrirModalDetalhes()">
+                                                                    <em class="icon ni ni-eye"></em>
+                                                                    <span>Ver Detalhes</span>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a
+                                                                    href="{% url 'editar_investigado' caso.id caso_investigado.investigado.id %}">
+                                                                    <em class="icon ni ni-edit"></em>
+                                                                    <span>Editar</span>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a href="#" class="text-danger"
+                                                                    style="display: block; width: 100%; text-align: left; cursor: pointer;"
+                                                                    onclick="confirmarRemocao('{% url 'remover_investigado' caso.id caso_investigado.investigado.id %}', '{{ caso_investigado.investigado.nome|escapejs }}')">
+                                                                    <em class="icon ni ni-trash"></em>
+                                                                    <span>Remover do Caso</span>
+                                                                </a>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="nk-tb-item">
+                                    <div class="nk-tb-col" style="text-align: center; padding: 2rem;">
+                                        <div class="text-center p-4">
+                                            <div class="text-muted">
+                                                <em class="icon ni ni-users" style="font-size: 3rem;"></em>
+                                                <h5 class="mt-2">Nenhum investigado encontrado</h5>
+                                                <p>Este caso ainda não possui investigados associados</p>
+                                                <a href="{% url 'adicionar_investigado' caso.id %}"
+                                                    class="btn btn-primary">
+                                                    <em class="icon ni ni-user-add"></em>
+                                                    <span>Adicionar Primeiro Investigado</span>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Funcionalidade de pesquisa
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                const filter = this.value.toLowerCase();
+                const rows = document.querySelectorAll('.nk-tb-item:not(.nk-tb-head)');
+
+                rows.forEach(function (row) {
+                    const text = row.textContent.toLowerCase();
+                    if (text.includes(filter)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+
+    // Função para abrir modal de detalhes
+    function abrirModalDetalhes() {
+        const modal = new bootstrap.Modal(document.getElementById('modal-detalhes'));
+        modal.show();
+    }
+</script>
+
+<!-- Modal para Detalhes do Investigado -->
+<div class="modal fade" id="modal-detalhes" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+    aria-labelledby="modalDetalhesLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <!-- O conteúdo será carregado via HTMX -->
+            <div class="modal-header">
+                <h5 class="modal-title">Carregando...</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

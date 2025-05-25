@@ -1,0 +1,204 @@
+<div class="modal-header">
+    <h5 class="modal-title">
+        <em class="icon ni ni-user"></em>
+        Detalhes do Investigado
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body">
+    <div class="row g-4">
+        <!-- Informações Básicas -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-inner">
+                    <div class="card-title-group align-start mb-3">
+                        <div class="card-title">
+                            <h6 class="title">Informações Básicas</h6>
+                        </div>
+                        <div class="card-tools">
+                            <span class="badge badge-{% if investigado.tipo == 'fisica' %}primary{% else %}info{% endif %}">
+                                {{ investigado.get_tipo_display }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label class="form-label">Nome Completo</label>
+                                <div class="form-control-wrap">
+                                    <div class="form-control-static">{{ investigado.nome }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">{% if investigado.tipo == 'fisica' %}CPF{% else %}CNPJ{% endif %}</label>
+                                <div class="form-control-wrap">
+                                    <div class="form-control-static">
+                                        <strong>{{ investigado.cpf_cnpj }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dados Pessoais -->
+        {% if investigado.dados_pessoais %}
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-inner">
+                    <div class="card-title-group align-start mb-3">
+                        <div class="card-title">
+                            <h6 class="title">Dados Pessoais</h6>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-control-wrap">
+                            <div class="form-control-static">
+                                {{ investigado.dados_pessoais|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Endereços -->
+        {% if investigado.enderecos %}
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-inner">
+                    <div class="card-title-group align-start mb-3">
+                        <div class="card-title">
+                            <h6 class="title">Endereços</h6>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-control-wrap">
+                            <div class="form-control-static">
+                                {{ investigado.enderecos|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Observações Gerais -->
+        {% if investigado.observacoes %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-inner">
+                    <div class="card-title-group align-start mb-3">
+                        <div class="card-title">
+                            <h6 class="title">Observações Gerais</h6>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-control-wrap">
+                            <div class="form-control-static">
+                                {{ investigado.observacoes|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Informações do Caso -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-inner">
+                    <div class="card-title-group align-start mb-3">
+                        <div class="card-title">
+                            <h6 class="title">Informações no Caso</h6>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">Caso</label>
+                                <div class="form-control-wrap">
+                                    <div class="form-control-static">
+                                        <strong>{{ caso.numero }}</strong> - {{ caso.nome|truncatechars:30 }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">Data de Inclusão</label>
+                                <div class="form-control-wrap">
+                                    <div class="form-control-static">
+                                        {{ caso_investigado.data_inclusao|date:"d/m/Y H:i" }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">Status do Caso</label>
+                                <div class="form-control-wrap">
+                                    <span class="badge badge-{% if caso.status == 'andamento' %}warning{% else %}success{% endif %}">
+                                        {{ caso.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if caso_investigado.observacoes %}
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-label">Observações Específicas do Caso</label>
+                                <div class="form-control-wrap">
+                                    <div class="form-control-static">
+                                        {{ caso_investigado.observacoes|linebreaks }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estatísticas -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-inner">
+                    <div class="card-title-group align-start mb-3">
+                        <div class="card-title">
+                            <h6 class="title">Estatísticas</h6>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3">
+                                                <div class="col-md-4">                            <div class="info-item">                                <div class="info-title">Total de Casos</div>                                <div class="info-text">                                    <span class="lead-text">{{ estatisticas.total_casos }}</span>                                </div>                            </div>                        </div>                        <div class="col-md-4">                            <div class="info-item">                                <div class="info-title">Casos Ativos</div>                                <div class="info-text">                                    <span class="lead-text">{{ estatisticas.casos_ativos }}</span>                                </div>                            </div>                        </div>                        <div class="col-md-4">                            <div class="info-item">                                <div class="info-title">Casos em Andamento</div>                                <div class="info-text">                                    <span class="lead-text">{{ estatisticas.casos_andamento }}</span>                                </div>                            </div>                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <div class="btn-group" role="group">
+        <a href="{% url 'editar_investigado' caso.id investigado.id %}" class="btn btn-primary">
+            <em class="icon ni ni-edit"></em>
+            <span>Editar</span>
+        </a>
+        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">
+            <span>Fechar</span>
+        </button>
+    </div>
+</div> 

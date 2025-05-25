@@ -1,0 +1,83 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="dashboard-header d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="dashboard-title">Lista de Ocorrências</h3>
+            <p class="dashboard-subtitle">Ocorrências do caso: {{ caso.numero }}</p>
+        </div>
+    </div>
+
+    <div class="card card-bordered">
+        <div class="card-inner table-responsive">
+            <table id="ocorrenciasTable" class="display table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Nº RIF</th>
+                        <th>Indexador</th>
+                        <th>ID Ocorrência</th>
+                        <th>Ocorrência</th>
+                        <th><i class="fas fa-question-circle"></i></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in ocorrencias %}
+                    <tr>
+                        <td nowrap>{{ o.rif.numero }}</td>
+                        <td width="1%">{{ o.indexador }}</td>
+                        <td>{{ o.id_ocorrencia }}</td>
+                        <td>{{ o.ocorrencia }}</td>
+                        <td>
+                            <a href="#" onclick="exibirAjuda('{{ o.id }}'); return false;">
+                                <i class="fas fa-question-circle"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Ajuda -->
+<div class="modal fade" id="modalAjuda" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajuda</h5>
+            </div>
+            <div class="modal-body" id="modalAjudaContent">
+                <p>Carregando...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#ocorrenciasTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json'
+            },
+            pageLength: 10,
+            responsive: true
+        });
+    });
+
+    function exibirAjuda(id) {
+        $('#modalAjuda').modal('show');
+        $('#modalAjudaContent').html('<p>Carregando...</p>');
+        $.get('/financeira/ajuda/' + id, function(data) {
+            // Decodifica entidades HTML e renderiza markdown
+            let html = marked.parse(data);
+            $('#modalAjudaContent').html(html);
+        });
+    }
+</script>
+{% endblock %}

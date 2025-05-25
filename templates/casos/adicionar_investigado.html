@@ -1,0 +1,261 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="nk-content-inner">
+        <div class="nk-content-body">
+            <div class="nk-block-head nk-block-head-sm">
+                <div class="nk-block-between">
+                    <div class="nk-block-head-content">
+                        <h3 class="nk-block-title page-title">Adicionar Investigado</h3>
+                        <div class="nk-block-des text-soft">
+                            <p><strong>Caso:</strong> {{ caso.numero }} - {{ caso.nome }}</p>
+                        </div>
+                    </div>
+                    <div class="nk-block-head-content">
+                        <div class="toggle-wrap nk-block-tools-toggle">
+                            <a href="{% url 'investigados' caso.id %}" class="btn btn-icon btn-trigger toggle-expand mr-n1">
+                                <em class="icon ni ni-arrow-left"></em>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs para escolher entre buscar existente ou criar novo -->
+            <div class="nk-block">
+                <div class="card">
+                    <div class="card-inner">
+                        <ul class="nav nav-tabs nav-tabs-mb-icon nav-tabs-card">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-toggle="tab" href="#tab-buscar">
+                                    <em class="icon ni ni-search"></em>
+                                    <span>Buscar Existente</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="tab" href="#tab-novo">
+                                    <em class="icon ni ni-user-add"></em>
+                                    <span>Criar Novo</span>
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content">
+                            <!-- Tab: Buscar Existente -->
+                            <div class="tab-pane active" id="tab-buscar">
+                                <form method="post" class="form-validate">
+                                    {% csrf_token %}
+                                    <div class="row g-gs">
+                                        <div class="col-md-8">
+                                            <div class="form-group">
+                                                <label class="form-label">{{ adicionar_form.cpf_cnpj_existente.label }}</label>
+                                                <div class="form-control-wrap">
+                                                    {{ adicionar_form.cpf_cnpj_existente }}
+                                                    <div class="form-text">Digite apenas números</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label class="form-label">&nbsp;</label>
+                                                <div class="form-control-wrap">
+                                                    <button type="button" class="btn btn-outline-primary" id="btn-buscar">
+                                                        <em class="icon ni ni-search"></em>
+                                                        <span>Buscar</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Resultado da busca -->
+                                    <div id="resultado-busca" style="display: none;">
+                                        <div class="card card-bordered">
+                                            <div class="card-inner">
+                                                <h6 class="title">Investigado Encontrado</h6>
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label class="form-label">Nome</label>
+                                                            <div class="form-control-wrap">
+                                                                <div class="form-control-static" id="result-nome"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label class="form-label">Tipo</label>
+                                                            <div class="form-control-wrap">
+                                                                <div class="form-control-static" id="result-tipo"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <div class="form-group">
+                                                            <label class="form-label">Dados Pessoais</label>
+                                                            <div class="form-control-wrap">
+                                                                <div class="form-control-static" id="result-dados"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">{{ adicionar_form.observacoes.label }}</label>
+                                        <div class="form-control-wrap">
+                                            {{ adicionar_form.observacoes }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <a href="{% url 'investigados' caso.id %}" class="btn btn-outline-light">
+                                            <em class="icon ni ni-arrow-left"></em>
+                                            <span>Voltar</span>
+                                        </a>
+                                        <button type="submit" name="buscar_existente" class="btn btn-primary" id="btn-adicionar-existente" disabled>
+                                            <em class="icon ni ni-user-add"></em>
+                                            <span>Adicionar ao Caso</span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <!-- Tab: Criar Novo -->
+                            <div class="tab-pane" id="tab-novo">
+                                <form method="post" class="form-validate">
+                                    {% csrf_token %}
+                                    <div class="row g-gs">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label">{{ investigado_form.nome.label }}</label>
+                                                <div class="form-control-wrap">
+                                                    {{ investigado_form.nome }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label class="form-label">{{ investigado_form.cpf_cnpj.label }}</label>
+                                                <div class="form-control-wrap">
+                                                    {{ investigado_form.cpf_cnpj }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label class="form-label">{{ investigado_form.tipo.label }}</label>
+                                                <div class="form-control-wrap">
+                                                    {{ investigado_form.tipo }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label">{{ investigado_form.dados_pessoais.label }}</label>
+                                                <div class="form-control-wrap">
+                                                    {{ investigado_form.dados_pessoais }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label">{{ investigado_form.enderecos.label }}</label>
+                                                <div class="form-control-wrap">
+                                                    {{ investigado_form.enderecos }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label">{{ investigado_form.observacoes.label }}</label>
+                                                <div class="form-control-wrap">
+                                                    {{ investigado_form.observacoes }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label">{{ adicionar_form.observacoes.label }}</label>
+                                                <div class="form-control-wrap">
+                                                    {{ adicionar_form.observacoes }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <button type="submit" name="criar_novo" class="btn btn-primary">
+                                            <em class="icon ni ni-user-add"></em>
+                                            <span>Criar e Adicionar ao Caso</span>
+                                        </button>
+                                        <a href="{% url 'investigados' caso.id %}" class="btn btn-outline-light">
+                                            <span>Cancelar</span>
+                                        </a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnBuscar = document.getElementById('btn-buscar');
+    const inputCpfCnpj = document.querySelector('input[name="cpf_cnpj_existente"]');
+    const resultadoBusca = document.getElementById('resultado-busca');
+    const btnAdicionar = document.getElementById('btn-adicionar-existente');
+    
+    btnBuscar.addEventListener('click', function() {
+        const cpfCnpj = inputCpfCnpj.value.trim();
+        if (!cpfCnpj) {
+            alert('Digite um CPF/CNPJ para buscar');
+            return;
+        }
+        
+        // Mostrar loading
+        btnBuscar.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Buscando...';
+        btnBuscar.disabled = true;
+        
+        fetch(`{% url 'buscar_investigado' %}?cpf_cnpj=${cpfCnpj}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.found) {
+                    document.getElementById('result-nome').textContent = data.nome;
+                    document.getElementById('result-tipo').textContent = data.tipo;
+                    document.getElementById('result-dados').textContent = data.dados_pessoais || 'Não informado';
+                    resultadoBusca.style.display = 'block';
+                    btnAdicionar.disabled = false;
+                } else {
+                    resultadoBusca.style.display = 'none';
+                    btnAdicionar.disabled = true;
+                    alert('Investigado não encontrado com este CPF/CNPJ');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao buscar investigado');
+            })
+            .finally(() => {
+                btnBuscar.innerHTML = '<em class="icon ni ni-search"></em><span>Buscar</span>';
+                btnBuscar.disabled = false;
+            });
+    });
+    
+    // Permitir busca com Enter
+    inputCpfCnpj.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            btnBuscar.click();
+        }
+    });
+});
+</script>
+{% endblock %} 

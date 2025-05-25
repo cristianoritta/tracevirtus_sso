@@ -1,0 +1,159 @@
+<!-- Modal Cadastrar RIF -->
+<div class="modal fade" id="modalCadastrarRIF" tabindex="-1" aria-labelledby="modalCadastrarRIFLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCadastrarRIFLabel">Cadastrar RIF</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formCadastrarRIF" method="post">
+                {% csrf_token %}
+                <div class="modal-body bg-white">
+                    <div class="mb-3">
+                        <label for="numero" class="form-label">Número do RIF <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="numero" name="numero" required 
+                               placeholder="Digite o número da RIF">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="outras_informacoes" class="form-label">Outras Informações</label>
+                        <textarea class="form-control" id="outras_informacoes" name="outras_informacoes" 
+                                  rows="4" placeholder="Informações adicionais sobre a RIF"></textarea>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnSalvarRIF">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        Cadastrar RIF
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('formCadastrarRIF');
+    const btnSalvar = document.getElementById('btnSalvarRIF');
+    const spinner = btnSalvar.querySelector('.spinner-border');
+    
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Limpar mensagens de erro anteriores
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            form.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+            
+            // Validação
+            const numero = document.getElementById('numero').value.trim();
+            
+            if (!numero) {
+                showFieldError('numero', 'O número do RIF é obrigatório');
+                return;
+            }
+            
+            // Mostrar loading
+            showLoading(true);
+            
+            try {
+                const formData = new FormData(form);
+                
+                const response = await fetch('{% url "financeira:cadastrar_rif" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Localiza o objeto btn-close e clica nele
+                    const btnClose = document.querySelector('.btn-close');
+                    btnClose.click();
+                    
+                    // Limpar formulário
+                    form.reset();
+                    
+                    // Mostrar mensagem de sucesso
+                    showSuccessMessage('RIF cadastrado com sucesso!');
+                    
+                    // Recarregar dados da página se necessário
+                    if (typeof recarregarDados === 'function') {
+                        recarregarDados();
+                    }
+                } else {
+                    if (data.errors) {
+                        for (const [field, errors] of Object.entries(data.errors)) {
+                            showFieldError(field, errors[0]);
+                        }
+                    } else {
+                        showErrorMessage(data.message || 'Erro ao cadastrar RIF');
+                    }
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showErrorMessage('Erro de conexão. Tente novamente.');
+            } finally {
+                showLoading(false);
+            }
+        });
+    }
+    
+    function showLoading(show) {
+        if (show) {
+            btnSalvar.disabled = true;
+            spinner.classList.remove('d-none');
+            btnSalvar.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvando...';
+        } else {
+            btnSalvar.disabled = false;
+            spinner.classList.add('d-none');
+            btnSalvar.innerHTML = 'Cadastrar RIF';
+        }
+    }
+    
+    function showFieldError(fieldName, message) {
+        const field = document.getElementById(fieldName);
+        if (field) {
+            field.classList.add('is-invalid');
+            const feedback = field.parentNode.querySelector('.invalid-feedback');
+            if (feedback) {
+                feedback.textContent = message;
+            }
+        }
+    }
+    
+    function showSuccessMessage(message) {
+        // Usar SweetAlert ou toast notification
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Sucesso!',
+                text: message,
+                icon: 'success',
+                confirmButtonColor: '#4f46e5'
+            });
+        } else {
+            alert(message);
+        }
+    }
+    
+    function showErrorMessage(message) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Erro!',
+                text: message,
+                icon: 'error',
+                confirmButtonColor: '#4f46e5'
+            });
+        } else {
+            alert(message);
+        }
+    }
+});
+</script> 

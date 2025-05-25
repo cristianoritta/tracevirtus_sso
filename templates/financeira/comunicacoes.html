@@ -1,0 +1,69 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="dashboard-title">Comunicações</h3>
+            <p class="dashboard-subtitle">Comunicações do caso: {{ caso.numero }}</p>
+        </div>
+    </div>
+    <div class="card card-bordered">
+        <div class="card-inner table-responsive">
+            <table id="comunicacoesTable" class="display table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Nº RIF</th>
+                        <th>Indexador</th>
+                        <th>CPF/CNPJ Comunicante</th>
+                        <th>Nome Comunicante</th>
+                        <th>Agência</th>
+                        <th>Campo A</th>
+                        <th>Campo B</th>
+                        <th>Campo C</th>
+                        <th>Campo D</th>
+                        <th>Segmento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in comunicacoes %}
+                    <tr>
+                        <td>{{ c.rif.numero }}</td>
+                        <td>{{ c.indexador }}</td>
+                        <td>{{ c.cpf_cnpj_comunicante }}</td>
+                        <td>{{ c.nome_comunicante }}</td>
+                        <td>{{ c.cidade_agencia }}</td>
+                        <td>{{ c.campo_a }}</td>
+                        <td>{{ c.campo_b }}</td>
+                        <td>{{ c.campo_c }}</td>
+                        <td>{{ c.campo_d }}</td>
+                        <td>{{ c.codigo_segmento }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="10">
+                            {{ c.informacoes_adicionais }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function () {
+        $('#comunicacoesTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json'
+            },
+            pageLength: 10,
+            responsive: true
+        });
+    });
+</script>
+{% endblock %}

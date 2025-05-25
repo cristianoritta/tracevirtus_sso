@@ -67,6 +67,7 @@ def ler_jwt(token, public_key, verificar_exp: bool = True, verificar_assinatura:
     Retorna o payload ou levanta exceção
     """
     try:
+        print(token)
         return jwt.decode(
             token,
             public_key,

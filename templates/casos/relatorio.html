@@ -1,0 +1,204 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="nk-content-inner">
+        <div class="nk-content-body">
+            <div class="nk-block-head nk-block-head-sm">
+                <div class="nk-block-between">
+                    <div class="nk-block-head-content">
+                        <h3 class="nk-block-title page-title">Relatório Financeiro</h3>
+                        <div class="nk-block-des text-soft">
+                            <p><strong>Caso:</strong> {{ caso.numero }} - {{ caso.nome }}</p>
+                        </div>
+                    </div>
+                    <div class="nk-block-head-content">
+                        <div class="toggle-wrap nk-block-tools-toggle">
+                            <a href="{% url 'casos' %}" class="btn btn-icon btn-trigger toggle-expand mr-n1">
+                                <em class="icon ni ni-arrow-left"></em>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumo Financeiro -->
+            <div class="nk-block">
+                <div class="card card-bordered">
+                    <div class="card-inner">
+                        <h5 class="card-title">Resumo Financeiro</h5>
+                        <div class="row g-4">
+                            <div class="col-sm-4">
+                                <div class="card card-bordered">
+                                    <div class="card-inner">
+                                        <div class="card-title-group align-start mb-2">
+                                            <div class="card-title">
+                                                <h6 class="title">Movimentação Total</h6>
+                                            </div>
+                                        </div>
+                                        <div class="align-end flex-sm-wrap g-4 flex-md-nowrap">
+                                            <div class="nk-sale-data">
+                                                <span class="amount text-primary">R$ {{ total_movimentacao|floatformat:2 }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="card card-bordered">
+                                    <div class="card-inner">
+                                        <div class="card-title-group align-start mb-2">
+                                            <div class="card-title">
+                                                <h6 class="title">Total Créditos</h6>
+                                            </div>
+                                        </div>
+                                        <div class="align-end flex-sm-wrap g-4 flex-md-nowrap">
+                                            <div class="nk-sale-data">
+                                                <span class="amount text-success">R$ {{ total_creditos|floatformat:2 }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="card card-bordered">
+                                    <div class="card-inner">
+                                        <div class="card-title-group align-start mb-2">
+                                            <div class="card-title">
+                                                <h6 class="title">Total Débitos</h6>
+                                            </div>
+                                        </div>
+                                        <div class="align-end flex-sm-wrap g-4 flex-md-nowrap">
+                                            <div class="nk-sale-data">
+                                                <span class="amount text-danger">R$ {{ total_debitos|floatformat:2 }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIFs -->
+            <div class="nk-block">
+                <div class="card card-bordered">
+                    <div class="card-inner">
+                        <h5 class="card-title">RIFs</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Número</th>
+                                        <th>Data</th>
+                                        <th>Informações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for rif in rifs %}
+                                    <tr>
+                                        <td>{{ rif.numero }}</td>
+                                        <td>{{ rif.created_at|date:"d/m/Y" }}</td>
+                                        <td>{{ rif.outras_informacoes|truncatechars:100 }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Investigados -->
+            <div class="nk-block">
+                <div class="card card-bordered">
+                    <div class="card-inner">
+                        <h5 class="card-title">Investigados</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>CPF/CNPJ</th>
+                                        <th>Tipo</th>
+                                        <th>Observações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for caso_investigado in investigados %}
+                                    <tr>
+                                        <td>{{ caso_investigado.investigado.nome }}</td>
+                                        <td>{{ caso_investigado.investigado.cpf_cnpj }}</td>
+                                        <td>{{ caso_investigado.investigado.get_tipo_display }}</td>
+                                        <td>{{ caso_investigado.observacoes|truncatechars:100 }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comunicações -->
+            <div class="nk-block">
+                <div class="card card-bordered">
+                    <div class="card-inner">
+                        <h5 class="card-title">Comunicações</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Data</th>
+                                        <th>Comunicante</th>
+                                        <th>Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for com in comunicacoes %}
+                                    <tr>
+                                        <td>{{ com.id_comunicacao }}</td>
+                                        <td>{{ com.data_operacao }}</td>
+                                        <td>{{ com.nome_comunicante }}</td>
+                                        <td>R$ {{ com.campo_a|floatformat:2 }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ocorrências -->
+            <div class="nk-block">
+                <div class="card card-bordered">
+                    <div class="card-inner">
+                        <h5 class="card-title">Ocorrências</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Descrição</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for oc in ocorrencias %}
+                                    <tr>
+                                        <td>{{ oc.id_ocorrencia }}</td>
+                                        <td>{{ oc.ocorrencia|truncatechars:200 }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

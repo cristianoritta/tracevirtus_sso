@@ -1,0 +1,219 @@
+<!-- Modal Importar Arquivos -->
+<div class="modal fade" id="modalImportarArquivos" tabindex="-1" aria-labelledby="modalImportarArquivosLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalImportarArquivosLabel">Importar Arquivos</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formImportarArquivos" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body bg-white">
+                    <div class="mb-3">
+                        <label for="rif" class="form-label">RIF <span class="text-danger">*</span></label>
+                        <select class="form-select" id="rif" name="rif" required>
+                            <option value="">Selecione uma RIF</option>
+                            <!-- As opções serão preenchidas via JavaScript -->
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="comunicacoes" class="form-label">Arquivo de Comunicações <span
+                                class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="comunicacoes" name="comunicacoes" required
+                            accept=".xlsx,.xls,.csv">
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="envolvidos" class="form-label">Arquivo de Envolvidos <span
+                                class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="envolvidos" name="envolvidos" required
+                            accept=".xlsx,.xls,.csv">
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="ocorrencias" class="form-label">Arquivo de Ocorrências <span
+                                class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="ocorrencias" name="ocorrencias" required
+                            accept=".xlsx,.xls,.csv">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnImportarArquivos">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        Importar Arquivos
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function importarArquivos() {
+        const modalElement = document.getElementById('modalImportarArquivos');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        carregarRIFs(); // Chama direto
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('formImportarArquivos');
+        const btnImportar = document.getElementById('btnImportarArquivos');
+        const spinner = btnImportar.querySelector('.spinner-border');
+
+        // Função para carregar as RIFs no select
+        async function carregarRIFs() {
+            console.log('carregarRIFs chamada!');
+            try {
+                const response = await fetch('{% url "financeira:listar_rifs" %}');
+                const data = await response.json();
+
+                const selectRIF = document.getElementById('rif');
+                selectRIF.innerHTML = '<option value="">Selecione uma RIF</option>';
+
+                data.forEach(rif => {
+                    const option = document.createElement('option');
+                    option.value = rif.id;
+                    option.textContent = rif.numero;
+                    selectRIF.appendChild(option);
+                });
+                console.log('RIFs carregados:', selectRIF.innerHTML);
+
+                if ($(selectRIF).hasClass('select2-hidden-accessible')) {
+                    $(selectRIF).trigger('change.select2');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar RIFs:', error);
+                showErrorMessage('Erro ao carregar lista de RIFs');
+            }
+        }
+
+        if (form) {
+            console.log('Formulário de importação inicializado');
+            carregarRIFs();
+            // Carregar RIFs quando o modal for aberto
+            const modal = document.getElementById('modalImportarArquivos');
+            // modal.addEventListener('shown.bs.modal', carregarRIFs);
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                // Limpar mensagens de erro anteriores
+                form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                form.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+
+                // Validação
+                const rif = document.getElementById('rif').value;
+                const comunicacoes = document.getElementById('comunicacoes').files[0];
+                const envolvidos = document.getElementById('envolvidos').files[0];
+                const ocorrencias = document.getElementById('ocorrencias').files[0];
+
+                if (!rif) {
+                    showFieldError('rif', 'Selecione um RIF');
+                    return;
+                }
+
+                if (!comunicacoes || !envolvidos || !ocorrencias) {
+                    showErrorMessage('Todos os arquivos são obrigatórios');
+                    return;
+                }
+
+                // Mostrar loading
+                showLoading(true);
+
+                try {
+                    const formData = new FormData(form);
+
+                    const response = await fetch('{% url "financeira:importar_arquivos" %}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Fechar modal
+                        const btnClose = document.querySelector('.btn-close');
+                        btnClose.click();
+
+                        // Limpar formulário
+                        form.reset();
+
+                        // Mostrar mensagem de sucesso
+                        Swal.fire({
+                            title: 'Sucesso!',
+                            text: 'Arquivos importados com sucesso!',
+                            icon: 'success',
+                            confirmButtonColor: '#4f46e5'
+                        });
+
+                        // Recarregar dados da página se necessário
+                        if (typeof recarregarDados === 'function') {
+                            recarregarDados();
+                        }
+                    } else {
+                        if (data.errors) {
+                            for (const [field, errors] of Object.entries(data.errors)) {
+                                showFieldError(field, errors[0]);
+                            }
+                        } else {
+                            showErrorMessage(data.message || 'Erro ao importar arquivos');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Erro:', error);
+                    showErrorMessage('Erro de conexão. Tente novamente.');
+                } finally {
+                    showLoading(false);
+                }
+            });
+        }
+
+        function showLoading(show) {
+            if (show) {
+                btnImportar.disabled = true;
+                spinner.classList.remove('d-none');
+                btnImportar.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Importando...';
+            } else {
+                btnImportar.disabled = false;
+                spinner.classList.add('d-none');
+                btnImportar.innerHTML = 'Importar Arquivos';
+            }
+        }
+
+        function showFieldError(fieldName, message) {
+            const field = document.getElementById(fieldName);
+            if (field) {
+                field.classList.add('is-invalid');
+                const feedback = field.parentNode.querySelector('.invalid-feedback');
+                if (feedback) {
+                    feedback.textContent = message;
+                }
+            }
+        }
+
+        function showErrorMessage(message) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Erro!',
+                    text: message,
+                    icon: 'error',
+                    confirmButtonColor: '#4f46e5'
+                });
+            } else {
+                alert(message);
+            }
+        }
+    });
+</script>

@@ -50,6 +50,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'app',
+    'financeira',
+    'bancaria',
+    'fiscal',
+    'patrimonial',
     'user_agents'
 ]
 
