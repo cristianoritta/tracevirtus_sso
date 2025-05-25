@@ -72,7 +72,4 @@ def executar_prompt(prompt):
         print("ERRO AO EXECUTAR_IA", e)
         resumo = None
 
-
-    print("Resumo: ", resumo)
-
     return resumo

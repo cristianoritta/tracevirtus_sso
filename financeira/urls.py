@@ -12,8 +12,8 @@ urlpatterns = [
          name='financeira_envolvidos'),
     path('ocorrencias/', views.financeira_ocorrencias,
          name='financeira_ocorrencias'),
-    path('informacoesadicionais/', views.financeira_informacoesadicionais,
-         name='financeira_informacoesadicionais'),
+    #path('informacoesadicionais/', views.financeira_informacoesadicionais,
+    #     name='financeira_informacoesadicionais'),
     path('analisedevinculos/', views.financeira_analisedevinculos,
          name='financeira_analisedevinculos'),
     path('dashboard/', views.financeira_dashboard, name='financeira_dashboard'),
@@ -30,5 +30,6 @@ urlpatterns = [
     path('envolvido_detalhes/<str:cpf_cnpj>/', views.envolvido_detalhes, name='envolvido_detalhes'),
 
     path('relatorio', views.relatorio, name='relatorio'),
+    path('relatorio_documento', views.relatorio_documento, name='relatorio_documento'),
 
 ]

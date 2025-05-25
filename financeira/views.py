@@ -19,6 +19,11 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.forms.models import model_to_dict
 from django.template.loader import render_to_string
 from django.db.models.functions import Cast
+from docxtpl import DocxTemplate, InlineImage
+from docx.shared import Mm
+import zipfile
+from io import BytesIO
+from utils.moeda import moeda
 
 @login_required
 def financeira_index(request):
@@ -32,6 +37,11 @@ def financeira_index(request):
 
     # Calcular estatísticas
     rifs = RIF.objects.select_related('caso').order_by('-created_at')
+    # Incluir em rif o numero de comunicacoes e envolvidos de cada rif
+    for rif in rifs:
+        rif.total_comunicacoes = Comunicacao.objects.filter(rif=rif).count()
+        rif.total_envolvidos = Envolvido.objects.filter(rif=rif).count()
+    
     total_rifs = rifs.count()
     total_comunicacoes = Comunicacao.objects.count()
     total_envolvidos = Envolvido.objects.count()
@@ -252,8 +262,8 @@ def ocorrencia_ajuda(request, id):
 
 
 @login_required
-def financeira_informacoesadicionais(request):
-    return render(request, 'financeira/informacoesadicionais.html')
+def financeira_informacoes_adicionais(request):
+    return render(request, 'financeira/informacoes_adicionais.html')
 
 
 @login_required
@@ -481,6 +491,17 @@ def converter_valores(valor):
 
     return float(valor)
 
+# Calcular totais
+def parse_valor(valor):
+    if not valor:
+        return 0.0
+    if isinstance(valor, (int, float)):
+        return float(valor)
+    valor = str(valor).replace('R$', '').replace('.', '').replace(',', '.').strip()
+    try:
+        return float(valor)
+    except Exception:
+        return 0.0
 
 def save_dataframe(df, table_name, if_exists='append', index=False):
     try:
@@ -494,7 +515,7 @@ def save_dataframe(df, table_name, if_exists='append', index=False):
 
         # Testa se existe a coluna de valor financeiro]
         for col in df.columns:
-            if col in ['CampoA', 'CampoB', 'CampoC', 'CampoD', 'CampoE', 'valor']:
+            if col in ['campo_a', 'campo_b', 'campo_c', 'campo_d', 'campo_e', 'valor']:
                 df[col] = df[col].apply(converter_valores)
 
         #
@@ -563,11 +584,11 @@ def ler_arquivo(uploaded_file):
             'UFAgencia': 'uf_agencia',
             'NomeAgencia': 'nome_agencia',
             'NumeroAgencia': 'numero_agencia',
-            'informacoesAdicionais': 'informacoes_adicionais',
-            'CampoA': 'campo_a',
-            'CampoB': 'campo_b',
-            'CampoC': 'campo_c',
-            'CampoD': 'campo_d',
+            'informacoes_adicionais': 'informacoes_adicionais',
+            'campo_a': 'campo_a',
+            'campo_b': 'campo_b',
+            'campo_c': 'campo_c',
+            'campo_d': 'campo_d',
             'CampoE': 'campo_e',
             'CodigoSegmento': 'codigo_segmento'
         }
@@ -575,8 +596,8 @@ def ler_arquivo(uploaded_file):
         mapeamento_colunas = {
             'Indexador': 'indexador',
             'cpfCnpjEnvolvido': 'cpf_cnpj_envolvido',
-            'nomeEnvolvido': 'nome_envolvido',
-            'tipoEnvolvido': 'tipo_envolvido',
+            'nome_envolvido': 'nome_envolvido',
+            'tipo_envolvido': 'tipo_envolvido',
             'agenciaEnvolvido': 'agencia_envolvido',
             'contaEnvolvido': 'conta_envolvido',
             'DataAberturaConta': 'data_abertura_conta',
@@ -682,18 +703,6 @@ def relatorio(request):
     # Buscar ocorrências
     ocorrencias = Ocorrencia.objects.filter(caso=caso)
     
-    # Calcular totais
-    def parse_valor(valor):
-        if not valor:
-            return 0.0
-        if isinstance(valor, (int, float)):
-            return float(valor)
-        valor = str(valor).replace('R$', '').replace('.', '').replace(',', '.').strip()
-        try:
-            return float(valor)
-        except Exception:
-            return 0.0
-
     total_movimentacao = sum(parse_valor(com.campo_a) for com in comunicacoes if com.campo_a)
     total_creditos = sum(parse_valor(com.campo_b) for com in comunicacoes if com.campo_b)
     total_debitos = sum(parse_valor(com.campo_c) for com in comunicacoes if com.campo_c)
@@ -713,4 +722,187 @@ def relatorio(request):
     }
     
     return render(request, 'casos/relatorio.html', context)
+
+
+def relatorio_documento(request):
+    """Gera relatório financeiro do caso"""
     
+    # Testa se tem um caso ativo.
+    caso = Caso.objects.filter(ativo=True).first()
+    if not caso:
+        messages.error(
+            request, 'Nenhum caso ativo encontrado. Por favor, cadastre um caso para continuar.')
+        return redirect('casos')
+    
+    # Buscar RIFs do caso
+    rifs = RIF.objects.filter(caso=caso)
+    comunicacoes = Comunicacao.objects.filter(caso=caso)
+    envolvidos = Envolvido.objects.filter(caso=caso)
+    ocorrencias = Ocorrencia.objects.filter(caso=caso)
+    investigados = caso.investigados.all()
+    
+    # Converter RIFs para lista de dicionários
+    rifs_list = []
+    for rif in rifs:
+        rifs_list.append({
+            'id': rif.id,
+            'numero': rif.numero,
+            'caso': rif.caso,
+            'movimentacao': 0  # Será atualizado abaixo
+        })
+    
+    # Calcular movimentação para cada RIF
+    for i, rif_dict in enumerate(rifs_list):
+        movimentacao_rif = sum(parse_valor(com.campo_a) for com in comunicacoes if com.caso == rif_dict['caso'])
+        rifs_list[i]['movimentacao'] = moeda(movimentacao_rif)
+    
+    # Filtra os titulares e representantes
+    titulares = envolvidos.filter(tipo_envolvido='Titular').values('cpf_cnpj_envolvido', 'nome_envolvido', 'tipo_envolvido', 'indexador').distinct().order_by('nome_envolvido')
+    representantes = envolvidos.filter(tipo_envolvido='Representante').values('cpf_cnpj_envolvido', 'nome_envolvido', 'tipo_envolvido', 'indexador').distinct().order_by('nome_envolvido')
+    
+    # Total movimentado no Caso
+    movimentacao = sum(parse_valor(com.campo_a) for com in comunicacoes if com.campo_a)
+    
+    # Total movimentado por titular
+    for i, titular in enumerate(titulares):
+        movimentacao_titular = sum(parse_valor(com.campo_a) for com in comunicacoes if com.campo_a and com.indexador == titular['cpf_cnpj_envolvido'])
+        titulares[i]['movimentacao'] = moeda(movimentacao_titular)
+        titulares[i]['creditos'] = moeda(sum(parse_valor(com.campo_b) for com in comunicacoes if com.indexador == titular['indexador']))
+        titulares[i]['debitos'] = moeda(sum(parse_valor(com.campo_c) for com in comunicacoes if com.indexador == titular['indexador']))
+
+
+    df_rifdetalhado = pd.DataFrame()
+    
+    # Converter QuerySets para DataFrames
+    df_comunicacoes = pd.DataFrame(list(comunicacoes.values('rif__numero', 'informacoes_adicionais', 'campo_a', 'campo_b', 'campo_c')))
+    df_envolvidos = pd.DataFrame(list(envolvidos.values('rif__numero', 'nome_envolvido', 'tipo_envolvido')))
+    df_ocorrencias = pd.DataFrame(list(ocorrencias.values('rif__numero', 'ocorrencia')))
+    
+    # Renomear colunas para usar 'numero' como chave
+    df_comunicacoes = df_comunicacoes.rename(columns={'rif__numero': 'numero'})
+    df_envolvidos = df_envolvidos.rename(columns={'rif__numero': 'numero'})
+    df_ocorrencias = df_ocorrencias.rename(columns={'rif__numero': 'numero'})
+    
+    # Juntar Comunicacao, Envolvido e Ocorrencia no df_rifdetalhado
+    if not df_comunicacoes.empty:
+        df_rifdetalhado = df_rifdetalhado.merge(df_comunicacoes, on='numero', how='left')
+    if not df_envolvidos.empty:
+        df_rifdetalhado = df_rifdetalhado.merge(df_envolvidos, on='numero', how='left')
+    if not df_ocorrencias.empty:
+        df_rifdetalhado = df_rifdetalhado.merge(df_ocorrencias, on='numero', how='left')
+    
+    print("Colunas do df_rifdetalhado:", df_rifdetalhado.columns.tolist())
+    print("Colunas do df_comunicacoes:", df_comunicacoes.columns.tolist())
+    print(df_rifdetalhado)
+
+    # Monta os dados para cada alvo
+    titulares_extratos = []
+    for titular in titulares:
+        alvo = titular['nome_envolvido']
+        
+        print('*******************************************************', alvo)
+        
+        # Filtrar o DataFrame para o titular atual
+        df_alvo = df_rifdetalhado[
+            (df_rifdetalhado['nome_envolvido'] == alvo) & 
+            (df_rifdetalhado['tipo_envolvido'] == 'Titular')
+        ].copy()
+        
+        print(df_alvo)
+
+        if df_alvo.empty:
+            continue
+
+        # Resultado financeiro separado por alvo (movimentação total)
+        df_alvo.loc[:, 'campo_a'] = pd.to_numeric(df_alvo['campo_a'], errors='coerce')
+        movimentacao = df_alvo['campo_a'].sum()
+        df_alvo['campo_a'] = df_alvo['campo_a'].apply(moeda)
+
+        df_alvo.loc[:, 'campo_b'] = pd.to_numeric(df_alvo['campo_b'], errors='coerce')
+        creditos = df_alvo['campo_b'].sum()
+        df_alvo['campo_b'] = df_alvo['campo_b'].apply(moeda)
+
+        df_alvo.loc[:, 'campo_c'] = pd.to_numeric(df_alvo['campo_c'], errors='coerce')
+        debitos = df_alvo['campo_c'].sum()
+        df_alvo['campo_c'] = df_alvo['campo_c'].apply(moeda)
+
+        # INFORMAÇÕES ADICIONAIS
+        infomacoes_adicionais = []
+        for informacao in df_alvo['informacoes_adicionais'].dropna():
+            infomacoes_adicionais.append(informacao)
+
+        # OBSERVAÇÕES DO ANALISTA COM < IA >
+        informacoes_texto = ' '.join(df_alvo['informacoes_adicionais'].dropna())
+        #observacoes_analista = executar_prompt([{
+        #    "role": "user",
+        #    "content": f"Faça uma breve análise, em formato dissertativo, com um ou dois parágrafos, dessas movimentações bancárias. Anote com quem {alvo} transacionou dinheiro: <movimentacoes_bancarias>{informacoes_texto[0:3000]}</movimentacoes_bancarias>"
+        #}])
+        
+        # KYC - Know Your Client
+        kyc = '' #executar_prompt([{
+        #    "role": "user",
+        #    "content": (f"Preciso fazer uma análise do tipo KYC (know your client) a partir das fichas de anotações de **{alvo}**. Identifique dados como CPF, Profissão, Renda, Bancos que mantém relacionamento, Empresas que é sócio ou tem alguma participação, Período em que os dados foram analisados. Foque ESPECIFICAMENTE nas informações de KYC, e ignore o restante das informações: <anotacoes>{informacoes_texto[0:3000]}</anotacoes>. Escreva um texto de um ou dois paragrafos com essas informações.")
+        #}])
+        
+        titulares_extratos.append({
+            'nome': alvo,
+            'investigado': False,  # Valor padrão
+            'cpf': titular['cpf_cnpj_envolvido'],
+            'kyc': kyc,
+            'movimentacao_total': moeda(movimentacao),
+            'creditos': moeda(creditos),
+            'debitos': moeda(debitos),
+            'comunicacoes': df_alvo.to_dict(orient='records'),
+            'comunicacoes_nao_suspeitas': df_alvo[df_alvo['codigo_segmento'] != 41].to_dict(orient='records') if 'codigo_segmento' in df_alvo.columns else [],
+            'outras_informacoes': infomacoes_adicionais,
+            'observacoes_analista': '', #observacoes_analista,
+            'ocorrencias': list(ocorrencias.filter(indexador=titular['indexador']).values('ocorrencia')),
+        })
+    
+    
+    
+    # Dados que serão impressos no relatório
+    data = {
+        'rifs': rifs,
+        'comunicacoes': comunicacoes,
+        'envolvidos': envolvidos,
+        'investigados': investigados,
+        'titulares': titulares,
+        'representantes': representantes,
+        'ocorrencias': ocorrencias,
+        'movimentacao': moeda(movimentacao),
+        'titulares_extratos': titulares_extratos,
+    }
+    
+    try:
+        doc = DocxTemplate(f"templates/documentos/rif.docx")
+        
+        doc.render(data)
+        
+        # Cria um arquivo temporário com nome único
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.docx')
+        temp_path = temp_file.name
+        temp_file.close()
+        
+        # Salva o documento no arquivo temporário
+        doc.save(temp_path)
+        
+        # Coloca em um .zip e manda para o cliente
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+            zip_file.write(temp_path, 'Relatorio Inteligência Financeira.docx')
+        
+        # Remove o arquivo temporário
+        try:
+            os.unlink(temp_path)
+        except:
+            pass
+        
+        # Envia o arquivo para o cliente
+        response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename="Relatorio Inteligência Financeira.zip"'
+        return response
+
+    except Exception as e:
+        print(e)
+        return redirect('/financeira/index/')

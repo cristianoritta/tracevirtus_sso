@@ -43,9 +43,6 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #f8fafc;
-        border-radius: 8px;
-        border: 2px dashed #e2e8f0;
         color: #64748b;
         font-weight: 500;
     }
@@ -54,43 +51,6 @@
         display: flex;
         gap: 1rem;
         margin-bottom: 2rem;
-    }
-
-    .btn-action {
-        flex: 1;
-        padding: 1rem;
-        font-weight: 600;
-        border-radius: 8px;
-        border: none;
-        transition: all 0.2s ease;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-
-    .btn-primary-action {
-        background: #4f46e5;
-        color: white;
-    }
-
-    .btn-primary-action:hover {
-        background: #4338ca;
-        transform: translateY(-1px);
-        color: white;
-    }
-
-    .btn-secondary-action {
-        background: #f1f5f9;
-        color: #475569;
-        border: 1px solid #e2e8f0;
-    }
-
-    .btn-secondary-action:hover {
-        background: #e2e8f0;
-        color: #334155;
-        transform: translateY(-1px);
     }
 
     .dashboard-header {
@@ -215,6 +175,21 @@
             <h1 class="dashboard-title">Análise Financeira</h1>
             <p class="dashboard-subtitle">Bem-vindo ao painel de análise de RIFs</p>
         </div>
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="#" class="btn btn-primary" onclick="cadastrarRIF()">
+                <i class="icon fas fa-plus"></i>
+                <span>Cadastrar RIF</span>
+            </a>
+            <a href="#" class="btn btn-secondary" onclick="importarArquivos()">
+                <i class="icon fas fa-upload"></i>
+                <span>Importar Arquivos</span>
+            </a>
+            <a href="/financeira/relatorio_documento" class="btn btn-secondary" download>
+                <i class="icon fas fa-file-pdf"></i>
+                <span>Gerar Relatório</span>
+            </a>
+        </div>
     </div>
 
     <!-- Statistics Overview -->
@@ -280,17 +255,20 @@
 
             <div class="row mb-4">
                 <div class="col-4 text-center">
-                    <div style="font-size: 1.1rem; font-weight: 700; color: #1e293b;">R$ {{ somas.total_a|floatformat:2 }}
+                    <div style="font-size: 1.1rem; font-weight: 700; color: #1e293b;">
+                        R$ {{ somas.total_a|floatformat:2 }}
                     </div>
                     <div style="color: #6b7280; font-size: 0.8rem;">Total</div>
                 </div>
                 <div class="col-4 text-center">
-                    <div style="font-size: 1.1rem; font-weight: 700; color: #1e293b;">R$ {{ somas.total_b|floatformat:2 }}
+                    <div style="font-size: 1.1rem; font-weight: 700; color: #1e293b;">
+                        R$ {{ somas.total_b|floatformat:2 }}
                     </div>
                     <div style="color: #6b7280; font-size: 0.8rem;">Créditos</div>
                 </div>
                 <div class="col-4 text-center">
-                    <div style="font-size: 1.1rem; font-weight: 700; color: #1e293b;">R$ {{ somas.total_c|floatformat:2 }}
+                    <div style="font-size: 1.1rem; font-weight: 700; color: #1e293b;">
+                        R$ {{ somas.total_c|floatformat:2 }}
                     </div>
                     <div style="color: #6b7280; font-size: 0.8rem;">Débitos</div>
                 </div>
@@ -362,7 +340,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.4.4/d3.min.js"></script>
 <script>
-    
+
     function cadastrarRIF() {
         // Abrir modal Bootstrap
         const modalElement = document.getElementById('modalCadastrarRIF');
@@ -407,12 +385,12 @@
         }
 
         // Gráfico de valores das comunicações com D3.js
-        const data = valoresCampoA.map((d, i) => ({indice: i + 1, valor: d}));
+        const data = valoresCampoA.map((d, i) => ({ indice: i + 1, valor: d }));
 
         // Limpa o gráfico anterior, se houver
         d3.select("#comunicacoesValores").selectAll("*").remove();
 
-        const margin = {top: 20, right: 20, bottom: 30, left: 60},
+        const margin = { top: 20, right: 20, bottom: 30, left: 60 },
             width = 300 - margin.left - margin.right,
             height = 200 - margin.top - margin.bottom;
 
@@ -441,7 +419,7 @@
             .range([height, 0]);
 
         svg.append("g")
-            .call(d3.axisLeft(y).ticks(5).tickFormat(d => `R$ ${d.toLocaleString('pt-BR', {minimumFractionDigits: 0})}`))
+            .call(d3.axisLeft(y).ticks(5).tickFormat(d => `R$ ${d.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`))
             .selectAll("text")
             .attr("font-size", "10px");
 
@@ -465,7 +443,7 @@
             .attr("y", d => y(d.valor) - 5)
             .attr("font-size", "10px")
             .attr("fill", "#1e293b")
-            .text(d => `R$ ${d.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`);
+            .text(d => `R$ ${d.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
     });
 
     function recarregarDados() {
