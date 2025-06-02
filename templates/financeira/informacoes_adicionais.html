@@ -1,0 +1,51 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="dashboard-title">Informações Adicionais</h3>
+            <p class="dashboard-subtitle">Processamento da "coluna M" do caso: {{ caso.numero }}</p>
+        </div>
+    </div>
+    {% if informacoes_adicionais %}
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>Comunicação</th>
+                <th>Indexador</th>
+                <th>Nome</th>
+                <th>CPF/CNPJ</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Quantidade</th>
+                <th>Plataforma</th>
+                <th width="%"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for info in informacoes_adicionais %}
+            <tr>
+                <td>{{ info.comunicacao.rif.numero }}</td>
+                <td>{{ info.indexador }}</td>
+                <td>{{ info.nome }}</td>
+                <td>{{ info.cpf }}</td>
+                <td>{{ info.tipo_transacao }}</td>
+                <td>R$ {{ info.valor }}</td>
+                <td>{{ info.transacoes }}</td>
+                <td>{{ info.plataforma }}</td>
+                <td>
+                    <a href="#" class="btn btn-primary">Editar</a>
+                    <a href="#" class="btn btn-danger">Excluir</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="alert alert-info mt-3">Nenhuma informação adicional cadastrada para este caso.</div>
+    {% endif %}
+</div>
+{% endblock %}

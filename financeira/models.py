@@ -114,11 +114,11 @@ class InformacaoAdicional(models.Model):
     arquivo = models.ForeignKey('app.Arquivo', on_delete=models.CASCADE)
     comunicacao = models.ForeignKey(Comunicacao, on_delete=models.CASCADE)
     indexador = models.IntegerField()
-    tipo_transacao = models.IntegerField()
-    cpf = models.IntegerField()
+    tipo_transacao = models.CharField(max_length=254)
+    cpf = models.CharField(max_length=21)
     nome = models.TextField()
     valor = models.FloatField()
-    transacoes = models.IntegerField()
+    transacoes = models.CharField(max_length=254)
     plataforma = models.CharField(max_length=254)
 
     def __str__(self):

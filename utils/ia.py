@@ -18,6 +18,7 @@ def executar_prompt(prompt):
     """
 
     api_key = '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'
+    api_key = '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'
     base_url = 'https://api.groq.com/openai/v1'
     modelo = 'meta-llama/llama-4-scout-17b-16e-instruct'
 

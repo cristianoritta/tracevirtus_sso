@@ -88,7 +88,7 @@
 
     .chart-grid {
         display: grid;
-        grid-template-columns: 2fr 1fr;
+        grid-template-columns: 1fr 2fr;
         gap: 1.5rem;
         margin-bottom: 2rem;
     }
@@ -205,13 +205,13 @@
         </div>
 
         <div class="card card-bordered metric-card">
-            <div class="metric-number">{{ taxa_processamento }}%</div>
-            <div class="metric-label">Taxa de Processamento</div>
+            <div class="metric-number">{{ total_envolvidos|floatformat:0 }}</div>
+            <div class="metric-label">Envolvidos</div>
         </div>
 
         <div class="card card-bordered metric-card">
-            <div class="metric-number">{{ total_envolvidos|floatformat:0 }}</div>
-            <div class="metric-label">Envolvidos</div>
+            <div class="metric-number">{{ taxa_processamento }}%</div>
+            <div class="metric-label">Taxa de Processamento</div>
         </div>
     </div>
 
@@ -256,33 +256,33 @@
             <div class="row mb-4">
                 <div class="col-4 text-center">
                     <div style="font-size: 1.1rem; font-weight: 700; color: #1e293b;">
-                        R$ {{ somas.total_a|floatformat:2 }}
+                        R$ {{ somas.total_a }}
                     </div>
                     <div style="color: #6b7280; font-size: 0.8rem;">Total</div>
                 </div>
                 <div class="col-4 text-center">
                     <div style="font-size: 1.1rem; font-weight: 700; color: #1e293b;">
-                        R$ {{ somas.total_b|floatformat:2 }}
+                        R$ {{ somas.total_b }}
                     </div>
                     <div style="color: #6b7280; font-size: 0.8rem;">Créditos</div>
                 </div>
                 <div class="col-4 text-center">
                     <div style="font-size: 1.1rem; font-weight: 700; color: #1e293b;">
-                        R$ {{ somas.total_c|floatformat:2 }}
+                        R$ {{ somas.total_c }}
                     </div>
                     <div style="color: #6b7280; font-size: 0.8rem;">Débitos</div>
                 </div>
             </div>
 
             <div class="chart-container" style="width: 100%; height: 200px;">
-                <div id="comunicacoesValores"></div>
+                <div id="valoresPorTitular"></div>
             </div>
         </div>
     </div>
 
     <!-- Bottom Section -->
     <div class="">
-        <div class="card card-bordered">
+        <div class="card card-bordered mb-3">
             <div class="card-inner">
                 <div class="card-title-group align-start">
                     <div class="card-title">
@@ -327,7 +327,6 @@
                     {% endfor %}
                 </tbody>
             </table>
-
         </div>
     </div>
 </div>
@@ -357,6 +356,7 @@
 
     // Passe os valores do Django para o JS
     const valoresCampoA = JSON.parse('{{ valores_campo_a|safe }}');
+    const valoresPorTitular = JSON.parse('{{ valores_por_titular|safe|escapejs }}');
 
     document.addEventListener('DOMContentLoaded', function () {
         // Gráfico de overview simplificado
@@ -384,66 +384,68 @@
             });
         }
 
-        // Gráfico de valores das comunicações com D3.js
-        const data = valoresCampoA.map((d, i) => ({ indice: i + 1, valor: d }));
+        // Gráfico de valores por titular
+        if (valoresPorTitular && valoresPorTitular.length > 0) {
+            // Limpa o gráfico anterior, se houver
+            d3.select("#valoresPorTitular").selectAll("*").remove();
 
-        // Limpa o gráfico anterior, se houver
-        d3.select("#comunicacoesValores").selectAll("*").remove();
+            const marginTitular = { top: 20, right: 20, bottom: 100, left: 100 },
+                widthTitular = 850,
+                heightTitular = 300 - marginTitular.top - marginTitular.bottom;
 
-        const margin = { top: 20, right: 20, bottom: 30, left: 60 },
-            width = 300 - margin.left - margin.right,
-            height = 200 - margin.top - margin.bottom;
+            const svgTitular = d3.select("#valoresPorTitular")
+                .append("svg")
+                .attr("width", widthTitular + marginTitular.left + marginTitular.right)
+                .attr("height", heightTitular + marginTitular.top + marginTitular.bottom)
+                .append("g")
+                .attr("transform", `translate(${marginTitular.left},${marginTitular.top})`);
 
-        const svg = d3.select("#comunicacoesValores")
-            .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", `translate(${margin.left},${margin.top})`);
+            // Eixo X: nome do titular
+            const xTitular = d3.scaleBand()
+                .domain(valoresPorTitular.map(d => d.titular.split(' ')[0]))
+                .range([0, widthTitular])
+                .padding(0.2);
 
-        // Eixo X: índice da comunicação
-        const x = d3.scaleBand()
-            .domain(data.map(d => d.indice))
-            .range([0, width])
-            .padding(0.2);
+            svgTitular.append("g")
+                .attr("transform", `translate(0,${heightTitular})`)
+                .call(d3.axisBottom(xTitular))
+                .selectAll("text")
+                .attr("transform", "rotate(-45)")
+                .style("text-anchor", "end")
+                .attr("font-size", "10px");
 
-        svg.append("g")
-            .attr("transform", `translate(0,${height})`)
-            .call(d3.axisBottom(x).tickFormat(d => d))
-            .selectAll("text")
-            .attr("font-size", "10px");
+            // Eixo Y: valor
+            const yTitular = d3.scaleLinear()
+                .domain([0, d3.max(valoresPorTitular, d => d.valor) * 1.1])
+                .range([heightTitular, 0]);
 
-        // Eixo Y: valor
-        const y = d3.scaleLinear()
-            .domain([0, d3.max(data, d => d.valor) * 1.1])
-            .range([height, 0]);
+            svgTitular.append("g")
+                .call(d3.axisLeft(yTitular).ticks(5).tickFormat(d => `R$ ${d.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`))
+                .selectAll("text")
+                .attr("font-size", "10px");
 
-        svg.append("g")
-            .call(d3.axisLeft(y).ticks(5).tickFormat(d => `R$ ${d.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`))
-            .selectAll("text")
-            .attr("font-size", "10px");
+            // Barras
+            svgTitular.selectAll("rect")
+                .data(valoresPorTitular)
+                .join("rect")
+                .attr("x", d => xTitular(d.titular.split(' ')[0]))
+                .attr("y", d => yTitular(d.valor))
+                .attr("width", xTitular.bandwidth())
+                .attr("height", d => heightTitular - yTitular(d.valor))
+                .attr("fill", "#4f46e5");
 
-        // Barras
-        svg.selectAll("rect")
-            .data(data)
-            .join("rect")
-            .attr("x", d => x(d.indice))
-            .attr("y", d => y(d.valor))
-            .attr("width", x.bandwidth())
-            .attr("height", d => height - y(d.valor))
-            .attr("fill", "#4f46e5");
-
-        // Valor acima da barra
-        svg.selectAll("text.bar")
-            .data(data)
-            .join("text")
-            .attr("class", "bar")
-            .attr("text-anchor", "middle")
-            .attr("x", d => x(d.indice) + x.bandwidth() / 2)
-            .attr("y", d => y(d.valor) - 5)
-            .attr("font-size", "10px")
-            .attr("fill", "#1e293b")
-            .text(d => `R$ ${d.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+            // Valor acima da barra
+            svgTitular.selectAll("text.bar")
+                .data(valoresPorTitular)
+                .join("text")
+                .attr("class", "bar")
+                .attr("text-anchor", "middle")
+                .attr("x", d => xTitular(d.titular.split(' ')[0]) + xTitular.bandwidth() / 2)
+                .attr("y", d => yTitular(d.valor) - 5)
+                .attr("font-size", "10px")
+                .attr("fill", "#1e293b")
+                .text(d => `R$ ${d.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+        }
     });
 
     function recarregarDados() {

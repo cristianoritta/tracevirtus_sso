@@ -23,7 +23,8 @@ from docxtpl import DocxTemplate, InlineImage
 from docx.shared import Mm
 import zipfile
 from io import BytesIO
-from utils.moeda import moeda
+from utils.moeda import moeda, valor
+import json
 
 @login_required
 def financeira_index(request):
@@ -69,6 +70,9 @@ def financeira_index(request):
     
     # Lista para armazenar os valores do campo_a para o gráfico
     valores_campo_a = []
+
+    # Dicionário para armazenar os valores por titular
+    valores_por_titular = {}
     
     for comunicacao in comunicacoes:
         try:
@@ -88,12 +92,28 @@ def financeira_index(request):
             somas['total_a'] += comunicacao.campo_a
             somas['total_b'] += comunicacao.campo_b
             somas['total_c'] += comunicacao.campo_c
+
+            # Adiciona o valor ao titular correspondente
+            titular = Envolvido.objects.filter(indexador=comunicacao.indexador, tipo_envolvido='Titular').first()
+            if titular:
+                if titular.nome_envolvido not in valores_por_titular:
+                    valores_por_titular[titular.nome_envolvido] = 0
+                valores_por_titular[titular.nome_envolvido] += comunicacao.campo_a
+
         except (ValueError, AttributeError):
             # Se houver erro na conversão, define como 0
             comunicacao.campo_a = 0
             comunicacao.campo_b = 0
             comunicacao.campo_c = 0
             valores_campo_a.append(0)
+    
+    # Somas
+    somas['total_a'] = moeda(somas['total_a'])
+    somas['total_b'] = moeda(somas['total_b'])
+    somas['total_c'] = moeda(somas['total_c'])
+    
+    # Converte o dicionário de valores por titular para uma lista de objetos
+    valores_por_titular_list = [{'titular': k, 'valor': float(v)} for k, v in valores_por_titular.items()]
     
     context = {
         'total_rifs': total_rifs,
@@ -104,6 +124,7 @@ def financeira_index(request):
         'rifs': rifs,
         'somas': somas,
         'valores_campo_a': valores_campo_a,  # Adiciona os valores para o gráfico
+        'valores_por_titular': json.dumps(valores_por_titular_list),  # Serializa para JSON
     }
 
     return render(request, 'financeira/index.html', context)
@@ -262,8 +283,65 @@ def ocorrencia_ajuda(request, id):
 
 
 @login_required
-def financeira_informacoes_adicionais(request):
-    return render(request, 'financeira/informacoes_adicionais.html')
+def financeira_informacoesadicionais(request):
+    # Busca o caso ativo
+    caso_ativo = Caso.objects.filter(ativo=True).first()
+    if not caso_ativo:
+        messages.error(
+            request, 'Nenhum caso ativo encontrado. Por favor, cadastre um caso para continuar.')
+        return redirect('casos')
+
+    # Busca as informações adicionais do caso ativo
+    informacoes_adicionais = InformacaoAdicional.objects.filter(caso=caso_ativo).order_by('indexador', 'nome')
+    
+    if not informacoes_adicionais:
+        
+        # Seleciona o campo informacao_adicional da tabela comunicacao
+        informacoes_adicionais = []
+        comunicacoes = Comunicacao.objects.filter(caso=caso_ativo)
+        for com  in comunicacoes:
+            informacoes_adicionais.append(com.informacoes_adicionais)
+            
+            # Processa as informações adicionais com IA
+            detalhes_envolvidos = executar_prompt([{
+                "role": "user",
+                "content": f"""Você é um especialista em investigação financeira e lavagem de dinheiro. Identifique, no texto, os envolvidos (nome e cpf/cnpj) o tipo de transação (crédito, débito) o valor (R$) e a quantidade. O Campo plataforma pode ser 'PIX', 'Depósito', 'Transferência' ou outras referência que você encontrar - se não encontrar algo explicito, deixe em branco. <texto>{informacoes_adicionais}</texto>. 
+                ATENÇÃO. A sua resposta deve ser um objeto json [{{'nome': 'nome', 'cpf_cnpj': 'cpf/cnpj', 'tipo_transacao': 'tipo', 'valor': 'valor', 'quantidade': 'quantidade', 'plataforma': ''}}]. Não de nenhuma explicação, apenas o objeto json. """
+            }])
+            
+            if detalhes_envolvidos:
+                detalhes_envolvidos = json.loads(detalhes_envolvidos.replace('json', '').replace('`', ''))
+                
+                # Salva no banco de dados
+                for detalhe in detalhes_envolvidos:
+                    # Cria uma nova informação adicional
+                    InformacaoAdicional.objects.create(
+                        rif=com.rif,
+                        caso=caso_ativo,
+                        arquivo=com.arquivo,
+                        comunicacao=com,
+                        indexador=com.indexador,
+                        tipo_transacao=detalhe['tipo_transacao'],
+                        cpf=detalhe['cpf_cnpj'],
+                        nome=detalhe['nome'],
+                        valor=valor(detalhe['valor']),
+                        transacoes=detalhe['quantidade'],
+                        plataforma=detalhe['plataforma'],
+                    )
+            
+                break
+    else:
+        detalhes_envolvidos = informacoes_adicionais
+
+    # Arruma a coluna Valor para moeda(), mantendo as outras colunas
+    detalhes_envolvidos = [{**detalhe, 'valor': moeda(detalhe['valor'])} if isinstance(detalhe, dict) else {**model_to_dict(detalhe), 'valor': moeda(detalhe.valor)} for detalhe in detalhes_envolvidos]
+            
+        
+    context = {
+        'caso': caso_ativo,
+        'informacoes_adicionais': detalhes_envolvidos,
+    }
+    return render(request, 'financeira/informacoes_adicionais.html', context)
 
 
 @login_required
