@@ -1,5 +1,29 @@
 $(document).ready(function () {
 
+    // Proteção contra erros de classList em elementos null
+    function safeClassList(element) {
+        return element && element.classList ? element.classList : null;
+    }
+
+    // Sobrescrever a função closeMenu do NioApp para adicionar verificação de segurança
+    function overrideCloseMenu() {
+        if (typeof NioApp !== 'undefined' && NioApp.Toggle && NioApp.Toggle.closeMenu) {
+            const originalCloseMenu = NioApp.Toggle.closeMenu;
+            NioApp.Toggle.closeMenu = function(e) {
+                try {
+                    if (e && $(e).length > 0) {
+                        return originalCloseMenu.call(this, e);
+                    }
+                } catch (error) {
+                    console.warn('Erro na função closeMenu:', error);
+                }
+            };
+        }
+    }
+
+    // Tentar sobrescrever imediatamente e também após um pequeno delay
+    overrideCloseMenu();
+    setTimeout(overrideCloseMenu, 100);
 
     /**
      * Exibe / Oculta elementos no DOM
@@ -48,25 +72,34 @@ $(document).ready(function () {
     /**
      * DataTable
      */
-    if ($('.dataTable').length > 0) {
-        let table = new DataTable('.dataTable', {
-            "order": [0, 'asc'],
-            "language": {
-                "lengthMenu": "Mostrar _MENU_ registros por página",
-                "zeroRecords": "Nenhum registro encontrado",
-                "info": "Mostrando página _PAGE_ de _PAGES_",
-                "infoEmpty": "Nenhum registro disponível",
-                "emptyTable": "Nenhum registro disponível",
-                "infoFiltered": "(filtrado de _MAX_ registros no total)",
-                "search": "Procurar:",
-                "paginate": {
-                    "first": "Primeiro",
-                    "last": "Último",
-                    "next": "Próximo",
-                    "previous": "Anterior"
-                }
-            }
-        });
+    if ($('.dataTable').length > 0 && typeof DataTable !== 'undefined') {
+        try {
+            let table = new DataTable('.dataTable', {
+                "order": [0, 'asc'],
+                "language": {
+                    "lengthMenu": "Mostrar _MENU_ registros por página",
+                    "zeroRecords": "Nenhum registro encontrado",
+                    "info": "Mostrando página _PAGE_ de _PAGES_",
+                    "infoEmpty": "Nenhum registro disponível",
+                    "emptyTable": "Nenhum registro disponível",
+                    "infoFiltered": "(filtrado de _MAX_ registros no total)",
+                    "search": "Procurar:",
+                    "paginate": {
+                        "first": "Primeiro",
+                        "last": "Último",
+                        "next": "Próximo",
+                        "previous": "Anterior"
+                    }
+                },
+                "pageLength": 10,
+                "responsive": true,
+                "lengthChange": false
+            });
+        } catch (error) {
+            console.warn('Erro ao inicializar DataTable:', error);
+        }
+    } else if ($('.dataTable').length > 0) {
+        console.warn('DataTable não está disponível');
     }
 
 
@@ -135,6 +168,28 @@ $(document).ready(function () {
                 e.detail.issueRequest(true);
             }
         });
+    });
+
+    // Mostrar loading durante requisições HTMX
+    document.body.addEventListener('htmx:beforeRequest', function (evt) {
+        if (evt.detail.elt && evt.detail.elt.classList && evt.detail.elt.classList.contains('btn')) {
+            evt.detail.elt.disabled = true;
+            const originalHTML = evt.detail.elt.innerHTML;
+            evt.detail.elt.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Processando...';
+            evt.detail.elt.setAttribute('data-original-html', originalHTML);
+        }
+    });
+
+    // Remover loading após requisições HTMX
+    document.body.addEventListener('htmx:afterRequest', function (evt) {
+        if (evt.detail.elt && evt.detail.elt.classList && evt.detail.elt.classList.contains('btn')) {
+            evt.detail.elt.disabled = false;
+            const originalHTML = evt.detail.elt.getAttribute('data-original-html');
+            if (originalHTML) {
+                evt.detail.elt.innerHTML = originalHTML;
+                evt.detail.elt.removeAttribute('data-original-html');
+            }
+        }
     });
 
 

@@ -1,6 +1,52 @@
 {% extends 'layout/base.html' %}
 {% load static %}
 
+{% block css %}
+<style>
+    .clickable {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .clickable:hover {
+        background-color: #f8f9fa !important;
+    }
+    
+    .info-row {
+        margin-top: 10px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .info-row h6 {
+        color: #495057;
+        margin-bottom: 10px;
+    }
+    
+    .info-row p {
+        margin-bottom: 0;
+        color: #6c757d;
+        line-height: 1.5;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .dataTables_wrapper {
+        margin-bottom: 20px;
+    }
+    
+    .modal-info-content {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <!-- Dashboard Header -->
@@ -25,11 +71,12 @@
                         <th>Campo C</th>
                         <th>Campo D</th>
                         <th>Segmento</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for c in comunicacoes %}
-                    <tr>
+                    <tr data-comunicacao-id="{{ forloop.counter }}">
                         <td>{{ c.rif.numero }}</td>
                         <td>{{ c.indexador }}</td>
                         <td>{{ c.cpf_cnpj_comunicante }}</td>
@@ -40,10 +87,10 @@
                         <td>{{ c.campo_c }}</td>
                         <td>{{ c.campo_d }}</td>
                         <td>{{ c.codigo_segmento }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="10">
-                            {{ c.informacoes_adicionais }}
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="showInfoModal('{{ forloop.counter }}')" data-comunicacao-id="{{ forloop.counter }}">
+                                <i class="fa fa-info-circle"></i>
+                            </button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -52,18 +99,71 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para Informações Adicionais -->
+<div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="infoModalLabel">Informações Adicionais</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="infoModalBody">
+                <!-- Conteúdo será carregado dinamicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dados das informações adicionais (ocultos) -->
+<div id="infoData" style="display: none;">
+    {% for c in comunicacoes %}
+    <div id="info-content-{{ forloop.counter }}">
+        <h6><strong>Informações Adicionais:</strong></h6>
+        <p>{{ c.informacoes_adicionais }}</p>
+    </div>
+    {% endfor %}
+</div>
 {% endblock %}
 
 {% block script %}
 <script>
     $(document).ready(function () {
-        dataTable = $('#comunicacoesTable').DataTable({
+        // Verificar se a tabela existe e tem dados antes de inicializar o DataTable
+        const table = $('#comunicacoesTable');
+        dataTable = table.DataTable({
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json'
+                url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
             },
             pageLength: 10,
-            responsive: true
+            responsive: true,
+            lengthChange: false,
+            columnDefs: [
+                {
+                    targets: '_all',
+                    className: 'text-wrap'
+                }
+            ],
+            order: [[0, 'asc']],
+            initComplete: function () {
+                console.log('DataTable inicializado com sucesso');
+            }
         });
     });
+
+    function showInfoModal(comunicacaoId) {
+        try {
+            const infoContent = $('#info-content-' + comunicacaoId);
+            if (infoContent.length > 0) {
+                $('#infoModalBody').html(infoContent.html());
+                $('#infoModal').modal('show');
+            }
+        } catch (error) {
+            console.warn('Erro ao mostrar modal de informações:', error);
+        }
+    }
 </script>
 {% endblock %}

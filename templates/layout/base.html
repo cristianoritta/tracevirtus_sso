@@ -31,9 +31,10 @@
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
     <!-- DataTables -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.1/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.datatables.net/2.3.1/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 
 
     {% block css %} {% endblock %}
@@ -229,7 +230,7 @@
             // Interceptar apenas confirmações específicas do HTMX (elementos com hx-confirm)
             document.body.addEventListener('htmx:confirm', function (evt) {
                 // Só interceptar se o elemento tem hx-confirm explícito
-                if (evt.detail.elt.hasAttribute('hx-confirm')) {
+                if (evt.detail.elt && evt.detail.elt.hasAttribute && evt.detail.elt.hasAttribute('hx-confirm')) {
                     evt.preventDefault();
                     Swal.fire({
                         title: 'Confirmar ação',
@@ -251,7 +252,7 @@
 
             // Mostrar loading durante requisições HTMX
             document.body.addEventListener('htmx:beforeRequest', function (evt) {
-                if (evt.detail.elt.classList.contains('btn')) {
+                if (evt.detail.elt && evt.detail.elt.classList && evt.detail.elt.classList.contains('btn')) {
                     evt.detail.elt.disabled = true;
                     const originalHTML = evt.detail.elt.innerHTML;
                     evt.detail.elt.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Processando...';
@@ -261,7 +262,7 @@
 
             // Remover loading após requisições HTMX
             document.body.addEventListener('htmx:afterRequest', function (evt) {
-                if (evt.detail.elt.classList.contains('btn')) {
+                if (evt.detail.elt && evt.detail.elt.classList && evt.detail.elt.classList.contains('btn')) {
                     evt.detail.elt.disabled = false;
                     const originalHTML = evt.detail.elt.getAttribute('data-original-html');
                     if (originalHTML) {
