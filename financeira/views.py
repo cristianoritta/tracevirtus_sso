@@ -708,48 +708,56 @@ def ler_arquivo(uploaded_file):
 def envolvido_detalhes(request, cpf_cnpj):
     # Busca o envolvido principal
     envolvido = Envolvido.objects.filter(cpf_cnpj_envolvido=cpf_cnpj).first()
-    if not envolvido:
-        return JsonResponse({'error': 'Envolvido não encontrado.'}, status=404)
-
-    # Busca todos os indexadores desse envolvido
-    indexadores = list(Envolvido.objects.filter(
-        cpf_cnpj_envolvido=cpf_cnpj).values_list('indexador', flat=True).distinct())
-
-    # Busca todos os envolvidos que aparecem nesses indexadores, ordenados por indexador e nome
-    envolvidos_mesmos_indexadores = Envolvido.objects.filter(indexador__in=indexadores).values(
-        'nome_envolvido', 'tipo_envolvido', 'cpf_cnpj_envolvido', 'indexador').order_by('indexador', 'nome_envolvido')
-
-    # Busca comunicações relacionadas a esses indexadores e faz join com RIF
-    comunicacoes = list(
-        Comunicacao.objects.filter(indexador__in=indexadores)
-        .values(
-            'indexador',
-            'informacoes_adicionais',
-            'data_operacao',
-            'nome_comunicante',
-            'rif__numero',
-            'campo_a',
-            'campo_b',
-            'campo_c',
-            'campo_d',
-            'campo_e',
-            'codigo_segmento'
-        )
-    )
-
-    # Busca ocorrências relacionadas a esses indexadores
-    ocorrencias = list(Ocorrencia.objects.filter(
-        indexador__in=indexadores).values('ocorrencia', 'indexador'))
-
-    html = render_to_string('financeira/partials/envolvido_detalhes.html', {
-        'envolvido': envolvido,
-        'indexadores': indexadores,
-        'envolvidos_mesmos_indexadores': envolvidos_mesmos_indexadores,
-        'comunicacoes': comunicacoes,
-        'ocorrencias': ocorrencias,
-    })
     
-    return HttpResponse(html)
+    if not envolvido:
+        messages.error(request, 'Envolvido não encontrado.')
+        return redirect('financeira:financeira_envolvidos')
+    
+    # Busca todas as comunicações relacionadas ao envolvido
+    comunicacoes = Comunicacao.objects.filter(
+        rif=envolvido.rif,
+        indexador=envolvido.indexador
+    )
+    
+    context = {
+        'envolvido': envolvido,
+        'comunicacoes': comunicacoes,
+        'rif': envolvido.rif
+    }
+    
+    return render(request, 'financeira/envolvido_detalhes.html', context)
+
+
+@login_required
+def comunicacoes_envolvido(request, cpf_cnpj_envolvido, rif_id):
+    """
+    Consulta todas as comunicações que o CPF consta no caso que o RIF está indicado
+    """
+    try:
+        # Buscar o RIF
+        rif = get_object_or_404(RIF, id=rif_id)
+        
+        # Buscar o envolvido
+        envolvido = get_object_or_404(Envolvido, cpf_cnpj_envolvido=cpf_cnpj_envolvido, rif=rif)
+        
+        # Buscar todas as comunicações relacionadas ao envolvido (mesmo indexador)
+        comunicacoes = Comunicacao.objects.filter(
+            rif__caso=rif.caso,
+            indexador=envolvido.indexador
+        ).order_by('-data_recebimento')
+        
+        context = {
+            'envolvido': envolvido,
+            'rif': rif,
+            'comunicacoes': comunicacoes,
+            'caso': rif.caso
+        }
+        
+        return render(request, 'financeira/comunicacoes_envolvido.html', context)
+        
+    except Exception as e:
+        messages.error(request, f'Erro ao buscar comunicações: {str(e)}')
+        return redirect('financeira:financeira_envolvidos')
 
 
 @login_required(login_url='/login')

@@ -28,6 +28,7 @@ urlpatterns = [
     path('ajuda/<int:id>/', views.ocorrencia_ajuda, name='ocorrencia_ajuda'),
     
     path('envolvido_detalhes/<str:cpf_cnpj>/', views.envolvido_detalhes, name='envolvido_detalhes'),
+    path('envolvidos/<str:cpf_cnpj_envolvido>/<int:rif_id>/', views.comunicacoes_envolvido, name='comunicacoes_envolvido'),
 
     path('relatorio', views.relatorio, name='relatorio'),
     path('relatorio_documento', views.relatorio_documento, name='relatorio_documento'),

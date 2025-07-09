@@ -7,11 +7,11 @@
         cursor: pointer;
         transition: background-color 0.2s;
     }
-    
+
     .clickable:hover {
         background-color: #f8f9fa !important;
     }
-    
+
     .info-row {
         margin-top: 10px;
         padding: 15px;
@@ -20,29 +20,34 @@
         border-radius: 5px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    
+
     .info-row h6 {
         color: #495057;
         margin-bottom: 10px;
     }
-    
+
     .info-row p {
         margin-bottom: 0;
         color: #6c757d;
         line-height: 1.5;
     }
-    
+
     .table-responsive {
         overflow-x: auto;
     }
-    
+
     .dataTables_wrapper {
         margin-bottom: 20px;
     }
-    
+
     .modal-info-content {
         max-height: 400px;
         overflow-y: auto;
+    }
+
+    .envolvido-info p {
+        margin-bottom: 5px;
+        opacity: 0.9;
     }
 </style>
 {% endblock %}
@@ -52,10 +57,30 @@
     <!-- Dashboard Header -->
     <div class="dashboard-header d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h3 class="dashboard-title">Comunicações</h3>
-            <p class="dashboard-subtitle">Comunicações do caso: {{ caso.numero }}</p>
+            <h3 class="dashboard-title">Comunicações do Envolvido</h3>
+            <p class="dashboard-subtitle">Caso: {{ caso.numero }} | RIF: {{ rif.numero }}</p>
+        </div>
+        <div>
+            <a href="{% url 'financeira:financeira_envolvidos' %}" class="btn btn-outline-secondary">
+                <i class="fa fa-arrow-left"></i> Voltar
+            </a>
         </div>
     </div>
+
+    <!-- Informações do Envolvido -->
+    <div class="card card-bordered mb-3">
+        <div class="card-header">
+            <h4><i class="fa fa-user"></i> {{ envolvido.nome_envolvido }}</h4>
+        </div>
+        <div class="card-body">
+            <p><strong>CPF/CNPJ:</strong> {{ envolvido.cpf_cnpj_envolvido }}</p>
+            <p><strong>Tipo:</strong> {{ envolvido.tipo_envolvido }}</p>
+            <p><strong>Indexador:</strong> {{ envolvido.indexador }}</p>
+            <p><strong>Agência:</strong> {{ envolvido.agencia_envolvido }}</p>
+            <p><strong>Conta:</strong> {{ envolvido.conta_envolvido }}</p>
+        </div>
+    </div>
+
     <div class="card card-bordered">
         <div class="card-inner table-responsive">
             <table id="comunicacoesTable" class="display table table-bordered table-striped">
@@ -88,7 +113,8 @@
                         <td>{{ c.campo_d }}</td>
                         <td>{{ c.codigo_segmento }}</td>
                         <td>
-                            <button class="btn btn-outline-primary" onclick="showInfoModal('{{ forloop.counter }}')" data-comunicacao-id="{{ forloop.counter }}">
+                            <button class="btn btn-sm btn-primary" onclick="showInfoModal('{{ forloop.counter }}')"
+                                data-comunicacao-id="{{ forloop.counter }}">
                                 <i class="fa fa-info-circle"></i>
                             </button>
                         </td>
