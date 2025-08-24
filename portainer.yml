@@ -6,7 +6,7 @@ x-environment: &app-environment
   ENVIRONMENT: "prod"
   SECRET_KEY: "dmodornmw@c9^@q36i)0(mys)cow_54o)1n1=-c8kp11jdh49f-tgi$u^8i1=ylx_u1wy&+vqxo%$uh-_wl3%9%iw1mlgg@+f(h"
   DEBUG: "False"
-  ALLOWED_HOSTS: "localhost,127.0.0.1,38.242.219.32,mpce.new.seg.br,www.mpce.new.seg.br"
+  ALLOWED_HOSTS: "localhost,127.0.0.1,144.91.92.115,mpce.new.seg.br,www.mpce.new.seg.br"
   USE_X_FORWARDED_HOST: "True"
   SECURE_PROXY_SSL_HEADER: "HTTP_X_FORWARDED_PROTO,https"
   CSRF_TRUSTED_ORIGINS: "https://mpce.new.seg.br,https://www.mpce.new.seg.br"
@@ -68,6 +68,7 @@ services:
     environment: *app-environment
     networks:
       - mpce_network
+      - postgres_public
     deploy:
       replicas: 1
       placement:
@@ -97,11 +98,11 @@ services:
         published: 9994
         mode: host
     volumes:
-      - /var/www/mpce/nginx/nginx_servidor.conf:/etc/nginx/nginx.conf
+      - /var/www/mpce/nginx/nginx.conf:/etc/nginx/nginx.conf
       - /var/www/mpce/data/web/static:/data/web/static
       - /var/www/mpce/data/web/media:/data/web/media
     depends_on:
-      - app
+      - django
     deploy:
       restart_policy:
         condition: any
@@ -113,4 +114,6 @@ networks:
   mpce_network:
     external: true
   npm_public:
+    external: true
+  postgres_public:
     external: true
