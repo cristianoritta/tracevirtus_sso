@@ -1,4 +1,6 @@
 {% extends 'layout/base.html' %}
+{% load static %}
+{% load mask %}
 
 {% block content %}
 <div class="container-fluid">
@@ -10,7 +12,7 @@
                         <h3 class="nk-block-title page-title">Editar Investigado</h3>
                         <div class="nk-block-des text-soft">
                             <p><strong>Caso:</strong> {{ caso.numero }} - {{ caso.nome }}</p>
-                            <p><strong>Investigado:</strong> {{ investigado.cpf_cnpj }} - {{ investigado.nome }}</p>
+                            <p><strong>Investigado:</strong> {{ investigado.cpf_cnpj|mask:'cpf_cnpj' }} - {{ investigado.nome }}</p>
                         </div>
                     </div>
                     <div class="nk-block-head-content">

@@ -1,12 +1,35 @@
 {% extends 'layout/base.html' %}
 {% load static %}
 
+{% block extra_css %}
+
+<style>
+    .column-filter {
+        width: 100%;
+        padding: 4px;
+        margin-top: 5px;
+        box-sizing: border-box;
+    }
+    thead input.column-filter {
+        font-size: 0.9em;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="dashboard-header d-flex justify-content-between align-items-center mb-3">
         <div>
             <h3 class="dashboard-title">Lista de Ocorrências</h3>
             <p class="dashboard-subtitle">Ocorrências do caso: {{ caso.numero }}</p>
+        </div>
+    </div>
+
+    <!-- Gráfico de Barras -->
+    <div class="card card-bordered mb-3">
+        <div class="card-inner">
+            <h5 class="card-title">Distribuição de Ocorrências</h5>
+            <canvas id="ocorrenciasChart" style="width: 100%; height: 300px;"></canvas>
         </div>
     </div>
 
@@ -21,6 +44,13 @@
                         <th>Ocorrência</th>
                         <th><i class="fas fa-question-circle"></i></th>
                     </tr>
+                    <tr>
+                        <th><input type="text" class="form-control form-control-sm column-filter" placeholder="Filtrar RIF"></th>
+                        <th><input type="text" class="form-control form-control-sm column-filter" placeholder="Filtrar Indexador"></th>
+                        <th><input type="text" class="form-control form-control-sm column-filter" placeholder="Filtrar ID"></th>
+                        <th><input type="text" class="form-control form-control-sm column-filter" placeholder="Filtrar Ocorrência"></th>
+                        <th></th>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for o in ocorrencias %}
@@ -28,8 +58,15 @@
                         <td nowrap>{{ o.rif.numero }}</td>
                         <td width="1%">{{ o.indexador }}</td>
                         <td>{{ o.id_ocorrencia }}</td>
-                        <td>{{ o.ocorrencia }}</td>
                         <td>
+                            {{ o.ocorrencia }}
+                        </td>
+                        <td nowrap>
+                            {% if o.comunicacao and o.comunicacao.id %}
+                                <a href="{% url 'financeira:comunicacao_detalhes' o.comunicacao.id %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-folder-open"></i>
+                                </a>
+                            {% endif %}
                             <a href="#" class="btn btn-outline-primary" onclick="exibirAjuda('{{ o.id }}'); return false;">
                                 <i class="fas fa-question-circle"></i>
                             </a>
@@ -41,6 +78,8 @@
         </div>
     </div>
 </div>
+
+
 
 <!-- Modal de Ajuda -->
 <div class="modal fade" id="modalAjuda" tabindex="-1">
@@ -59,15 +98,88 @@
 
 {% block script %}
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
     $(document).ready(function () {
-        $('#ocorrenciasTable').DataTable({
+        // Inicializa DataTable
+        const dataTable = $('#ocorrenciasTable').DataTable({
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json'
             },
             pageLength: 10,
-            responsive: true
+            responsive: true,
+            orderCellsTop: true,
+            initComplete: function () {
+                // Aplica o filtro de coluna
+                this.api().columns().every(function (index) {
+                    const column = this;
+                    const input = $('.column-filter').eq(index);
+                    
+                    // Não adiciona evento na última coluna (ícone de ajuda)
+                    if (index < $('.column-filter').length) {
+                        input.on('keyup change', function () {
+                            if (column.search() !== this.value) {
+                                column.search(this.value).draw();
+                            }
+                        });
+                    }
+                });
+            }
         });
+
+        // Prepara dados para o gráfico de barras
+        const ocorrenciasData = JSON.parse('{{ ocorrencias_json|safe }}');
+        const ocorrenciasCount = {};
+        ocorrenciasData.forEach(o => {
+            ocorrenciasCount[o.ocorrencia] = (ocorrenciasCount[o.ocorrencia] || 0) + 1;
+        });
+
+        // Inicializa gráfico de barras
+        const ctx = document.getElementById('ocorrenciasChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(ocorrenciasCount),
+                datasets: [{
+                    label: 'Quantidade de Ocorrências',
+                    data: Object.values(ocorrenciasCount),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right'  // Coloca a legenda à direita
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const label = chart.data.labels[index];
+                        // Preenche o campo de busca da DataTable e aciona a busca
+                        const dataTable = $('#ocorrenciasTable').DataTable();
+                        dataTable.search(label).draw();
+                    }
+                },
+                onHover: (event, elements) => {
+                    event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+                }
+            }
+        });
+
+        
     });
 
     function exibirAjuda(id) {

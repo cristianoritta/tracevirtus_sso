@@ -1,0 +1,170 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="dashboard-title">Cooperações Bancárias</h1>
+            <p class="dashboard-subtitle">Gerenciamento de cooperações SIMBA e quebras de sigilo bancário</p>
+        </div>
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaCooperacao">
+                <em class="icon ni ni-plus"></em>
+                <span>Cadastrar</span>
+            </button>
+            <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modalImportarArquivos">
+                <em class="icon ni ni-upload"></em>
+                <span>Importar</span>
+            </button>
+            <a href="{% url 'bancaria:gerar_relatorio' %}" class="btn btn-secondary">
+                <em class="icon ni ni-file-pdf"></em>
+                <span>Gerar Relatório</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="card card-bordered">
+        <div class="card-inner">
+            <div class="card-title-group align-start mb-3">
+                <div class="card-title">
+                    <h6 class="title">Cooperações Cadastradas</h6>
+                </div>
+            </div>
+            
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Inquérito</th>
+                        <th>Processo</th>
+                        <th>Data</th>
+                        <th>Titulares</th>
+                        <th>Arquivos</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cooperacao in cooperacoes %}
+                    <tr>
+                        <td>{{ cooperacao.inquerito }}</td>
+                        <td>{{ cooperacao.processo }}</td>
+                        <td>{{ cooperacao.created_at|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <a href="{% url 'bancaria:listar_titulares' cooperacao.id %}" class="btn btn-primary btn-sm">
+                                <i class="icon ni ni-users"></i>
+                                <span>{{ cooperacao.titulares }} Titular(es)</span>
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{% url 'bancaria:listar_arquivos' cooperacao.id %}" class="btn btn-primary btn-sm">
+                                <i class="icon ni ni-file-pdf"></i>
+                                <span>{{ cooperacao.arquivos }} Arquivo(s)</span>
+                            </a>
+                        </td>
+                        <td class="text-end">
+
+                            
+
+                            <button class="btn btn-danger btn-sm" hx-delete="{% url 'bancaria:delete_cooperacao' cooperacao.id %}"
+                                hx-target="closest tr" hx-swap="outerHTML swap:1s"
+                                hx-confirm="Tem certeza que deseja excluir esta cooperação?">
+                                <em class="icon ni ni-trash"></em>
+                                <span>Excluir</span>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">
+                            <span class="text-muted">Nenhuma cooperação cadastrada</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer">
+            <a href="/bancaria/unificardados" class="btn btn-primary" title="Unificar nomes com o mesmo CPF/CNPJs ">
+                <i class="icon fas fa-user-plus"></i>
+                <span>Unificar Dados</span>
+            </a>
+        </div>
+    </div>
+
+
+</div>
+
+<!-- Modal Nova Cooperação -->
+<div class="modal fade" id="modalNovaCooperacao" tabindex="-1" aria-labelledby="modalNovaCooperacaoLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNovaCooperacaoLabel">Nova Cooperação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formNovaCooperacao" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="numero">Cooperação</label>
+                        <input type="text" class="form-control" id="numero" name="numero" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="inquerito">Inquérito</label>
+                        <input type="text" class="form-control" id="inquerito" name="inquerito" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="processo">Processo</label>
+                        <input type="text" class="form-control" id="processo" name="processo" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Incluir Modal de Importação -->
+{% include 'bancaria/partials/importar.html' %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const formNovaCooperacao = document.getElementById('formNovaCooperacao');
+
+        formNovaCooperacao.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+
+            fetch('', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        window.location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erro ao salvar cooperação');
+                });
+        });
+    });
+</script>
+{% endblock %}

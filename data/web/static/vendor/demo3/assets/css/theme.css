@@ -1,0 +1,17 @@
+/*!
+ * Theme Name: Default
+ * Package : DashLite
+ * Author: Softnio
+ * Author URI: http://themeforest.net/user/softnio
+ * Version	 :	1.0.0
+ * Updated	 :	07.23.2020
+**/
+
+.alert-card {
+    position: fixed;
+    right: 30px;
+    top: 30px;
+    width: 400px;
+    min-height: 200px;
+    z-index: 99999
+}

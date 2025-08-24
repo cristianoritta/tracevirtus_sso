@@ -22,6 +22,7 @@ class Instituicao(models.Model):
     categoria_instituicao = models.ForeignKey(CategoriaInstituicao, on_delete=models.SET_NULL, 
                                               null=True, related_name='instituicao_categoria_instituicao')
     
+    
     #auditoria
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey('CustomUser', on_delete=models.SET_NULL, null=True
@@ -32,6 +33,28 @@ class Instituicao(models.Model):
 
     def __str__(self):
         return self.instituicao
+
+
+class Unidade(models.Model):
+    instituicao = models.ForeignKey(Instituicao, on_delete=models.CASCADE, related_name='unidade_instituicao')
+    nome = models.CharField(max_length=255)
+    endereco = models.CharField(max_length=255)
+    numero = models.CharField(max_length=50)
+    complemento = models.CharField(max_length=255)
+    bairro = models.CharField(max_length=255)
+    cep = models.CharField(max_length=9)
+    
+    #auditoria
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.SET_NULL, null=True
+                                   , related_name='unidade_created_by', to_field='cpf')
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey('CustomUser', on_delete=models.SET_NULL, null=True
+                                   , related_name='unidade_updated_by', to_field='cpf')
+
+    def __str__(self):
+        return f'{self.instituicao} - {self.nome}'
+
 
 class Cargo(models.Model):
     categoria_instituicao = models.ForeignKey(CategoriaInstituicao, on_delete=models.SET_NULL, 
@@ -99,6 +122,7 @@ class CustomUser(AbstractUser):
     telefone = models.CharField(max_length=15)
     instituicao = models.ForeignKey(Instituicao, on_delete=models.SET_NULL, null=True, 
                                     blank=True, related_name='instituicao_usuario')
+    unidade = models.ForeignKey(Unidade, on_delete=models.SET_NULL, null=True, blank=True, related_name='unidade_usuario')
     cargo = models.ForeignKey(Cargo, on_delete=models.SET_NULL, null=True, blank=True, related_name='cargo_usuario')
     cidade = models.ForeignKey(Cidades, on_delete=models.SET_NULL, null=True, blank=True, related_name='cidade_usuario')
     uf_residencia = models.CharField(max_length=250, null=True, blank=True)
@@ -159,12 +183,14 @@ class Planos(models.Model):
     Modelo para gerenciar os planos disponíveis no sistema.
     """
     nome = models.CharField(max_length=100, help_text="Nome do plano")
-    faces = models.IntegerField(help_text="Cota total de faces para o período do plano")
-    reconhecimentos = models.IntegerField(help_text="Cota total de reconhecimentos para o período do plano")
+    casos = models.IntegerField(help_text="Cota total de casos para o período do plano")
     valor_regular = models.DecimalField(max_digits=10, decimal_places=2, help_text="Valor do plano")
     valor_promocional = models.DecimalField(max_digits=10, decimal_places=2, help_text="Valor promocional do plano")
     periodo = models.IntegerField(help_text="Período em dias")
     publico = models.BooleanField(default=True, help_text="Indica se o plano está disponível publicamente")
+    
+    # LIMITE DE USUARIOS
+    limite_usuarios = models.IntegerField(default=0)
     
     created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, 
                                    to_field='cpf', related_name='planos_created_by')
@@ -201,8 +227,7 @@ class Assinatura(models.Model):
 
     usuario = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='assinaturas')
     plano = models.ForeignKey(Planos, on_delete=models.CASCADE, related_name='assinaturas')
-    faces = models.IntegerField(help_text="Cota total de faces para o período da assinatura")
-    reconhecimentos = models.IntegerField(help_text="Cota total de reconhecimentos para o período da assinatura")
+    casos = models.IntegerField(help_text="Cota total de faces para o período da assinatura")
     valor = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS, default='pendente')
     forma_pagamento = models.CharField(max_length=20, choices=FORMAS_PAGAMENTO, null=True, blank=True)

@@ -1,5 +1,6 @@
 {% extends 'layout/base.html' %}
 {% load static %}
+{% load mask %}
 
 {% block css %}
 <style>
@@ -7,11 +8,11 @@
         cursor: pointer;
         transition: background-color 0.2s;
     }
-    
+
     .clickable:hover {
         background-color: #f8f9fa !important;
     }
-    
+
     .info-row {
         margin-top: 10px;
         padding: 15px;
@@ -20,26 +21,26 @@
         border-radius: 5px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    
+
     .info-row h6 {
         color: #495057;
         margin-bottom: 10px;
     }
-    
+
     .info-row p {
         margin-bottom: 0;
         color: #6c757d;
         line-height: 1.5;
     }
-    
+
     .table-responsive {
         overflow-x: auto;
     }
-    
+
     .dataTables_wrapper {
         margin-bottom: 20px;
     }
-    
+
     .modal-info-content {
         max-height: 400px;
         overflow-y: auto;
@@ -63,9 +64,9 @@
                     <tr>
                         <th>Nº RIF</th>
                         <th>Indexador</th>
-                        <th>CPF/CNPJ Comunicante</th>
                         <th>Nome Comunicante</th>
                         <th>Agência</th>
+                        <th>Titular</th>
                         <th>Campo A</th>
                         <th>Campo B</th>
                         <th>Campo C</th>
@@ -79,18 +80,29 @@
                     <tr data-comunicacao-id="{{ forloop.counter }}">
                         <td>{{ c.rif.numero }}</td>
                         <td>{{ c.indexador }}</td>
-                        <td>{{ c.cpf_cnpj_comunicante }}</td>
-                        <td>{{ c.nome_comunicante }}</td>
-                        <td>{{ c.cidade_agencia }}</td>
-                        <td>{{ c.campo_a }}</td>
-                        <td>{{ c.campo_b }}</td>
-                        <td>{{ c.campo_c }}</td>
-                        <td>{{ c.campo_d }}</td>
-                        <td>{{ c.codigo_segmento }}</td>
                         <td>
-                            <button class="btn btn-outline-primary" onclick="showInfoModal('{{ forloop.counter }}')" data-comunicacao-id="{{ forloop.counter }}">
-                                <i class="fa fa-info-circle"></i>
+                            {{ c.nome_comunicante }}
+                            <br><small>CNPJ: {{ c.cpf_cnpj_comunicante|mask:'cpf_cnpj' }}</small>
+                        </td>
+                        <td>{{ c.cidade_agencia }}</td>
+                        <td>{{ c.titular }}</td>
+                        <td nowrap>{{ c.campo_a|mask:'moeda' }}</td>
+                        <td nowrap>{{ c.campo_b|mask:'moeda' }}</td>
+                        <td nowrap>{{ c.campo_c|mask:'moeda' }}</td>
+                        <td nowrap>{{ c.campo_d|mask:'moeda' }}</td>
+                        <td>{{ c.codigo_segmento }}</td>
+                        <td nowrap>
+                            <a href="{% url 'financeira:comunicacao_detalhes' c.id %}" class="btn btn-outline-primary">
+                                <i class="fa fa-folder-open"></i>
+                            </a>
+                            <button class="btn btn-outline-primary toggle-info" data-comunicacao-id="{{ forloop.counter }}" onclick="toggleInfo({{ forloop.counter }})">
+                                <i class="fas fa-info-circle"></i>
                             </button>
+                        </td>
+                    </tr>
+                    <tr class="informacoes-adicionais d-none" data-comunicacao-id="{{ forloop.counter }}">
+                        <td colspan="11">
+                            {{ c.informacoes_adicionais|safe }}
                         </td>
                     </tr>
                     {% endfor %}
@@ -117,16 +129,6 @@
         </div>
     </div>
 </div>
-
-<!-- Dados das informações adicionais (ocultos) -->
-<div id="infoData" style="display: none;">
-    {% for c in comunicacoes %}
-    <div id="info-content-{{ forloop.counter }}">
-        <h6><strong>Informações Adicionais:</strong></h6>
-        <p>{{ c.informacoes_adicionais }}</p>
-    </div>
-    {% endfor %}
-</div>
 {% endblock %}
 
 {% block script %}
@@ -136,7 +138,7 @@
         const table = $('#comunicacoesTable');
         dataTable = table.DataTable({
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+                url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
             },
             pageLength: 10,
             responsive: true,
@@ -165,5 +167,11 @@
             console.warn('Erro ao mostrar modal de informações:', error);
         }
     }
+
+    function toggleInfo(comunicacaoId) {
+        const infoRow = $(`tr.informacoes-adicionais[data-comunicacao-id="${comunicacaoId}"]`);
+        infoRow.toggleClass('d-none');
+    }
+
 </script>
 {% endblock %}

@@ -1,0 +1,95 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% load mask %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="nk-block-head nk-block-head-sm">
+        <div class="nk-block-between">
+            <div class="nk-block-head-content">
+                <h3 class="nk-block-title page-title">{{ title }}</h3>
+                <div class="nk-block-des text-soft">
+                    <p>{{ subtitle }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card card-bordered card-preview">
+        <div class="card-inner">
+            <p>Esta página exibe os CPFs/CNPJs que possuem mais de um nome associado. Use os formulários abaixo para
+                unificar os nomes.</p>
+            <p><span class="badge bg-success">Manter</span>: Selecione o nome que deve ser mantido. <br>
+                <span class="badge bg-primary">Agrupar</span>: Marque os nomes que devem ser substituídos pelo nome
+                principal.
+            </p>
+
+            {% regroup titulares by cpf_cnpj_titular as grupos_de_titulares %}
+
+            {% if grupos_de_titulares %}
+            {% for grupo in grupos_de_titulares %}
+            {% if grupo.list|length > 1 %}
+            <div class="card card-bordered my-4">
+                <div class="card-header border-bottom">
+                    <h5 class="card-title">CPF/CNPJ: {{ grupo.grouper|mask:'cpf_cnpj' }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'bancaria:unificar_dados' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="cpf_cnpj" value="{{ grupo.grouper }}">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Manter</th>
+                                    <th>Agrupar</th>
+                                    <th>Nome do Titular</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for titular in grupo.list %}
+                                <tr>
+                                    <td>
+                                        <div class="custom-control custom-radio">
+                                            <input type="radio"
+                                                id="manter-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"
+                                                name="nome_manter" value="{{ titular.nome_titular }}"
+                                                class="custom-control-input" {% if forloop.first %}checked{% endif %}>
+                                            <label class="custom-control-label"
+                                                for="manter-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"></label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox"
+                                                id="agrupar-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"
+                                                name="nome_agrupar" value="{{ titular.nome_titular }}"
+                                                class="custom-control-input" checked>
+                                            <label class="custom-control-label"
+                                                for="agrupar-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"></label>
+                                        </div>
+                                    </td>
+                                    <td>{{ titular.nome_titular }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <button type="submit" class="btn btn-primary mt-2">Unificar Nomes para este CPF/CNPJ</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+            {% else %}
+
+            <div class="card card-bordered my-4">
+                <div class="card-body">
+                    <p>Nenhum CPF/CNPJ encontrado.</p>
+                </div>
+            </div>
+
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

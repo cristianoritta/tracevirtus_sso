@@ -3,6 +3,7 @@ import locale
 from datetime import date, datetime
 from django import template
 from django.conf import settings
+from django.utils.safestring import mark_safe
 
 
 register = template.Library()
@@ -118,8 +119,34 @@ def mask(value, mask):
             return ''
 
     elif mask == 'moeda':
-        locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-        string = locale.currency(value, grouping=True, symbol="R$")
+        try:
+            # Tenta usar locale primeiro
+            locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+            string = locale.currency(value, grouping=True, symbol="R$")
+        except:
+            # Fallback para formatação manual
+            if value is None or value == "":
+                string = "R$ 0,00"
+            else:
+                try:
+                    # Converte para float
+                    valor = float(value)
+                    # Formata com 2 casas decimais
+                    valor_str = f"{valor:.2f}"
+                    # Separa parte inteira e decimal
+                    partes = valor_str.split('.')
+                    parte_inteira = partes[0]
+                    parte_decimal = partes[1] if len(partes) > 1 else "00"
+                    
+                    # Adiciona separadores de milhares
+                    if len(parte_inteira) > 3:
+                        parte_inteira = re.sub(r'(\d)(?=(\d{3})+(?!\d))', r'\1.', parte_inteira[::-1])[::-1]
+                    
+                    string = f"R$ {parte_inteira},{parte_decimal}"
+                except:
+                    string = "R$ 0,00"
+
+
 
     elif mask == 'tratar_none':
         string = value if value != None or "None" else ''
@@ -151,5 +178,102 @@ def mask(value, mask):
         siglas = [estados_siglas.get(estado.strip(), "Estado desconhecido") for estado in estados]
         string = ', '.join(siglas)
 
+    elif mask == 'cpf_cnpj':
+        if value is None or value == "None" or value == "" or value == "N/A":
+            string = ""
+        else:
+            # Remove caracteres não numéricos
+            value = "".join(re.findall("\d+", str(value)))
+            
+            # Aplica máscara baseada no tamanho
+            if len(value) <= 11:
+                value = str(value).zfill(11)
+                string = re.sub("(\d{3})(\d{3})(\d{3})(\d{2})",
+                                "\\1.\\2.\\3-\\4",
+                                value)
+            else:
+                string = re.sub("(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})",
+                                "\\1.\\2.\\3/\\4-\\5",
+                                value)
+
     # RETURN
     return string
+
+
+@register.filter
+def real(value):
+    """
+    Máscara específica para valores monetários brasileiros (R$)
+    Formato: R$ 1.234,56
+    """
+    if value is None or value == "" or str(value).lower() in ['none', 'nan']:
+        return "R$ 0,00"
+    else:
+        try:
+            # Remove caracteres não numéricos exceto ponto e vírgula
+            valor_limpo = re.sub(r'[^\d.,]', '', str(value))
+            
+            # Se tem vírgula, assume que é decimal
+            if ',' in valor_limpo:
+                valor_limpo = valor_limpo.replace('.', '').replace(',', '.')
+            else:
+                # Se só tem ponto, assume que é decimal
+                valor_limpo = valor_limpo.replace(',', '')
+            
+            # Converte para float
+            valor = float(valor_limpo)
+            
+            # Formata com 2 casas decimais
+            valor_str = f"{valor:.2f}"
+            
+            # Separa parte inteira e decimal
+            partes = valor_str.split('.')
+            parte_inteira = partes[0]
+            parte_decimal = partes[1] if len(partes) > 1 else "00"
+            
+            # Adiciona separadores de milhares (ponto)
+            if len(parte_inteira) > 3:
+                # Inverte a string, aplica os separadores e inverte de volta
+                parte_inteira = parte_inteira[::-1]  # inverte a string
+                parte_inteira = '.'.join(parte_inteira[i:i+3] for i in range(0, len(parte_inteira), 3))
+                parte_inteira = parte_inteira[::-1]  # inverte de volta
+            
+            return f"R$ {parte_inteira},{parte_decimal}"
+            
+        except (ValueError, TypeError):
+            return "R$ 0,00"
+
+
+@register.filter
+def markdown(value):
+    """
+    Filtro para renderizar markdown em HTML
+    """
+    if not value:
+        return ""
+    
+    try:
+        # Importa markdown apenas quando necessário
+        import markdown as md
+        
+        # Configurações básicas do markdown
+        md_extensions = [
+            'markdown.extensions.codehilite',
+            'markdown.extensions.fenced_code',
+            'markdown.extensions.tables',
+            'markdown.extensions.toc',
+            'markdown.extensions.nl2br'
+        ]
+        
+        # Converte markdown para HTML
+        html = md.markdown(str(value), extensions=md_extensions)
+        
+        # Marca como seguro para renderização
+        return mark_safe(html)
+        
+    except ImportError:
+        # Se markdown não estiver instalado, retorna o texto original
+        return str(value)
+    except Exception:
+        # Em caso de erro, retorna o texto original
+        return str(value)

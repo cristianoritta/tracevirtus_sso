@@ -1,0 +1,196 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Gerenciar Prompts{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="nk-content">
+    <div class="container-fluid">
+        <div class="nk-content-inner">
+            <div class="nk-content-body">
+                <div class="nk-block">
+                    <div class="nk-block-head">
+                        <div class="nk-block-head-content">
+                            <h2 class="nk-block-title">Gerenciar Prompts</h2>
+                            <div class="nk-block-des">
+                                <p>Gerencie os prompts utilizados pelo sistema de IA.</p>
+                            </div>
+                        </div>
+                        <div class="nk-block-head-content">
+                            <a href="{% url 'financeira:prompt_create' %}" class="btn btn-primary">
+                                <em class="icon ni ni-plus"></em>
+                                <span>Novo Prompt</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-inner">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Módulo</th>
+                                            <th>Função</th>
+                                            <th>Label</th>
+                                            <th>Status</th>
+                                            <th>Criado por</th>
+                                            <th>Atualizado em</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for prompt in prompts %}
+                                        <tr>
+                                            <td>{{ prompt.modulo }}</td>
+                                            <td>{{ prompt.funcao }}</td>
+                                            <td>{{ prompt.label }}</td>
+                                            <td>
+                                                <span class="badge badge-{% if prompt.is_active %}success{% else %}light{% endif %}">
+                                                    {% if prompt.is_active %}Ativo{% else %}Inativo{% endif %}
+                                                </span>
+                                            </td>
+                                            <td>{{ prompt.created_by.get_full_name|default:prompt.created_by.username }}</td>
+                                            <td>{{ prompt.updated_at|date:"d/m/Y H:i" }}</td>
+                                            <td>
+                                                <div class="dropdown">
+                                                    <a href="#" class="dropdown-toggle btn btn-sm btn-outline-light" data-bs-toggle="dropdown">
+                                                        <em class="icon ni ni-more-h"></em>
+                                                    </a>
+                                                    <div class="dropdown-menu dropdown-menu-end">
+                                                        <ul class="link-list-opt no-bdr">
+                                                            <li>
+                                                                <a href="{% url 'financeira:prompt_edit' prompt.id %}">
+                                                                    <em class="icon ni ni-edit"></em>
+                                                                    <span>Editar</span>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a href="#" onclick="togglePrompt({{ prompt.id }})">
+                                                                    <em class="icon ni ni-{% if prompt.is_active %}cross{% else %}check{% endif %}"></em>
+                                                                    <span>{% if prompt.is_active %}Desativar{% else %}Ativar{% endif %}</span>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a href="#" onclick="deletePrompt({{ prompt.id }}, '{{ prompt.label }}')" class="text-danger">
+                                                                    <em class="icon ni ni-trash"></em>
+                                                                    <span>Excluir</span>
+                                                                </a>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="7" class="text-center">Nenhum prompt cadastrado.</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Função para obter o token CSRF
+function getCSRFToken() {
+    const token = document.querySelector('[name=csrfmiddlewaretoken]');
+    return token ? token.value : '';
+}
+
+// Função para alternar o status do prompt
+function togglePrompt(promptId) {
+    console.log('Toggle chamado para prompt ID:', promptId);
+    
+    if (confirm('Deseja alterar o status deste prompt?')) {
+        const url = `/financeira/prompts/${promptId}/toggle/`;
+        const token = getCSRFToken();
+        
+        console.log('Fazendo requisição para:', url);
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': token,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `csrfmiddlewaretoken=${token}`
+        })
+        .then(response => {
+            console.log('Resposta recebida:', response);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Dados recebidos:', data);
+            if (data.success) {
+                alert('Status alterado com sucesso!');
+                location.reload();
+            } else {
+                alert('Erro: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Erro na requisição:', error);
+            alert('Erro ao processar a requisição: ' + error.message);
+        });
+    }
+}
+
+// Função para excluir o prompt
+function deletePrompt(promptId, promptLabel) {
+    console.log('Delete chamado para prompt ID:', promptId);
+    
+    if (confirm(`Deseja realmente excluir o prompt "${promptLabel}"?`)) {
+        const url = `/financeira/prompts/${promptId}/delete/`;
+        const token = getCSRFToken();
+        
+        console.log('Fazendo requisição para:', url);
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': token,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `csrfmiddlewaretoken=${token}`
+        })
+        .then(response => {
+            console.log('Resposta recebida:', response);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Dados recebidos:', data);
+            if (data.success) {
+                alert('Prompt excluído com sucesso!');
+                location.reload();
+            } else {
+                alert('Erro: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Erro na requisição:', error);
+            alert('Erro ao processar a requisição: ' + error.message);
+        });
+    }
+}
+
+// Log quando o script é carregado
+console.log('Script de prompts carregado');
+</script>
+{% endblock %} 

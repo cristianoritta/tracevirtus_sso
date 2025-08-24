@@ -1,5 +1,5 @@
 from django import forms
-from .models import Caso, Investigado, CasoInvestigado
+from .models import Caso, Investigado, CasoInvestigado, Relatorio
 
 class CasoForm(forms.ModelForm):
     class Meta:
@@ -20,7 +20,7 @@ class CasoForm(forms.ModelForm):
             'resumo': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 4,
-                'placeholder': 'Resumo do caso'
+                'placeholder': 'Resumo do caso',
             }),
         }
         labels = {
@@ -32,9 +32,10 @@ class CasoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Tornando todos os campos obrigatórios
-        for field in self.fields.values():
-            field.required = True 
+        # Tornando campos obrigatórios
+        self.fields['nome'].required = True
+        self.fields['numero'].required = True
+        self.fields['resumo'].required = True
 
 class InvestigadoForm(forms.ModelForm):
     class Meta:
@@ -121,3 +122,46 @@ class AdicionarInvestigadoForm(forms.Form):
         }),
         label='Observações'
     ) 
+
+class RelatorioForm(forms.ModelForm):
+    class Meta:
+        model = Relatorio
+        fields = ['nome', 'descricao', 'tipo', 'status', 'arquivo']
+        widgets = {
+            'nome': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nome do relatório'
+            }),
+            'descricao': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Descrição detalhada do relatório'
+            }),
+            'tipo': forms.Select(attrs={
+                'class': 'form-control',
+                'choices': Relatorio.TIPO_CHOICES
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-control',
+                'choices': Relatorio.STATUS_CHOICES
+            }),
+            'arquivo': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': '.pdf,.doc,.docx,.xls,.xlsx'
+            }),
+        }
+        labels = {
+            'nome': 'Nome do Relatório',
+            'descricao': 'Descrição',
+            'tipo': 'Tipo',
+            'status': 'Status',
+            'arquivo': 'Arquivo',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Tornando campos obrigatórios
+        self.fields['nome'].required = True
+        self.fields['descricao'].required = True
+        self.fields['tipo'].required = True
+        self.fields['status'].required = True 

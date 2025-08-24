@@ -1,15 +1,148 @@
 {% extends 'layout/base.html' %}
+{% load static %}
+{% load mask %}
 
 {% block content %}
 <div class="container mt-4">
-    <h1>Bem-vindo, {{ request.session.nome_completo|default:'' }}!</h1>
-    
-    <div class="mt-4">
-        <h4>Suas informações:</h4>
-        <ul class="list-unstyled">
-            <li><strong>CPF:</strong> {{ request.session.cpf|default:'' }}</li>
-            <li><strong>Email:</strong> {{ request.session.email|default:'' }}</li>
-        </ul>
+    <div class="nk-block-head nk-block-head-sm">
+        <div class="nk-block-between">
+            <div class="nk-block-head-content">
+                <h3 class="nk-block-title page-title">Bem-vindo(a), {{ request.session.nome_completo|default:'' }}!</h3>
+                <div class="nk-block-des text-soft">
+                    <p></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card card-bordered">
+                <div class="card-inner-group">
+                    <div class="card-inner card-inner-md">
+                        <div class="card-title-group">
+                            <div class="card-title">
+                                <h6 class="title">{{caso.nome}}</h6>
+                            </div>
+                            <div class="card-tools me-n1">
+                                <span class="badge bg-primary">{{caso.status}}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-inner">
+                        <div class="nk-wg-action">
+                            <div class="nk-wg-action-content">
+                                <em class="icon ni ni-cc-alt-fill"></em>
+                                <div class="title">RIFs</div>
+                                <p>Total de RIFs: <strong>{{caso.rif_set.count}}</strong></p>
+                            </div>
+                            <a href="/financeira/index" class="btn btn-icon btn-trigger me-n2">
+                                <em class="icon ni ni-forward-ios"></em>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-inner">
+                        <div class="nk-wg-action">
+                            <div class="nk-wg-action-content">
+                                <em class="icon ni ni-help-fill"></em>
+                                <div class="title">Investigados</div>
+                                <p>Total de investigados: <strong>{{caso.investigados.count}}</strong></p>
+                            </div>
+                            <a href="/casos/investigados/{{caso.id}}" class="btn btn-icon btn-trigger me-n2">
+                                <em class="icon ni ni-forward-ios"></em>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-inner">
+                        <div class="nk-wg-action">
+                            <div class="nk-wg-action-content">
+                                <em class="icon ni ni-wallet-fill"></em>
+                                <div class="title">Ocorrências</div>
+                                <p>Total de comunicações: <strong>{{caso.rif.comunicacao.count}}</strong></p>
+                            </div>
+                            <a href="/financeira/ocorrencias/{{caso.id}}" class="btn btn-icon btn-trigger me-n2">
+                                <em class="icon ni ni-forward-ios"></em>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GRAFICO MOSTRANDO O VOLUME FINANCEIRO DE CADA COMUNICAÇÃO -->
+        <div class="col-md-6">
+            <div class="card card-bordered">
+                <div class="card-inner-group">
+                    <div class="card-inner card-inner-md">
+                        <div class="card-title-group">
+                            <div class="card-title">
+                                <h6 class="title">Inteligência Financeira</h6>
+                                <p>Volume Financeiro por Comunicação</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-inner">
+                        <canvas id="volumeFinanceiroChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('volumeFinanceiroChart').getContext('2d');
+
+        const dados = {{ volume_financeiro_por_comunicacao|safe}};
+    const comunicacoes = Object.keys(dados);
+    const valores = Object.values(dados).map(valor =>
+        parseFloat(valor.replace('R$', '').replace('.', '').replace(',', '.'))
+    );
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: comunicacoes.map(c => `${c}`),
+            datasets: [{
+                label: 'Volume Financeiro (R$)',
+                data: valores,
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function (value) {
+                            return new Intl.NumberFormat('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                            }).format(value);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return new Intl.NumberFormat('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                            }).format(context.raw);
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

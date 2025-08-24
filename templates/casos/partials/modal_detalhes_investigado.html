@@ -1,3 +1,5 @@
+{% load mask %}
+
 <div class="modal-header">
     <h5 class="modal-title">
         <em class="icon ni ni-user"></em>
@@ -37,7 +39,7 @@
                                 <label class="form-label">{% if investigado.tipo == 'fisica' %}CPF{% else %}CNPJ{% endif %}</label>
                                 <div class="form-control-wrap">
                                     <div class="form-control-static">
-                                        <strong>{{ investigado.cpf_cnpj }}</strong>
+                                        <strong>{{ investigado.cpf_cnpj|mask:'cpf_cnpj' }}</strong>
                                     </div>
                                 </div>
                             </div>

@@ -1,0 +1,803 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css">
+<style>
+    .slider-container {
+        margin: 20px 0;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        position: relative;
+    }
+    /* Customização do noUiSlider para visual de timeline */
+    #nouiSlider {
+        margin: 40px 0 10px 0;
+    }
+    .noUi-target {
+        background: #e9ecef;
+        border-radius: 8px;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        height: 16px;
+    }
+    .noUi-connect {
+        background: #007bff;
+        border-radius: 8px;
+        height: 16px;
+        box-shadow: 0 2px 8px rgba(0,123,255,0.15);
+    }
+    .noUi-horizontal .noUi-handle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #fff;
+        border: 3px solid #007bff;
+        top: -9px;
+        box-shadow: 0 2px 8px rgba(0,123,255,0.15);
+        transition: box-shadow 0.2s;
+    }
+    .noUi-horizontal .noUi-handle:before,
+    .noUi-horizontal .noUi-handle:after {
+        display: none;
+    }
+    .noUi-handle:hover, .noUi-handle:focus {
+        box-shadow: 0 4px 16px rgba(0,123,255,0.25);
+        outline: none;
+    }
+    .noUi-tooltip {
+        background: #007bff;
+        color: #fff;
+        border-radius: 4px;
+        font-size: 1rem;
+        font-weight: bold;
+        padding: 4px 10px;
+        box-shadow: 0 2px 8px rgba(0,123,255,0.10);
+        top: -45px;
+        white-space: nowrap;
+    }
+    .noUi-horizontal .noUi-tooltip {
+        transform: translateX(-50%);
+        left: 50%;
+    }
+    
+    .slider-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+    
+    .range-slider {
+        position: relative;
+        width: 100%;
+        height: 6px;
+        background: #ddd;
+        border-radius: 3px;
+        margin: 20px 0;
+    }
+    
+    .range-slider .range-slider__range {
+        position: absolute;
+        height: 6px;
+        background: #007bff;
+        border-radius: 3px;
+        top: 0;
+    }
+    
+    .range-slider .range-slider__thumb {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: #007bff;
+        border-radius: 50%;
+        cursor: pointer;
+        top: -7px;
+        transform: translateX(-50%);
+        z-index: 2;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        transition: box-shadow 0.2s ease;
+    }
+    
+    .range-slider .range-slider__thumb:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    
+    .range-slider .range-slider__thumb:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+    }
+    
+    .range-slider .range-slider__thumb--left {
+        left: 0;
+    }
+    
+    .range-slider .range-slider__thumb--right {
+        left: 100%;
+    }
+    
+    .date-display {
+        text-align: center;
+        font-weight: bold;
+        margin-top: 10px;
+        color: #007bff;
+    }
+    
+    .stats-cards {
+        margin: 20px 0;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .stats-card.creditos {
+        border-left: 4px solid #28a745;
+    }
+    
+    .stats-card.debitos {
+        border-left: 4px solid #dc3545;
+    }
+    
+    .stats-card.saldo {
+        border-left: 4px solid #007bff;
+    }
+    
+    .stats-value {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .stats-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+        font-style: italic;
+    }
+    /* Sankey */
+    .sankey-container {
+        width: 100%;
+        height: 460px;
+    }
+    .sankey-node rect {
+        stroke: #999;
+        stroke-width: 1px;
+        fill-opacity: 0.85;
+        rx: 4px;
+        ry: 4px;
+    }
+    .sankey-node text {
+        font-size: 12px;
+        fill: #111;
+        pointer-events: none;
+    }
+    .sankey-link {
+        fill: none;
+        stroke: #999;
+        stroke-opacity: 0.25;
+    }
+    .sankey-link:hover {
+        stroke-opacity: 0.45;
+    }
+    .sankey-legend {
+        font-size: 12px;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="{% url 'bancaria:index' %}">Bancária</a></li>
+                        <li class="breadcrumb-item active">{{ title }}</li>
+                    </ol>
+                </div>
+                <h4 class="page-title">{{ title }}</h4>
+                <p class="text-muted">{{ subtitle }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form id="filtroForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="titular" class="form-label">Selecione o Titular</label>
+                                    <select class="form-select" id="titular" name="cpf_cnpj_titular" required>
+                                        <option value="">Selecione um titular...</option>
+                                        {% for titular in titulares %}
+                                        <option value="{{ titular.cpf_cnpj_titular }}">
+                                            {{ titular.nome_titular }} ({{ titular.cpf_cnpj_titular }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Intervalo de Datas</label>
+                                    <div class="slider-container">
+                                        <div class="slider-labels">
+                                            <span id="dataInicioLabel">{{ data_min|date:"d/m/Y" }}</span>
+                                            <span id="dataFimLabel">{{ data_max|date:"d/m/Y" }}</span>
+                                        </div>
+                                        <div id="nouiSlider" style="margin: 30px 0;"></div>
+                                        <input type="hidden" id="dataInicio" value="{{ data_min_timestamp }}">
+                                        <input type="hidden" id="dataFim" value="{{ data_max_timestamp }}">
+                                        <div class="date-display">
+                                            <span id="dataInicioDisplay">{{ data_min|date:"d/m/Y" }}</span> 
+                                            até 
+                                            <span id="dataFimDisplay">{{ data_max|date:"d/m/Y" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="icon fas fa-search"></i> <span>Filtrar Registros</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div class="row stats-cards" id="statsCards" style="display: none;">
+        <div class="col-md-4">
+            <div class="stats-card creditos">
+                <div class="stats-value" id="totalCreditos">R$ 0,00</div>
+                <div class="stats-label">Total de Créditos</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card debitos">
+                <div class="stats-value" id="totalDebitos">R$ 0,00</div>
+                <div class="stats-label">Total de Débitos</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card saldo">
+                <div class="stats-value" id="saldoTotal">R$ 0,00</div>
+                <div class="stats-label">Saldo</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Registros -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Registros do Extrato</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Sankey -->
+                    <div id="sankeyCard" class="mb-4" style="display:none;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="m-0">Fluxo de Operações (Créditos → Titular → Débitos)</h5>
+                            <small class="sankey-legend">Esquerda: quem creditou (C) | Direita: para quem debitou (D)</small>
+                        </div>
+                        <div id="sankey-container" class="sankey-container"></div>
+                    </div>
+                    <div id="loadingTable" class="loading" style="display: none;">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                        <p>Carregando registros...</p>
+                    </div>
+                    
+                    <div id="noDataTable" class="no-data" style="display: none;">
+                        <i class="fas fa-info-circle fa-2x"></i>
+                        <p>Nenhum registro encontrado para os filtros selecionados.</p>
+                    </div>
+                    
+                    <div id="tableContainer" style="display: none;">
+                        <table id="registrosTable" class="table table-striped table-bordered dt-responsive nowrap" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Natureza</th>
+                                    <th>Valor</th>
+                                    <th>Contraparte</th>
+                                    <th>Descrição</th>
+                                    <th>Ações</th>
+                                </tr>
+                                <tr id="filtrosColunas">
+                                    <th><input type="text" placeholder="Filtrar Data" class="form-control form-control-sm" style="width:100%" /></th>
+                                    <th><input type="text" placeholder="Filtrar Natureza" class="form-control form-control-sm" style="width:100%" /></th>
+                                    <th><input type="text" placeholder="Filtrar Valor" class="form-control form-control-sm" style="width:100%" /></th>
+                                    <th><input type="text" placeholder="Filtrar Contraparte" class="form-control form-control-sm" style="width:100%" /></th>
+                                    <th><input type="text" placeholder="Filtrar Descrição" class="form-control form-control-sm" style="width:100%" /></th>
+                                    <th>
+                                        
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://unpkg.com/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+
+<script>
+let dataTable = null;
+
+$(document).ready(function() {
+    console.log('Página carregada, inicializando...');
+    console.log('jQuery disponível:', typeof $ !== 'undefined');
+    console.log('SweetAlert disponível:', typeof Swal !== 'undefined');
+    
+    // Inicializa o noUiSlider
+    initNoUiSlider();
+    
+    // Event listener para o formulário
+    $('#filtroForm').on('submit', function(e) {
+        console.log('Formulário submetido');
+        e.preventDefault();
+        filtrarRegistros();
+    });
+    
+    console.log('Inicialização concluída');
+});
+
+function initNoUiSlider() {
+    const slider = document.getElementById('nouiSlider');
+    const dataInicio = document.getElementById('dataInicio');
+    const dataFim = document.getElementById('dataFim');
+    const dataInicioDisplay = document.getElementById('dataInicioDisplay');
+    const dataFimDisplay = document.getElementById('dataFimDisplay');
+
+    const min = Number(dataInicio.value);
+    const max = Number(dataFim.value);
+
+    noUiSlider.create(slider, {
+        start: [min, max],
+        connect: true,
+        range: {
+            'min': min,
+            'max': max
+        },
+        step: 24 * 60 * 60 * 1000, // 1 dia em ms
+        tooltips: [
+            {
+                to: function(value) {
+                    const date = new Date(Math.round(value));
+                    return date.toLocaleDateString('pt-BR');
+                },
+                from: function(value) { return value; }
+            },
+            {
+                to: function(value) {
+                    const date = new Date(Math.round(value));
+                    return date.toLocaleDateString('pt-BR');
+                },
+                from: function(value) { return value; }
+            }
+        ],
+        format: {
+            to: function(value) { return value; },
+            from: function(value) { return value; }
+        }
+    });
+
+    slider.noUiSlider.on('update', function(values, handle, unencoded) {
+        const inicio = Math.round(unencoded[0]);
+        const fim = Math.round(unencoded[1]);
+        dataInicio.value = inicio;
+        dataFim.value = fim;
+        dataInicioDisplay.textContent = new Date(inicio).toLocaleDateString('pt-BR');
+        dataFimDisplay.textContent = new Date(fim).toLocaleDateString('pt-BR');
+    });
+
+    // Ajuste do dataFim com scroll do mouse (ao passar o mouse sobre o slider ou o display do fim)
+    function onWheelAdjustEnd(e) {
+        // Evita que a página role quando for sobre o slider/display
+        e.preventDefault();
+        const dayMs = 24 * 60 * 60 * 1000; // 1 dia
+        // Modificadores: Ctrl = 30 dias, Shift = 7 dias, padrão = 1 dia
+        let stepDays = 1;
+        if (e.ctrlKey) {
+            stepDays = 30;
+        } else if (e.shiftKey) {
+            stepDays = 7;
+        }
+        const stepMs = stepDays * dayMs;
+        const values = slider.noUiSlider.get();
+        let inicio = Number(values[0]);
+        let fim = Number(values[1]);
+        // Direção: deltaY < 0 (scroll up) avança +1 dia; deltaY > 0 recua -1 dia
+        let novoFim = fim + (e.deltaY < 0 ? stepMs : -stepMs);
+        // Limites
+        novoFim = Math.max(min, Math.min(max, novoFim));
+        // Garante que o fim não ultrapasse o início (mantém intervalo válido)
+        if (novoFim < inicio) {
+            novoFim = inicio;
+        }
+        slider.noUiSlider.set([inicio, novoFim]);
+    }
+
+    slider.addEventListener('wheel', onWheelAdjustEnd, { passive: false });
+    if (dataFimDisplay) {
+        dataFimDisplay.addEventListener('wheel', onWheelAdjustEnd, { passive: false });
+    }
+}
+
+function filtrarRegistros() {
+    console.log('Iniciando filtro de registros...');
+    
+    const titular = $('#titular').val();
+    const dataInicioTimestamp = Number($('#dataInicio').val()); // Get timestamp
+    const dataFimTimestamp = Number($('#dataFim').val());     // Get timestamp
+    
+    console.log('Titular selecionado:', titular);
+    console.log('Data início (raw):', dataInicioTimestamp);
+    console.log('Data fim (raw):', dataFimTimestamp);
+    
+    // Convert timestamps to Date objects, then to YYYY-MM-DD format
+    const dataInicioObj = new Date(dataInicioTimestamp);
+    const dataFimObj = new Date(dataFimTimestamp);
+    
+    // Ensure dates are valid before formatting
+    if (isNaN(dataInicioObj.getTime()) || isNaN(dataFimObj.getTime())) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Erro de Data',
+            text: 'As datas selecionadas são inválidas. Por favor, tente novamente.'
+        });
+        return;
+    }
+    
+    const dataInicioFormatada = dataInicioObj.toISOString().split('T')[0];
+    const dataFimFormatada = dataFimObj.toISOString().split('T')[0];
+    
+    console.log('Data início formatada:', dataInicioFormatada);
+    console.log('Data fim formatada:', dataFimFormatada);
+    
+    if (!titular) {
+        console.log('Nenhum titular selecionado');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atenção',
+            text: 'Por favor, selecione um titular.'
+        });
+        return;
+    }
+    
+    // Mostra loading
+    $('#loadingTable').show();
+    $('#tableContainer').hide();
+    $('#noDataTable').hide();
+    $('#statsCards').hide();
+    
+    console.log('Mostrando loading...');
+    
+    // Destrói a tabela anterior se existir
+    if (dataTable) {
+        dataTable.destroy();
+    }
+    
+    console.log('Fazendo requisição AJAX...');
+    
+    console.log('CSRF Token:', $('meta[name="csrf-token"]').attr('content'));
+    
+    $.ajax({
+        url: '{% url "bancaria:filtrar_extrato_titular" %}',
+        method: 'POST',
+        data: {
+            cpf_cnpj_titular: titular,
+            data_inicio: dataInicioFormatada,
+            data_fim: dataFimFormatada,
+            csrfmiddlewaretoken: $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            console.log('Resposta recebida:', response);
+            $('#loadingTable').hide();
+            
+            if (response.success) {
+                console.log('Sucesso! Registros encontrados:', response.registros.length);
+                
+                if (response.registros.length === 0) {
+                    console.log('Nenhum registro encontrado');
+                    $('#noDataTable').show();
+                    $('#sankeyCard').hide();
+                    return;
+                }
+                
+                // Atualiza os cards de estatísticas
+                atualizarCards(response.totais);
+                
+                // Inicializa a tabela
+                inicializarTabela(response.registros);
+                // Renderiza Sankey
+                renderSankey(response.registros);
+                
+            } else {
+                console.log('Erro na resposta:', response.error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: response.error || 'Erro ao filtrar registros.'
+                });
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log('Erro na requisição AJAX:', status, error);
+            console.log('Resposta do servidor:', xhr.responseText);
+            $('#loadingTable').hide();
+            let errorMsg = 'Erro ao filtrar registros.';
+            
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMsg = xhr.responseJSON.error;
+            }
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Erro',
+                text: errorMsg
+            });
+        }
+    });
+}
+
+function atualizarCards(totais) {
+    $('#totalCreditos').text(formatarMoeda(totais.creditos));
+    $('#totalDebitos').text(formatarMoeda(totais.debitos));
+    $('#saldoTotal').text(formatarMoeda(totais.saldo));
+    $('#statsCards').show();
+}
+
+function inicializarTabela(registros) {
+    $('#tableContainer').show();
+    
+    dataTable = $('#registrosTable').DataTable({
+        data: registros,
+        columns: [
+            { data: 'data' },
+            { data: 'natureza', render: function(data) { const classe = data === 'Crédito' ? 'text-success' : 'text-danger'; return `<span class="${classe}">${data}</span>`; } },
+            { data: 'valor', render: function(data) { return formatarMoeda(data); } },
+            { data: 'contraparte' },
+            { data: 'descricao' },
+            { data: null, orderable: false, searchable: false, render: function(data, type, row) {
+                const cpf = (row.cpf_cnpj_od || '').trim();
+                const nome = (row.contraparte || '').trim();
+                if (!cpf) {
+                    return '<span class="text-muted"></span>';
+                }
+                const base = window.location && window.location.origin ? window.location.origin : '';
+                const url = `${base}/bancaria/detalhes-pessoa/?cpf=${encodeURIComponent(cpf)}&nome=${encodeURIComponent(nome)}`;
+                return `<a href="${url}" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener" title="Ver detalhes da pessoa">
+                            <i class="fas fa-user"></i> Detalhes
+                        </a>`;
+            } }
+        ],
+        responsive: true,
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+        },
+        pageLength: 25,
+        order: [[0, 'asc']],
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+        initComplete: function () {
+            this.api().columns().every(function () {
+                var that = this;
+                $('input', this.header()).on('keyup change clear', function () {
+                    if (that.search() !== this.value) {
+                        that.search(this.value).draw();
+                    }
+                });
+            });
+        }
+    });
+}
+
+function formatarMoeda(valor) {
+    if (valor === null || valor === undefined) return 'R$ 0,00';
+    
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    }).format(valor);
+}
+
+function renderSankey(registros) {
+    try {
+        const container = document.getElementById('sankey-container');
+        if (!container) return;
+
+        // Limpa render anterior
+        container.innerHTML = '';
+
+        // Prepara dimensões responsivas
+        const width = Math.max(600, container.clientWidth || 900);
+        const height = 460;
+
+        const titularTexto = $('#titular option:selected').text() || 'Titular';
+        const titularId = '__TITULAR__';
+        const titularLabel = `Titular: ${titularTexto}`;
+
+        // Agrega valores por contraparte (C e D)
+        const creditosPorContraparte = new Map();
+        const debitosPorContraparte = new Map();
+
+        for (const r of registros) {
+            const natureza = (r.natureza || '').toString().toLowerCase();
+            const contraparte = (r.contraparte && r.contraparte.trim() !== '' && r.contraparte !== '-') ? r.contraparte.trim() : 'Desconhecido';
+            const valor = Math.max(0, Number(r.valor) || 0);
+            if (!valor) continue;
+
+            if (natureza.startsWith('cr') || natureza.includes('crédito')) {
+                creditosPorContraparte.set(contraparte, (creditosPorContraparte.get(contraparte) || 0) + valor);
+            } else {
+                debitosPorContraparte.set(contraparte, (debitosPorContraparte.get(contraparte) || 0) + valor);
+            }
+        }
+
+        // Constrói nós
+        const nodes = [];
+        const nodeIndexById = new Map();
+
+        function addNode(id, name) {
+            if (!nodeIndexById.has(id)) {
+                nodeIndexById.set(id, nodes.length);
+                nodes.push({ name });
+            }
+            return nodeIndexById.get(id);
+        }
+
+        // Nó central (titular)
+        addNode(titularId, titularLabel);
+
+        // Nós da esquerda (C) e direita (D)
+        for (const [nome, _valor] of creditosPorContraparte.entries()) {
+            addNode(`C:${nome}`, nome);
+        }
+        for (const [nome, _valor] of debitosPorContraparte.entries()) {
+            addNode(`D:${nome}`, nome);
+        }
+
+        // Constrói links
+        const links = [];
+        for (const [nome, valor] of creditosPorContraparte.entries()) {
+            links.push({
+                source: nodeIndexById.get(`C:${nome}`),
+                target: nodeIndexById.get(titularId),
+                value: valor
+            });
+        }
+        for (const [nome, valor] of debitosPorContraparte.entries()) {
+            links.push({
+                source: nodeIndexById.get(titularId),
+                target: nodeIndexById.get(`D:${nome}`),
+                value: valor
+            });
+        }
+
+        if (links.length === 0) {
+            $('#sankeyCard').hide();
+            return;
+        }
+
+        $('#sankeyCard').show();
+
+        // SVG base
+        const svg = d3.select(container)
+            .append('svg')
+            .attr('width', '100%')
+            .attr('height', height)
+            .attr('viewBox', `0 0 ${width} ${height}`)
+            .attr('preserveAspectRatio', 'xMidYMid meet');
+
+        const sankey = d3.sankey()
+            .nodeWidth(12)
+            .nodePadding(16)
+            .extent([[1, 1], [width - 1, height - 1]]);
+
+        const graph = sankey({
+            nodes: nodes.map(d => Object.assign({}, d)),
+            links: links.map(d => Object.assign({}, d))
+        });
+
+        // Escalas de cor (por coluna)
+        const colorLeft = d3.scaleOrdinal(d3.schemeSet2);
+        const colorRight = d3.scaleOrdinal(d3.schemeSet3);
+
+        // Links
+        svg.append('g')
+            .attr('fill', 'none')
+            .selectAll('path')
+            .data(graph.links)
+            .join('path')
+            .attr('class', 'sankey-link')
+            .attr('d', d3.sankeyLinkHorizontal())
+            .attr('stroke', d => {
+                const isFromLeft = graph.nodes[d.source.index].name !== titularLabel;
+                return isFromLeft ? '#6c8ebf' : '#c77d7d';
+            })
+            .attr('stroke-width', d => Math.max(1, d.width))
+            .append('title')
+            .text(d => `${graph.nodes[d.source.index].name} → ${graph.nodes[d.target.index].name}\n${formatarMoeda(d.value)}`);
+
+        // Nós
+        const node = svg.append('g')
+            .selectAll('g')
+            .data(graph.nodes)
+            .join('g')
+            .attr('class', 'sankey-node');
+
+        node.append('rect')
+            .attr('x', d => d.x0)
+            .attr('y', d => d.y0)
+            .attr('height', d => d.y1 - d.y0)
+            .attr('width', d => d.x1 - d.x0)
+            .attr('fill', d => {
+                if (d.name === titularLabel) return '#4e79a7';
+                const isLeft = d.x0 < width / 3;
+                return isLeft ? colorLeft(d.name) : colorRight(d.name);
+            })
+            .append('title')
+            .text(d => `${d.name}\nTotal: ${formatarMoeda(d.value || 0)}`);
+
+        node.append('text')
+            .attr('x', d => d.x0 - 6)
+            .attr('y', d => (d.y1 + d.y0) / 2)
+            .attr('dy', '0.35em')
+            .attr('text-anchor', 'end')
+            .text(d => d.name)
+            .filter(d => d.x0 < width / 2)
+            .attr('x', d => d.x1 + 6)
+            .attr('text-anchor', 'start');
+    } catch (e) {
+        console.error('Erro ao renderizar Sankey:', e);
+        $('#sankeyCard').hide();
+    }
+}
+</script>
+{% endblock %}

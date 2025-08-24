@@ -1,0 +1,49 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Teste de Prompts{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="nk-content">
+    <div class="container-fluid">
+        <div class="nk-content-inner">
+            <div class="nk-content-body">
+                <div class="nk-block">
+                    <div class="nk-block-head">
+                        <div class="nk-block-head-content">
+                            <h2 class="nk-block-title">Teste de Prompts</h2>
+                            <div class="nk-block-des">
+                                <p>Teste das funcionalidades de prompts.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-inner">
+                            <button onclick="testToggle()" class="btn btn-primary">Testar Toggle</button>
+                            <button onclick="testDelete()" class="btn btn-danger">Testar Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function testToggle() {
+    console.log('Testando toggle...');
+    alert('Função toggle chamada!');
+}
+
+function testDelete() {
+    console.log('Testando delete...');
+    alert('Função delete chamada!');
+}
+
+console.log('Script de teste carregado');
+</script>
+{% endblock %} 

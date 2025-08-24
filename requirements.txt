@@ -29,6 +29,7 @@ Jinja2==3.1.6
 jiter==0.10.0
 jmespath==1.0.1
 lxml==5.4.0
+markdown==3.7
 MarkupSafe==3.0.2
 minio==7.2.12
 mysql==0.0.3
@@ -40,6 +41,7 @@ openai==1.82.0
 packaging==24.2
 pandas==2.2.3
 pillow==11.0.0
+openpyxl==3.1.5
 pycparser==2.22
 pycryptodome==3.21.0
 pydantic==2.11.5
@@ -66,3 +68,5 @@ ua-parser-builtins==0.18.0.post1
 urllib3==2.2.3
 user-agents==2.2.0
 validate-docbr==1.10.0
+
+unidecode==1.4.0

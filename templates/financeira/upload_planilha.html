@@ -1,0 +1,352 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">Upload de Planilha - Informações Adicionais</h4>
+                    <div>
+                        <a href="{% url 'financeira:financeira_informacoesadicionais' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Voltar
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Instruções:</h6>
+                        <ul class="mb-2">
+                            <li><strong>Colunas obrigatórias:</strong> <code>nome</code>, <code>cpf_cnpj</code>, <code>tipo_transacao</code>, <code>valor</code>, <code>transacoes</code>, <code>plataforma</code></li>
+                            <li><strong>Formatos aceitos:</strong> .xlsx, .xls, .csv</li>
+                            <li><strong>Nomes das colunas:</strong> O sistema normaliza automaticamente (remove acentos, espaços extras, etc.)</li>
+                            <li><strong>Valores monetários:</strong> Aceita formato brasileiro (R$ 1.234,56) ou americano (1234.56)</li>
+                            <li><strong>CPF/CNPJ:</strong> Pode usar pontuação (123.456.789-10) ou só números (12345678910)</li>
+                            <li><strong>tipo_transacao:</strong> "crédito" ou "débito"</li>
+                            <li><strong>plataforma:</strong> "PIX", "Transferência", "Depósito", etc.</li>
+                        </ul>
+                        <div class="alert alert-warning mb-2">
+                            <small><strong>💡 Dica:</strong> Se suas colunas tiverem nomes diferentes, o sistema tenta mapear automaticamente. Por exemplo: "CPF" → "cpf_cnpj", "Quantidade" → "transacoes", etc.</small>
+                        </div>
+                        <div class="alert alert-success mb-2">
+                            <small><strong>📋 CSV:</strong> O sistema detecta automaticamente se usa vírgula (,) ou ponto-e-vírgula (;) como separador. Se tiver problemas, salve no Excel como "CSV UTF-8 (delimitado por vírgula)".</small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#exemploModal">
+                            <i class="icon fas fa-table"></i><span>Ver Exemplo de Planilha</span>
+                        </button>
+                        <a href="{% url 'financeira:download_modelo_planilha' %}" class="btn btn-sm btn-outline-success">
+                            <i class="icon fas fa-download"></i><span>Baixar Modelo CSV</span>
+                        </a>
+                    </div>
+
+                    <form id="uploadForm" enctype="multipart/form-data" method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="comunicacao_id">Comunicação *</label>
+                                    <select name="comunicacao_id" id="comunicacao_id" class="form-control" required>
+                                        <option value="">Selecione uma comunicação</option>
+                                        {% for com in comunicacoes %}
+                                        <option value="{{ com.id }}" data-indexador="{{ com.indexador }}">
+                                            RIF {{ com.rif.numero }} - {{ com.nome_comunicante }} ({{ com.indexador }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="indexador">Indexador *</label>
+                                    <input type="number" name="indexador" id="indexador" class="form-control" 
+                                           placeholder="Digite o indexador" required>
+                                    <small class="text-muted">Será preenchido automaticamente ao selecionar a comunicação</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="planilha">Arquivo da Planilha *</label>
+                                    <input type="file" name="planilha" id="planilha" class="form-control" 
+                                           accept=".xlsx,.xls,.csv" required>
+                                    <small class="text-muted">Formatos aceitos: Excel (.xlsx, .xls) ou CSV (.csv)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="icon fas fa-upload"></i><span>Fazer Upload</span>
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="previewFile()">
+                                    <i class="icon fas fa-eye"></i><span>Prévia do Arquivo</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Área de prévia do arquivo -->
+                    <div id="preview-container" class="mt-4" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>Prévia do Arquivo</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="preview-content"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Área de resultado -->
+                    <div id="result-container" class="mt-4" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>Resultado do Upload</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="result-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template para exemplo de planilha -->
+<div class="modal fade" id="exemploModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Exemplo de Planilha</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th>nome</th>
+                                <th>cpf_cnpj</th>
+                                <th>tipo_transacao</th>
+                                <th>valor</th>
+                                <th>transacoes</th>
+                                <th>plataforma</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>João da Silva</td>
+                                <td>123.456.789-10</td>
+                                <td>crédito</td>
+                                <td>R$ 1.500,00</td>
+                                <td>1</td>
+                                <td>PIX</td>
+                            </tr>
+                            <tr>
+                                <td>Maria Santos</td>
+                                <td>98765432100</td>
+                                <td>débito</td>
+                                <td>2500.50</td>
+                                <td>2</td>
+                                <td>Transferência</td>
+                            </tr>
+                            <tr>
+                                <td>Empresa ABC LTDA</td>
+                                <td>12.345.678/0001-90</td>
+                                <td>crédito</td>
+                                <td>10000</td>
+                                <td>1</td>
+                                <td>Depósito</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Auto-preenche indexador ao selecionar comunicação
+    $('#comunicacao_id').on('change', function() {
+        const selectedOption = $(this).find('option:selected');
+        const indexador = selectedOption.data('indexador');
+        if (indexador) {
+            $('#indexador').val(indexador);
+        }
+    });
+
+    // Submit do formulário
+    $('#uploadForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitButton = $(this).find('button[type="submit"]');
+        
+        // Desabilita o botão
+        submitButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processando...');
+        
+        $.ajax({
+            url: '{% url "financeira:upload_planilha" %}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                showResult(response, 'success');
+                if (response.success) {
+                    // Limpa o formulário
+                    $('#uploadForm')[0].reset();
+                    $('#preview-container').hide();
+                }
+            },
+            error: function(xhr) {
+                let errorMessage = 'Erro no upload';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    errorMessage = response.message || errorMessage;
+                } catch (e) {
+                    errorMessage = `Erro ${xhr.status}: ${xhr.statusText}`;
+                }
+                showResult({success: false, message: errorMessage}, 'error');
+            },
+            complete: function() {
+                // Reabilita o botão
+                submitButton.prop('disabled', false).html('<i class="fas fa-upload"></i> Fazer Upload');
+            }
+        });
+    });
+});
+
+function showResult(response, type) {
+    const container = $('#result-container');
+    const content = $('#result-content');
+    
+    let alertClass = response.success ? 'alert-success' : 'alert-danger';
+    let icon = response.success ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
+    
+    let html = `<div class="alert ${alertClass}">
+        <h6><i class="${icon}"></i> ${response.success ? 'Sucesso' : 'Erro'}</h6>
+        <p>${response.message.replace(/\n/g, '<br>')}</p>
+    `;
+    
+    if (response.success && (response.registros_salvos || response.registros_erro)) {
+        html += `
+        <hr>
+        <div class="row">
+            <div class="col-md-4">
+                <strong>Total de registros:</strong> ${response.total_registros || 0}
+            </div>
+            <div class="col-md-4">
+                <strong>Salvos:</strong> <span class="text-success">${response.registros_salvos || 0}</span>
+            </div>
+            <div class="col-md-4">
+                <strong>Com erro:</strong> <span class="text-danger">${response.registros_erro || 0}</span>
+            </div>
+        </div>
+        `;
+    }
+    
+    html += '</div>';
+    
+    content.html(html);
+    container.show();
+    
+    // Scroll para o resultado
+    $('html, body').animate({
+        scrollTop: container.offset().top - 100
+    }, 500);
+}
+
+function previewFile() {
+    const fileInput = document.getElementById('planilha');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Selecione um arquivo primeiro.');
+        return;
+    }
+    
+    const container = $('#preview-container');
+    const content = $('#preview-content');
+    
+    if (file.name.toLowerCase().endsWith('.csv')) {
+        // Preview para CSV
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                showPreview(results.data.slice(0, 5), Object.keys(results.data[0] || {}));
+            },
+            error: function(error) {
+                content.html(`<div class="alert alert-danger">Erro ao ler arquivo: ${error.message}</div>`);
+                container.show();
+            }
+        });
+    } else {
+        // Para Excel, apenas mostra informações básicas
+        content.html(`
+            <div class="alert alert-info">
+                <h6>Arquivo Excel selecionado</h6>
+                <p><strong>Nome:</strong> ${file.name}</p>
+                <p><strong>Tamanho:</strong> ${(file.size / 1024).toFixed(2)} KB</p>
+                <p><strong>Tipo:</strong> ${file.type}</p>
+                <p class="mb-0">Use a função de upload para processar o arquivo Excel.</p>
+            </div>
+        `);
+        container.show();
+    }
+}
+
+function showPreview(data, columns) {
+    const container = $('#preview-container');
+    const content = $('#preview-content');
+    
+    if (!data || data.length === 0) {
+        content.html('<div class="alert alert-warning">Arquivo vazio ou sem dados válidos.</div>');
+        container.show();
+        return;
+    }
+    
+    let html = `
+        <div class="alert alert-info">
+            <h6>Prévia das primeiras 5 linhas</h6>
+            <p><strong>Colunas encontradas:</strong> ${columns.join(', ')}</p>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+                <thead>
+                    <tr>
+    `;
+    
+    columns.forEach(col => {
+        html += `<th>${col}</th>`;
+    });
+    
+    html += '</tr></thead><tbody>';
+    
+    data.forEach(row => {
+        html += '<tr>';
+        columns.forEach(col => {
+            html += `<td>${row[col] || ''}</td>`;
+        });
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table></div>';
+    
+    content.html(html);
+    container.show();
+}
+</script>
+{% endblock %} 

@@ -4,11 +4,11 @@
             <li class="nk-menu-heading">
                 <h6 class="overline-title text-primary-alt">Plataforma ALIAS</h6>
             </li>
-            <li class="nk-menu-item"><a href="/home" class="nk-menu-link">
+            <li class="nk-menu-item"><a href="/" class="nk-menu-link">
                     <span class="nk-menu-icon">
                         <em class="icon ni ni-dashboard"></em>
                     </span>
-                    <span class="nk-menu-text">Dashboard</span>
+                    <span class="nk-menu-text">Início</span>
                 </a>
             </li>
 
@@ -77,7 +77,13 @@
                     <li class="nk-menu-item">
                         <a href="/financeira/errosimportacao" class="nk-menu-link" data-original-title=""
                             title="Ver todos os erros de importação do Caso">
-                            <span class="nk-menu-text">Erros de Importação</span>
+                            <span class="nk-menu-text">Erros de Sincronização</span>
+                        </a>
+                    </li>
+                    <li class="nk-menu-item">
+                        <a href="/financeira/resumo" class="nk-menu-link" data-original-title=""
+                            title="Relatório Técnico de Inteligência Financeira">
+                            <span class="nk-menu-text">Resumo</span>
                         </a>
                     </li>
                 </ul>
@@ -98,14 +104,43 @@
                         </a>
                     </li>
                     <li class="nk-menu-item">
-                        <a href="/bancaria/index" class="nk-menu-link" data-original-title="" title="">
-                            <span class="nk-menu-text">Respostas IFs</span>
+                        <a href="/bancaria/dashboard" class="nk-menu-link" data-original-title="" title="">
+                            <span class="nk-menu-text">Dashboard</span>
                         </a>
                     </li>
                     <li class="nk-menu-item">
-                        <a href="/bancaria/analisedevinculos" class="nk-menu-link" data-original-title=""
+                        <a href="{% url 'bancaria:extrato_detalhado' %}" class="nk-menu-link" data-original-title=""
+                            title="">
+                            <span class="nk-menu-text">Extrato Detalhado</span>
+                        </a>
+                    </li>
+                    <li class="nk-menu-item">
+                        <a href="{% url 'bancaria:calendario' %}" class="nk-menu-link" data-original-title="" title="">
+                            <span class="nk-menu-text">Movimentação por Dia</span>
+                        </a>
+                    </li>
+                    <li class="nk-menu-item">
+                        <a href="{% url 'bancaria:unificar_dados' %}" class="nk-menu-link" data-original-title=""
+                            title="Unificar nomes de titulares e outras informações">
+                            <span class="nk-menu-text">Unificar Dados</span>
+                        </a>
+                    </li>
+                    <li class="nk-menu-item">
+                        <a href="{% url 'bancaria:analise_de_vinculos' %}" class="nk-menu-link" data-original-title=""
                             title="Ver todas as análises de vínculos do Caso">
                             <span class="nk-menu-text">Análise de Vínculos</span>
+                        </a>
+                    </li>
+                    <li class="nk-menu-item">
+                        <a href="{% url 'bancaria:analise_vinculos_selecionados' %}" class="nk-menu-link" data-original-title=""
+                            title="Análise de vínculos entre titulares e contrapartes selecionados">
+                            <span class="nk-menu-text">Análise de Vínculos Selecionados</span>
+                        </a>
+                    </li>
+                    <li class="nk-menu-item">
+                        <a href="{% url 'bancaria:filtrar_extrato_titular' %}" class="nk-menu-link" data-original-title=""
+                            title="Filtrar extratos por titular e intervalo de datas">
+                            <span class="nk-menu-text">Filtrar Extrato por Titular</span>
                         </a>
                     </li>
                 </ul>
@@ -118,32 +153,19 @@
                     </span>
                     <span class="nk-menu-text">Análise Patrimonial</span>
                 </a>
-
-                <ul class="nk-menu-sub">
-                    <li class="nk-menu-item">
-                        <a href="/financeira/index" class="nk-menu-link" data-original-title="" title="">
-                            <span class="nk-menu-text">Gerenciar Dossies</span>
-                        </a>
-                    </li>
-                    <li class="nk-menu-item">
-                        <a href="/financeira/index" class="nk-menu-link" data-original-title="" title="">
-                            <span class="nk-menu-text">Mapa</span>
-                        </a>
-                    </li>
-                </ul>
             </li>
 
             <li class="nk-menu-item has-sub">
                 <a href="#" class="nk-menu-link nk-menu-toggle" data-original-title="" title="">
                     <span class="nk-menu-icon">
-                        <i class="icon fa-regular fa-chart-line"></i>
+                        <i class="icon fa-regular fa-messages"></i>
                     </span>
-                    <span class="nk-menu-text">Análise de Vínculos</span>
+                    <span class="nk-menu-text">Chat com Dados</span>
                 </a>
                 <ul class="nk-menu-sub">
                     <li class="nk-menu-item">
-                        <a href="/financeira/index" class="nk-menu-link" data-original-title="" title="">
-                            <span class="nk-menu-text">Análise de Rede (graphos)</span>
+                        <a href="{% url 'bancaria:chat_dados' %}" class="nk-menu-link" data-original-title="" title="">
+                            <span class="nk-menu-text">Chat com Dados</span>
                         </a>
                     </li>
                 </ul>
@@ -159,13 +181,13 @@
 
                 <ul class="nk-menu-sub">
                     <li class="nk-menu-item">
-                        <a href="/financeira/relatorio" class="nk-menu-link" data-original-title="" title="">
-                            <span class="nk-menu-text">RT Inteligência Financeira</span>
+                        <a href="/relatorios" class="nk-menu-link" data-original-title="" title="">
+                            <span class="nk-menu-text">Gerenciar Relatórios</span>
                         </a>
                     </li>
                     <li class="nk-menu-item">
-                        <a href="/bancaria/relatorio" class="nk-menu-link" data-original-title="" title="">
-                            <span class="nk-menu-text">RT Análise Bancária</span>
+                        <a href="/relatorios/documentacao" class="nk-menu-link" data-original-title="" title="">
+                            <span class="nk-menu-text">Documentação de Dados</span>
                         </a>
                     </li>
                 </ul>

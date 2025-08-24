@@ -1,0 +1,381 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% load financeira_filters %}
+
+{% block css %}
+<style>
+    .query-card {
+        margin-bottom: 20px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .query-header {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .query-body {
+        padding: 15px;
+    }
+
+    .query-stats {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 15px;
+    }
+
+    .stat-item {
+        background-color: #e9ecef;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .error-message {
+        color: #dc3545;
+        background-color: #f8d7da;
+        padding: 10px;
+        border-radius: 4px;
+        margin-top: 10px;
+    }
+
+    .success-message {
+        color: #155724;
+        background-color: #d4edda;
+        padding: 10px;
+        border-radius: 4px;
+        margin-top: 10px;
+    }
+
+    .table-responsive {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .custom-query-form {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="dashboard-title">Queries Customizadas</h3>
+            <p class="dashboard-subtitle">Execução de queries SQL personalizadas</p>
+        </div>
+        <div>
+            <span class="badge bg-success">{{ successful_queries }}/{{ total_queries }} executadas com sucesso</span>
+        </div>
+    </div>
+
+    <!-- Formulário para query customizada -->
+    <div class="custom-query-form">
+        <h5>Executar Query Customizada</h5>
+        <div class="row">
+            <div class="col-md-8">
+                <textarea id="customQuery" class="form-control" rows="4"
+                    placeholder="Digite sua query SQL aqui..."></textarea>
+            </div>
+            <div class="col-md-4">
+                <button id="executeQuery" class="btn btn-primary mt-2">
+                    <i class="icon fas fa-play"></i><span>Executar Query</span>
+                </button>
+                <button id="createQuery" class="btn btn-info mt-2">
+                    <i class="icon fas fa-robot"></i><span>Criar Query com IA</span>
+                </button>
+                <button id="clearQuery" class="btn btn-secondary mt-2 ms-2">
+                    <i class="icon fas fa-trash"></i><span>Limpar</span>
+                </button>
+                <hr>
+                <div class="row">
+                    <!-- Lista de tabelas -->
+                    <select id="tables" class="form-select">
+                        {% for table in tables %}
+                        <option value="{{ table }}">{{ table }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div id="queryResult" class="mt-3"></div>
+    </div>
+
+    <!-- Resultados das queries pré-definidas -->
+    <div class="row">
+        <div class="col-12">
+            <h5>Queries Pré-definidas</h5>
+        </div>
+    </div>
+
+    {% for query_result in queries_results %}
+    <div class="query-card">
+        <div class="query-header">
+            <h6 class="mb-0">{{ query_result.name }}</h6>
+            <small class="text-muted">{{ query_result.query|truncatechars:100 }}</small>
+        </div>
+        <div class="query-body">
+            <div class="query-stats">
+                <div class="stat-item">
+                    <strong>Registros:</strong> {{ query_result.total_registros }}
+                </div>
+                {% if query_result.colunas %}
+                <div class="stat-item">
+                    <strong>Colunas:</strong> {{ query_result.colunas|join:", " }}
+                </div>
+                {% endif %}
+            </div>
+
+            {% if query_result.erro %}
+            <div class="error-message">
+                <strong>Erro:</strong> {{ query_result.erro }}
+            </div>
+            {% else %}
+            <div class="success-message">
+                <strong>Sucesso!</strong> Query executada com sucesso.
+            </div>
+
+            {% if query_result.resultado %}
+            <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            {% for coluna in query_result.colunas %}
+                            <th>{{ coluna }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in query_result.resultado %}
+                        <tr>
+                            {% for coluna in query_result.colunas %}
+                            <td>{{ row|get_item:coluna }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal para criar query com IA -->
+<div class="modal fade" id="createQueryModal" tabindex="-1" aria-labelledby="createQueryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createQueryModalLabel">Criar Query com IA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="tableSelect" class="form-label">Tabela (opcional):</label>
+                    <select id="tableSelect" class="form-select">
+                        <option value="">Todas as tabelas</option>
+                        {% for table in tables %}
+                        <option value="{{ table }}">{{ table }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="queryDescription" class="form-label">Descreva o que você quer consultar:</label>
+                    <textarea id="queryDescription" class="form-control" rows="4"
+                        placeholder="Ex: Buscar todas as comunicações com valor maior que 10000, ou: Contar quantos envolvidos existem por tipo"></textarea>
+                </div>
+                <div id="aiResponse" class="alert alert-info d-none">
+                    <strong>IA:</strong> <span id="aiResponseText"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="generateQuery">
+                    <i class="fas fa-magic"></i> Gerar Query
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    // Função para obter o token CSRF
+    function getCSRFToken() {
+        return $('[name=csrfmiddlewaretoken]').val() || $('meta[name=csrf-token]').attr('content');
+    }
+
+    $(document).ready(function () {
+        $('#executeQuery').click(function () {
+            const query = $('#customQuery').val().trim();
+            if (!query) {
+                alert('Por favor, digite uma query SQL.');
+                return;
+            }
+
+            // Mostrar loading
+            $('#executeQuery').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Executando...');
+
+            $.ajax({
+                url: '{% url "financeira:execute_custom_query_api" %}',
+                method: 'POST',
+                contentType: 'application/json',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                },
+                data: JSON.stringify({ query: query }),
+                success: function (response) {
+                    if (response.success) {
+                        let html = `
+                        <div class="alert alert-success">
+                            <strong>Sucesso!</strong> Query executada com ${response.total_registros} registros.
+                        </div>
+                    `;
+
+                        if (response.resultado.length > 0) {
+                            html += '<div class="table-responsive"><table class="table table-sm table-striped">';
+
+                            // Cabeçalho
+                            html += '<thead><tr>';
+                            response.colunas.forEach(coluna => {
+                                html += `<th>${coluna}</th>`;
+                            });
+                            html += '</tr></thead>';
+
+                            // Dados
+                            html += '<tbody>';
+                            response.resultado.forEach(row => {
+                                html += '<tr>';
+                                response.colunas.forEach(coluna => {
+                                    html += `<td>${row[coluna] || ''}</td>`;
+                                });
+                                html += '</tr>';
+                            });
+                            html += '</tbody></table></div>';
+                        }
+
+                        $('#queryResult').html(html);
+                    } else {
+                        $('#queryResult').html(`
+                        <div class="alert alert-danger">
+                            <strong>Erro:</strong> ${response.error}
+                        </div>
+                    `);
+                    }
+                },
+                error: function (xhr) {
+                    let errorMsg = 'Erro ao executar query.';
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        errorMsg = response.error || errorMsg;
+                    } catch (e) { }
+
+                    $('#queryResult').html(`
+                    <div class="alert alert-danger">
+                        <strong>Erro:</strong> ${errorMsg}
+                    </div>
+                `);
+                },
+                complete: function () {
+                    $('#executeQuery').prop('disabled', false).html('<i class="fas fa-play"></i> Executar Query');
+                }
+            });
+        });
+
+        $('#clearQuery').click(function () {
+            $('#customQuery').val('');
+            $('#queryResult').empty();
+        });
+
+        // Criar Query com IA
+        $('#createQuery').click(function () {
+            $('#createQueryModal').modal('show');
+        });
+
+        $('#generateQuery').click(function () {
+            const description = $('#queryDescription').val().trim();
+            const table = $('#tableSelect').val();
+
+            if (!description) {
+                alert('Por favor, descreva o que você quer consultar.');
+                return;
+            }
+
+            // Mostrar loading
+            $('#generateQuery').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Gerando...');
+            $('#aiResponse').addClass('d-none');
+
+            $.ajax({
+                url: '{% url "financeira:create_query_api" %}',
+                method: 'POST',
+                contentType: 'application/json',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                },
+                data: JSON.stringify({
+                    request: description,
+                    table: table
+                }),
+                success: function (response) {
+                    if (response.success) {
+                        // Colocar a query gerada na textarea principal
+                        $('#customQuery').val(response.query);
+
+                        // Mostrar resposta da IA
+                        $('#aiResponseText').text(response.ai_response);
+                        $('#aiResponse').removeClass('d-none');
+
+                        // Fechar modal
+                        $('#createQueryModal').modal('hide');
+
+                        // Limpar campos do modal
+                        $('#queryDescription').val('');
+                        $('#tableSelect').val('');
+
+                        // Mostrar sucesso
+                        $('#queryResult').html(`
+                            <div class="alert alert-success">
+                                <strong>Query gerada com sucesso!</strong> A query foi inserida no campo acima.
+                            </div>
+                        `);
+                    } else {
+                        $('#queryResult').html(`
+                            <div class="alert alert-danger">
+                                <strong>Erro:</strong> ${response.error}
+                            </div>
+                        `);
+                    }
+                },
+                error: function (xhr) {
+                    let errorMsg = 'Erro ao gerar query.';
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        errorMsg = response.error || errorMsg;
+                    } catch (e) { }
+
+                    $('#queryResult').html(`
+                        <div class="alert alert-danger">
+                            <strong>Erro:</strong> ${errorMsg}
+                        </div>
+                    `);
+                },
+                complete: function () {
+                    $('#generateQuery').prop('disabled', false).html('<i class="fas fa-magic"></i> Gerar Query');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

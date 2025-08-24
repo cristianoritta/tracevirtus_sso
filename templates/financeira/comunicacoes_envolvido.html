@@ -1,5 +1,6 @@
 {% extends 'layout/base.html' %}
 {% load static %}
+{% load mask %}
 
 {% block css %}
 <style>
@@ -60,11 +61,6 @@
             <h3 class="dashboard-title">Comunicações do Envolvido</h3>
             <p class="dashboard-subtitle">Caso: {{ caso.numero }} | RIF: {{ rif.numero }}</p>
         </div>
-        <div>
-            <a href="{% url 'financeira:financeira_envolvidos' %}" class="btn btn-outline-secondary">
-                <i class="fa fa-arrow-left"></i> Voltar
-            </a>
-        </div>
     </div>
 
     <!-- Informações do Envolvido -->
@@ -73,7 +69,7 @@
             <h4><i class="fa fa-user"></i> {{ envolvido.nome_envolvido }}</h4>
         </div>
         <div class="card-body">
-            <p><strong>CPF/CNPJ:</strong> {{ envolvido.cpf_cnpj_envolvido }}</p>
+            <p><strong>CPF/CNPJ:</strong> {{ envolvido.cpf_cnpj_envolvido|mask:'cpf_cnpj' }}</p>
             <p><strong>Tipo:</strong> {{ envolvido.tipo_envolvido }}</p>
             <p><strong>Indexador:</strong> {{ envolvido.indexador }}</p>
             <p><strong>Agência:</strong> {{ envolvido.agencia_envolvido }}</p>
@@ -88,15 +84,16 @@
                     <tr>
                         <th>Nº RIF</th>
                         <th>Indexador</th>
-                        <th>CPF/CNPJ Comunicante</th>
                         <th>Nome Comunicante</th>
+                        <th>Titular</th>
                         <th>Agência</th>
                         <th>Campo A</th>
                         <th>Campo B</th>
                         <th>Campo C</th>
                         <th>Campo D</th>
                         <th>Segmento</th>
-                        <th>Ações</th>
+                        <th nowrap>Informações</th>
+                        <th nowrap>Detalhes</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -104,19 +101,29 @@
                     <tr data-comunicacao-id="{{ forloop.counter }}">
                         <td>{{ c.rif.numero }}</td>
                         <td>{{ c.indexador }}</td>
-                        <td>{{ c.cpf_cnpj_comunicante }}</td>
                         <td>{{ c.nome_comunicante }}</td>
+                        <td>
+                            {{ c.titular|default:"Não identificado" }}
+                            <br><small>
+                                CPF: {{ c.cpf_cnpj_titular|mask:'cpf_cnpj' }}
+                            </small>
+                        </td>
                         <td>{{ c.cidade_agencia }}</td>
                         <td>{{ c.campo_a }}</td>
                         <td>{{ c.campo_b }}</td>
                         <td>{{ c.campo_c }}</td>
                         <td>{{ c.campo_d }}</td>
                         <td>{{ c.codigo_segmento }}</td>
-                        <td>
-                            <button class="btn btn-sm btn-primary" onclick="showInfoModal('{{ forloop.counter }}')"
-                                data-comunicacao-id="{{ forloop.counter }}">
+                        <td nowrap>
+                            <button class="btn btn-outline-primary" onclick="showInfoModal('{{ forloop.counter }}')"
+                                data-comunicacao-id="{{ forloop.counter }}" title="Informações Adicionais">
                                 <i class="fa fa-info-circle"></i>
                             </button>
+                        </td>
+                        <td nowrap>
+                            <a href="/financeira/comunicacao/{{ c.id }}" class="btn btn-outline-primary" title="Comunicação detalhada">
+                                <i class="fa fa-folder-open"></i>
+                            </a>
                         </td>
                     </tr>
                     {% endfor %}

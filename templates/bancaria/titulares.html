@@ -1,0 +1,82 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% load mask %}
+{% load math_filters %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="nk-block-head nk-block-head-sm">
+        <div class="nk-block-between">
+            <div class="nk-block-head-content">
+                <h3 class="nk-block-title page-title">{{ title }}</h3>
+                <div class="nk-block-des text-soft">
+                    <p>{{ subtitle }}</p>
+                </div>
+            </div>
+            <div class="nk-block-head-content">
+                <a href="{% url 'bancaria:index' %}" class="btn btn-outline-light bg-white d-none d-sm-inline-flex"><em class="icon ni ni-arrow-left"></em><span>Voltar</span></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Titulares em Cards -->
+    <div class="row g-gs">
+        {% for titular in titulares %}
+            <div class="col-sm-6 col-lg-4 col-xxl-3">
+                <div class="card card-bordered">
+                    <div class="card-inner">
+                        <div class="team">
+                            <div class="team-options">
+                                <div class="drodown">
+                                    <a href="#" class="dropdown-toggle btn btn-sm btn-icon btn-trigger" data-bs-toggle="dropdown"><em class="icon ni ni-more-h"></em></a>
+                                    <div class="dropdown-menu dropdown-menu-end">
+                                        <ul class="link-list-opt no-bdr">
+                                            <li><a href="#"><em class="icon ni ni-focus"></em><span>Ver Transações</span></a></li>
+                                            <li><a href="#"><em class="icon ni ni-eye"></em><span>Ver Perfil</span></a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="user-card user-card-s2">
+                                <div class="user-info">
+                                    <h6>{{ titular.nome_titular }}</h6>
+                                    <span class="sub-text">CPF: {{ titular.cpf_cnpj_titular|mask:'cpf_cnpj' }}</span>
+                                </div>
+                            </div>
+                            <div class="team-details">
+                                <p>
+                                    Análise consolidada das movimentações bancárias.
+                                </p>
+                                <strong>{{ titular.total_operacoes }} Operações</strong>
+                            </div>
+                            <ul class="team-statistics">
+                                <li><span>{{ titular.total_credito|real }}</span><span>Créditos</span></li>
+                                <li><span>{{ titular.total_debito|real }}</span><span>Débitos</span></li>
+                            </ul>
+                            <div class="team-details mb-3">                                
+                                {% if titular.total_credito|subtract:titular.total_debito > 0 %}
+                                <p class="text-primary">Saldo: {{ titular.total_credito|subtract:titular.total_debito|real }}</p>
+                                {% else %}
+                                <p class="text-danger">Saldo: - {{ titular.total_credito|subtract:titular.total_debito|real }}</p>
+                                {% endif %}
+                            </div>
+                        </div><!-- .team -->
+                    </div><!-- .card-inner -->
+                </div><!-- .card -->
+            </div><!-- .col -->
+        {% empty %}
+            <div class="col-12">
+                <div class="card card-bordered">
+                    <div class="card-inner">
+                        <div class="text-center">
+                            <h4>Nenhum titular encontrado</h4>
+                            <p>Não há registros de titulares para esta cooperação.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

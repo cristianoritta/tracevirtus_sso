@@ -1,0 +1,184 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-file-alt me-2"></i>{{ relatorio.nome }}
+                    </h4>
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'relatorio_update' relatorio.pk %}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit me-1"></i>Editar
+                        </a>
+                        {% if relatorio.arquivo %}
+                        <a href="{% url 'relatorio_download' relatorio.pk %}" class="btn btn-success btn-sm">
+                            <i class="fas fa-download me-1"></i>Download
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'relatorio_delete' relatorio.pk %}" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash me-1"></i>Remover
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Informações Básicas</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Nome:</strong></td>
+                                    <td>{{ relatorio.nome }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Tipo:</strong></td>
+                                    <td>
+                                        <span class="badge bg-info">{{ relatorio.get_tipo_display }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ relatorio.status }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Criado por:</strong></td>
+                                    <td>{{ relatorio.created_by.username }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Data de criação:</strong></td>
+                                    <td>{{ relatorio.created_at|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Última atualização:</strong></td>
+                                    <td>{{ relatorio.updated_at|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Arquivo</h6>
+                            {% if relatorio.arquivo %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-file me-2"></i>
+                                    <strong>Arquivo:</strong> {{ relatorio.arquivo.name }}
+                                    <br>
+                                    <small class="text-muted">
+                                        Tamanho: {{ relatorio.arquivo.size|filesizeformat }}
+                                    </small>
+                                </div>
+                                <a href="{% url 'relatorio_download' relatorio.pk %}" class="btn btn-success">
+                                    <i class="fas fa-download me-1"></i>Download do Arquivo
+                                </a>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Nenhum arquivo anexado
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <h6 class="text-muted">Descrição</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                {% if relatorio.descricao %}
+                                    {{ relatorio.descricao|linebreaks }}
+                                {% else %}
+                                    <em class="text-muted">Nenhuma descrição fornecida.</em>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if relatorio.historico_atualizacoes and relatorio.historico_atualizacoes.atualizacoes %}
+                    <div class="mb-3">
+                        <h6 class="text-muted">Histórico de Atualizações</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="timeline">
+                                    {% for atualizacao in relatorio.historico_atualizacoes.atualizacoes %}
+                                    <div class="timeline-item">
+                                        <div class="timeline-marker"></div>
+                                        <div class="timeline-content">
+                                            <h6 class="mb-1">{{ atualizacao.acao }}</h6>
+                                            <p class="mb-1">{{ atualizacao.descricao }}</p>
+                                            <small class="text-muted">
+                                                <i class="fas fa-user me-1"></i>{{ atualizacao.usuario }}
+                                                <i class="fas fa-clock ms-2 me-1"></i>
+                                                {{ atualizacao.data|date:"d/m/Y H:i" }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-cogs me-2"></i>Ações Rápidas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2 bg-white">
+                        <a href="{% url 'relatorios_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-list me-1"></i>Lista de Relatórios
+                        </a>
+                        <a href="{% url 'relatorio_create' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus me-1"></i>Novo Relatório
+                        </a>
+                        {% if relatorio.arquivo %}
+                        <a href="{% url 'relatorio_download' relatorio.pk %}" class="btn btn-outline-success">
+                            <i class="fas fa-download me-1"></i>Download
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -35px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #007bff;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #007bff;
+}
+
+.timeline-content {
+    padding-left: 15px;
+    border-left: 2px solid #e9ecef;
+    padding-bottom: 10px;
+}
+</style>
+{% endblock %} 

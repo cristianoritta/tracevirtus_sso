@@ -19,5 +19,14 @@ urlpatterns = [
     path('casos/<int:id>/investigados/<int:investigado_id>/excluir/', views.excluir_investigado, name='excluir_investigado'),
     path('investigados/<int:investigado_id>/excluir/', views.excluir_investigado, name='excluir_investigado'),
     path('api/buscar-investigado/', views.buscar_investigado, name='buscar_investigado'),
+    
+    # CRUD de Relatórios
+    path('relatorios/', views.relatorios_list, name='relatorios_list'),
+    path('relatorios/criar/', views.relatorio_create, name='relatorio_create'),
+    path('relatorios/<int:pk>/', views.relatorio_detail, name='relatorio_detail'),
+    path('relatorios/<int:pk>/editar/', views.relatorio_update, name='relatorio_update'),
+    path('relatorios/<int:pk>/remover/', views.relatorio_delete, name='relatorio_delete'),
+    path('relatorios/<int:pk>/download/', views.relatorio_download, name='relatorio_download'),
+    path('relatorios/documentacao/', views.relatorio_documentacao, name='relatorio_documentacao'),
 ]
 

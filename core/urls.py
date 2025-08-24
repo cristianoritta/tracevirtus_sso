@@ -15,4 +15,5 @@ urlpatterns = [
     path('usuarios/', include('user.urls')),
     
     path('financeira/', include('financeira.urls', namespace='financeira')),
+    path('bancaria/', include('bancaria.urls', namespace='bancaria')),
 ]

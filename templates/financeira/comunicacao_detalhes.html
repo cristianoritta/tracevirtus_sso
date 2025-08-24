@@ -1,0 +1,961 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% load mask %}
+
+{% block css %}
+<style>
+    .alert-segmento {
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+        color: #856404;
+    }
+
+    .card-detalhes {
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header-custom {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        padding: 15px 20px;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .info-item {
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f3f4;
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #495057;
+        min-width: 150px;
+    }
+
+    .info-value {
+        color: #6c757d;
+    }
+
+    .analise-ia {
+        background-color: #f8f9fa;
+        border-left: 4px solid #007bff;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 5px;
+    }
+
+    .dados-financeiros {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 15px 0;
+    }
+
+    .campo-financeiro {
+        background-color: #e9ecef;
+        padding: 15px;
+        border-radius: 5px;
+        text-align: center;
+    }
+
+    .campo-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 5px;
+    }
+
+    .campo-valor {
+        font-size: 1.1em;
+        color: #007bff;
+    }
+
+    .envolvido-card {
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+
+    .envolvido-header {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 15px;
+        font-weight: 600;
+    }
+
+    .envolvido-body {
+        padding: 15px;
+    }
+
+    .ocorrencia-item {
+        background-color: #f8f9fa;
+        border-left: 3px solid #007bff;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 3px;
+    }
+
+    .btn-voltar {
+        margin-bottom: 20px;
+    }
+
+    .envolvidos-coluna {
+        min-height: 200px;
+        padding: 15px;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+    }
+
+    .envolvidos-coluna h6 {
+        border-bottom: 2px solid;
+        padding-bottom: 8px;
+        margin-bottom: 20px;
+    }
+
+    .envolvidos-coluna .text-success {
+        border-color: #28a745;
+    }
+
+    .envolvidos-coluna .text-danger {
+        border-color: #dc3545;
+    }
+
+    .bg-success {
+        background-color: #28a745 !important;
+    }
+
+    .bg-danger {
+        background-color: #dc3545 !important;
+    }
+
+    .bg-info {
+        background-color: #17a2b8 !important;
+    }
+
+    .bg-primary {
+        background-color: #007bff !important;
+    }
+
+    .text-primary {
+        color: #007bff !important;
+    }
+
+    /* Garantir que titulares sempre sejam azuis */
+    .envolvido-header.bg-primary,
+    .envolvido-header.bg-primary * {
+        background-color: #007bff !important;
+        color: white !important;
+    }
+
+    /* Forçar cor azul para ícones de titulares */
+    .envolvido-header.bg-primary i.fa-user-circle {
+        color: white !important;
+    }
+
+    .text-success {
+        color: #28a745 !important;
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+    }
+
+    .text-info {
+        color: #17a2b8 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-1">Detalhes da Comunicação</h3>
+            <p class="text-muted mb-0">RIF: {{ comunicacao.rif.numero }} | ID: {{ comunicacao.id_comunicacao }}</p>
+        </div>
+        <a href="{% url 'financeira:financeira_comunicacoes' %}" class="btn btn-outline-secondary">
+            <i class="fa fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <!-- Alerta de Segmento -->
+    {% if segmento_alerta %}
+    <div class="alert alert-warning alert-segmento" role="alert">
+        <i class="fa fa-exclamation-triangle"></i>
+        <strong>{{ segmento_alerta.mensagem }}</strong><br>
+        Código atual: {{ segmento_alerta.codigo_atual }} | Código padrão: {{ segmento_alerta.codigo_padrao }}
+    </div>
+    {% endif %}
+
+    <!-- Dados da Comunicação -->
+    <div class="card card-detalhes">
+        <div class="card-header-custom">
+            <i class="fa fa-file-text"></i> Dados da Comunicação
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-item d-flex">
+                        <span class="info-label">Nº RIF:</span>
+                        <span class="info-value">{{ comunicacao.rif.numero }}</span>
+                    </div>
+                    <div class="info-item d-flex">
+                        <span class="info-label">Indexador:</span>
+                        <span class="info-value">{{ comunicacao.indexador }}</span>
+                    </div>
+                    <div class="info-item d-flex">
+                        <span class="info-label">CPF/CNPJ do Comunicante:</span>
+                        <span class="info-value">{{ comunicacao.cpf_cnpj_comunicante|mask:'cpf_cnpj' }}</span>
+                    </div>
+                    <div class="info-item d-flex">
+                        <span class="info-label">Nome Comunicante:</span>
+                        <span class="info-value">{{ comunicacao.nome_comunicante }}</span>
+                    </div>
+                    <div class="info-item d-flex">
+                        <span class="info-label">Agência:</span>
+                        <span class="info-value">{{ comunicacao.nome_agencia }}
+                            - {{ comunicacao.cidade_agencia }}/{{ comunicacao.uf_agencia }}
+                        </span>
+                    </div>
+                    {% for titular in titulares %}
+                    <div class="info-item d-flex">
+                        <span class="info-label">Titular:</span>
+                        <span class="info-value fw-bold">{{ titular.nome_envolvido }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-6">
+                    <div class="info-item d-flex">
+                        <span class="info-label">Data Recebimento:</span>
+                        <span class="info-value">{{ comunicacao.data_recebimento }}</span>
+                    </div>
+                    <div class="info-item d-flex">
+                        <span class="info-label">Data Operação:</span>
+                        <span class="info-value">{{ comunicacao.data_operacao }}</span>
+                    </div>
+                    <div class="info-item d-flex">
+                        <span class="info-label">Data Fim Fato:</span>
+                        <span class="info-value">{{ comunicacao.data_fim_fato }}</span>
+                    </div>
+                    <div class="info-item d-flex">
+                        <span class="info-label">Nº Ocorrência BC:</span>
+                        <span class="info-value">{{ comunicacao.numero_ocorrencia_bc }}</span>
+                    </div>
+                    <div class="info-item d-flex">
+                        <span class="info-label">Segmento:</span>
+                        <span class="info-value">{{ comunicacao.codigo_segmento }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dados Financeiros -->
+    <div class="card card-detalhes">
+        <div class="card-header-custom">
+            <i class="fa fa-money-bill"></i> Dados Financeiros
+        </div>
+        <div class="card-body">
+            <div class="dados-financeiros">
+                <div class="campo-financeiro">
+                    <div class="campo-label">Campo A</div>
+                    <div class="campo-valor">{{ dados_financeiros.campo_a|real }}</div>
+                </div>
+                <div class="campo-financeiro">
+                    <div class="campo-label">Campo B</div>
+                    <div class="campo-valor">{{ dados_financeiros.campo_b|real }}</div>
+                </div>
+                <div class="campo-financeiro">
+                    <div class="campo-label">Campo C</div>
+                    <div class="campo-valor">{{ dados_financeiros.campo_c|real }}</div>
+                </div>
+                <div class="campo-financeiro">
+                    <div class="campo-label">Campo D</div>
+                    <div class="campo-valor">{{ dados_financeiros.campo_d|real }}</div>
+                </div>
+                <div class="campo-financeiro">
+                    <div class="campo-label">Campo E</div>
+                    <div class="campo-valor">{{ dados_financeiros.campo_e|real }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Envolvidos -->
+    {% if envolvidos %}
+    <div class="card card-detalhes">
+        <div class="card-header-custom">
+            <i class="fa fa-users"></i> Envolvidos ({{ envolvidos.count }})
+        </div>
+        <div class="card-body">
+            <!-- Titular - Linha Completa -->
+            {% if titulares %}
+            <div class="mb-4">
+                <h6 class="text-primary mb-3">
+                    <i class="fa fa-user-circle"></i> Titular da Conta (Principal)
+                </h6>
+                {% for envolvido in titulares %}
+                <div class="envolvido-card">
+                    <div class="envolvido-header bg-primary">
+                        <i class="fa fa-user-circle"></i> {{ envolvido.tipo_envolvido }}
+                        - {{ envolvido.nome_envolvido }}
+                    </div>
+                    <div class="envolvido-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item d-flex">
+                                    <span class="info-label">CPF/CNPJ:</span>
+                                    <span class="info-value">
+                                        {{ envolvido.cpf_cnpj_envolvido|mask:'cpf_cnpj' }}
+                                    </span>
+                                </div>
+                                <div class="info-item d-flex">
+                                    <span class="info-label">Agência:</span>
+                                    <span class="info-value">{{ envolvido.agencia_envolvido }}</span>
+                                </div>
+                                <div class="info-item d-flex">
+                                    <span class="info-label">Conta:</span>
+                                    <span class="info-value">{{ envolvido.conta_envolvido }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item d-flex">
+                                    <span class="info-label">Data Abertura:</span>
+                                    <span class="info-value">{{ envolvido.data_abertura_conta }}</span>
+                                </div>
+                                <div class="info-item d-flex">
+                                    <span class="info-label">Data Atualização:</span>
+                                    <span class="info-value">{{ envolvido.data_atualizacao_conta }}</span>
+                                </div>
+                                <div class="info-item d-flex">
+                                    <span class="info-label">PEP:</span>
+                                    <span class="info-value">{{ envolvido.bit_pep_citado }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Fluxo de Recursos - Duas Colunas -->
+            <div class="text-center mb-4">
+                <h5 class="text-primary">
+                    <i class="fa fa-exchange-alt"></i> Fluxo de Recursos
+                </h5>
+                <p class="text-muted">De onde vem e para onde vai o dinheiro</p>
+            </div>
+
+            <div class="row">
+                <!-- Coluna da Esquerda - Remetentes (Origem dos Recursos) -->
+                <div class="col-lg-6">
+                    <div class="envolvidos-coluna">
+                        <h6 class="text-success mb-3">
+                            <i class="fa fa-arrow-down"></i> Origem dos Recursos - Remetentes
+                        </h6>
+                        {% for envolvido in remetentes %}
+                        <div class="envolvido-card">
+                            <div class="envolvido-header bg-success">
+                                <i class="fa fa-user"></i> {{ envolvido.tipo_envolvido }}
+                                - {{ envolvido.nome_envolvido }}
+                            </div>
+                            <div class="envolvido-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="info-item d-flex">
+                                            <span class="info-label">CPF/CNPJ:</span>
+                                            <span class="info-value">
+                                                {{ envolvido.cpf_cnpj_envolvido|mask:'cpf_cnpj' }}
+                                            </span>
+                                        </div>
+                                        <div class="info-item d-flex">
+                                            <span class="info-label">Agência:</span>
+                                            <span class="info-value">{{ envolvido.agencia_envolvido }}</span>
+                                        </div>
+                                        <div class="info-item d-flex">
+                                            <span class="info-label">Conta:</span>
+                                            <span class="info-value">{{ envolvido.conta_envolvido }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="info-item d-flex">
+                                            <span class="info-label">Data Abertura:</span>
+                                            <span class="info-value">{{ envolvido.data_abertura_conta }}</span>
+                                        </div>
+                                        <div class="info-item d-flex">
+                                            <span class="info-label">Data Atualização:</span>
+                                            <span class="info-value">{{ envolvido.data_atualizacao_conta }}</span>
+                                        </div>
+                                        <div class="info-item d-flex">
+                                            <span class="info-label">PEP:</span>
+                                            <span class="info-value">{{ envolvido.bit_pep_citado }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if envolvido.info_adicional %}
+                                <div class="row">
+                                    <div class="col-lg-4">
+                                        <strong class="info-label">Valor movimentado:</strong>
+                                        <br>{{ envolvido.info_adicional.valor|real }}
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <strong class="info-label">Transações:</strong>
+                                        <br>{{ envolvido.info_adicional.transacoes }}
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <strong class="info-label">Plataforma:</strong>
+                                        <br>{{ envolvido.info_adicional.plataforma }}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted py-3">
+                            <i class="fa fa-info-circle"></i> Nenhum remetente encontrado
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Coluna da Direita - Beneficiários (Destino dos Recursos) -->
+                <div class="col-lg-6">
+                    <div class="envolvidos-coluna">
+                        <h6 class="text-danger mb-3">
+                            <i class="fa fa-arrow-up"></i> Destino dos Recursos - Beneficiários
+                        </h6>
+                        {% for envolvido in beneficiarios %}
+                        <div class="envolvido-card">
+                            <div class="envolvido-header bg-danger">
+                                <i class="fa fa-user-check"></i> {{ envolvido.tipo_envolvido }}
+                                - {{ envolvido.nome_envolvido }}
+                            </div>
+                            <div class="envolvido-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="info-item d-flex">
+                                            <span class="info-label">CPF/CNPJ:</span>
+                                            <span class="info-value">
+                                                {{ envolvido.cpf_cnpj_envolvido|mask:'cpf_cnpj' }}
+                                            </span>
+                                        </div>
+                                        <div class="info-item d-flex">
+                                            <span class="info-label">Agência:</span>
+                                            <span class="info-value">{{ envolvido.agencia_envolvido }}</span>
+                                        </div>
+                                        <div class="info-item d-flex">
+                                            <span class="info-label">Conta:</span>
+                                            <span class="info-value">{{ envolvido.conta_envolvido }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="info-item d-flex">
+                                            <span class="info-label">Data Abertura:</span>
+                                            <span class="info-value">{{ envolvido.data_abertura_conta }}</span>
+                                        </div>
+                                        <div class="info-item d-flex">
+                                            <span class="info-label">Data Atualização:</span>
+                                            <span class="info-value">{{ envolvido.data_atualizacao_conta }}</span>
+                                        </div>
+                                        <div class="info-item d-flex">
+                                            <span class="info-label">PEP:</span>
+                                            <span class="info-value">{{ envolvido.bit_pep_citado }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if envolvido.info_adicional %}
+                                <div class="row">
+                                    <div class="col-lg-4">
+                                        <strong class="info-label">Valor movimentado:</strong>
+                                        <br>{{ envolvido.info_adicional.valor|real }}
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <strong class="info-label">Transações:</strong>
+                                        <br>{{ envolvido.info_adicional.transacoes }}
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <strong class="info-label">Plataforma:</strong>
+                                        <br>{{ envolvido.info_adicional.plataforma }}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted py-3">
+                            <i class="fa fa-info-circle"></i> Nenhum beneficiário encontrado
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Outros tipos de envolvidos (se houver) -->
+            {% if outros_envolvidos %}
+            <div class="mt-4">
+                <h6 class="text-info mb-3">
+                    <i class="fa fa-users"></i> Outros Envolvidos
+                </h6>
+            </div>
+            {% for envolvido in outros_envolvidos %}
+            <div class="envolvido-card">
+                <div class="envolvido-header bg-info">
+                    <i class="fa fa-user-friends"></i> {{ envolvido.tipo_envolvido }}
+                    - {{ envolvido.nome_envolvido }}
+                </div>
+                <div class="envolvido-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item d-flex">
+                                <span class="info-label">CPF/CNPJ:</span>
+                                <span class="info-value">
+                                    {{ envolvido.cpf_cnpj_envolvido|mask:'cpf_cnpj' }}
+                                </span>
+                            </div>
+                            <div class="info-item d-flex">
+                                <span class="info-label">Agência:</span>
+                                <span class="info-value">{{ envolvido.agencia_envolvido }}</span>
+                            </div>
+                            <div class="info-item d-flex">
+                                <span class="info-label">Conta:</span>
+                                <span class="info-value">{{ envolvido.conta_envolvido }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item d-flex">
+                                <span class="info-label">Data Abertura:</span>
+                                <span class="info-value">{{ envolvido.data_abertura_conta }}</span>
+                            </div>
+                            <div class="info-item d-flex">
+                                <span class="info-label">Data Atualização:</span>
+                                <span class="info-value">{{ envolvido.data_atualizacao_conta }}</span>
+                            </div>
+                            <div class="info-item d-flex">
+                                <span class="info-label">PEP:</span>
+                                <span class="info-value">{{ envolvido.bit_pep_citado }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Ocorrências -->
+    {% if ocorrencias %}
+    <div class="card card-detalhes">
+        <div class="card-header-custom">
+            <i class="fa fa-exclamation-triangle"></i> Ocorrências ({{ ocorrencias.count }})
+        </div>
+        <div class="card-body">
+            {% for ocorrencia in ocorrencias %}
+            <div class="ocorrencia-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <strong>Ocorrência #{{ ocorrencia.id_ocorrencia }}</strong>
+                    <small class="text-muted">Indexador: {{ ocorrencia.indexador }}</small>
+                </div>
+                <div class="mt-2">
+                    {{ ocorrencia.ocorrencia|linebreaks }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+
+
+    <!-- Informações Adicionais -->
+    {% if informacoes_adicionais %}
+    <div class="card card-detalhes">
+        <div class="card-header-custom">
+            <i class="fa fa-info-circle"></i> Informações Adicionais ({{ informacoes_adicionais.count }})
+        </div>
+        <div class="card-body">
+            {% for info in informacoes_adicionais %}
+            <div class="envolvido-card">
+                <div class="envolvido-header">
+                    {{ info.tipo_transacao }} - {{ info.nome }}
+                </div>
+                <div class="envolvido-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item d-flex">
+                                <span class="info-label">CPF:</span>
+                                <span class="info-value">
+                                    {{ info.cpf|mask:'cpf_cnpj' }}
+                                </span>
+                            </div>
+                            <div class="info-item d-flex">
+                                <span class="info-label">Valor:</span>
+                                <span class="info-value">{{ info.valor|real }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item d-flex">
+                                <span class="info-label">Transações:</span>
+                                <span class="info-value">{{ info.transacoes }}</span>
+                            </div>
+                            <div class="info-item d-flex">
+                                <span class="info-label">Plataforma:</span>
+                                <span class="info-value">{{ info.plataforma }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Dados KYC -->
+    {% if kyc_data %}
+    <div class="card card-detalhes">
+        <div class="card-header-custom">
+            <i class="fa fa-user-check"></i> Know Your Client (KYC)
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-item d-flex">
+                        <span class="info-label">Profissão:</span>
+                        <span class="info-value">{{ kyc_data.profissao }}</span>
+                    </div>
+                    <div class="info-item d-flex">
+                        <span class="info-label">Renda:</span>
+                        <span class="info-value">{{ kyc_data.renda|real }}</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-item d-flex">
+                        <span class="info-label">Período:</span>
+                        <span class="info-value">{{ kyc_data.periodo }}</span>
+                    </div>
+                </div>
+            </div>
+            {% if kyc_data.analise %}
+            <div class="mt-3">
+                <strong>Análise KYC:</strong>
+                <div class="mt-2 p-3 bg-light rounded">
+                    {{ kyc_data.analise|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Gráfico de movimentação financeira -->
+    <div class="card card-detalhes">
+        <div class="card-header-custom">
+            <i class="fa fa-chart-line"></i> Diagrama de Movimentações entre Envolvidos
+        </div>
+        <div class="card-body">
+            <div id="force-diagram" style="width: 100%; height: 600px; margin: 0 auto;"></div>
+        </div>
+    </div>
+
+
+    <!-- Análise por IA -->
+    {% if analise_ia %}
+    <div class="card card-detalhes">
+        <div class="card-header-custom">
+            <i class="fa fa-robot"></i> Análise por Inteligência Artificial
+        </div>
+        <div class="card-body">
+            <div class="analise-ia">
+                {{ analise_ia|safe|markdown }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Links de notícias -->
+    {% if links_noticias %}
+    <div class="card card-detalhes">
+        <div class="card-header-custom">
+            <i class="fa fa-newspaper"></i> Links de Notícias
+        </div>
+        <div class="card-body">
+            <ul>
+                {% for link in links_noticias %}
+                <li><a href="{{ link }}" target="_blank">{{ link }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Informações Adicionais da Comunicação -->
+    <div class="card card-detalhes">
+        <div class="card-header-custom">
+            <i class="fa fa-file-text"></i> Informações Adicionais da Comunicação
+        </div>
+        <div class="card-body">
+            <div class="p-3 bg-light rounded">
+                {{ comunicacao.informacoes_adicionais|safe|linebreaks }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script type="text/javascript">
+    window.dadosEnvolvidos = {
+        titulares: {{ titulares_json|safe }},
+        remetentes: {{ remetentes_json|safe }},
+        beneficiarios: {{ beneficiarios_json|safe }},
+        outros: {{ outros_json|safe }}
+    };
+</script>
+<!-- Adiciona D3.js -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // Remove tooltips existentes antes de adicionar novos
+        $('[data-toggle="tooltip"]').tooltip('dispose');
+        // Adiciona novos tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+
+        // Scroll suave para links internos
+        $('a[href^="#"]').on('click', function (event) {
+            var target = $(this.getAttribute('href'));
+            if (target.length) {
+                event.preventDefault();
+                $('html, body').stop().animate({
+                    scrollTop: target.offset().top - 100
+                }, 1000);
+            }
+        });
+
+        try {
+            // Usar os dados disponíveis globalmente
+            const envolvidos = window.dadosEnvolvidos;
+
+        // Função para criar os dados do grafo force-directed
+        function criarDadosGrafo(envolvidos) {
+            const nodes = [];
+            const links = [];
+            const nodeMap = new Map();
+
+            // Adicionar nós para cada tipo de envolvido
+            envolvidos.titulares.forEach((titular, index) => {
+                const nodeId = `titular_${index}`;
+                nodeMap.set(titular.nome_envolvido, nodeId);
+                nodes.push({
+                    id: nodeId,
+                    name: titular.nome_envolvido,
+                    type: 'titular',
+                    group: 0
+                });
+            });
+
+            envolvidos.remetentes.forEach((remetente, index) => {
+                const nodeId = `remetente_${index}`;
+                nodeMap.set(remetente.nome_envolvido, nodeId);
+                nodes.push({
+                    id: nodeId,
+                    name: remetente.nome_envolvido,
+                    type: 'remetente',
+                    group: 1
+                });
+            });
+
+            envolvidos.beneficiarios.forEach((beneficiario, index) => {
+                const nodeId = `beneficiario_${index}`;
+                nodeMap.set(beneficiario.nome_envolvido, nodeId);
+                nodes.push({
+                    id: nodeId,
+                    name: beneficiario.nome_envolvido,
+                    type: 'beneficiario',
+                    group: 2
+                });
+            });
+
+            envolvidos.outros.forEach((outro, index) => {
+                const nodeId = `outro_${index}`;
+                nodeMap.set(outro.nome_envolvido, nodeId);
+                nodes.push({
+                    id: nodeId,
+                    name: outro.nome_envolvido,
+                    type: 'outro',
+                    group: 3
+                });
+            });
+
+            // Criar links apenas com titulares
+            // Remetentes se conectam com titulares
+            envolvidos.remetentes.forEach(remetente => {
+                envolvidos.titulares.forEach(titular => {
+                    links.push({
+                        source: nodeMap.get(remetente.nome_envolvido),
+                        target: nodeMap.get(titular.nome_envolvido),
+                        value: 1
+                    });
+                });
+            });
+
+            // Beneficiários se conectam com titulares
+            envolvidos.beneficiarios.forEach(beneficiario => {
+                envolvidos.titulares.forEach(titular => {
+                    links.push({
+                        source: nodeMap.get(beneficiario.nome_envolvido),
+                        target: nodeMap.get(titular.nome_envolvido),
+                        value: 1
+                    });
+                });
+            });
+
+            // Outros se conectam com titulares
+            envolvidos.outros.forEach(outro => {
+                envolvidos.titulares.forEach(titular => {
+                    links.push({
+                        source: nodeMap.get(outro.nome_envolvido),
+                        target: nodeMap.get(titular.nome_envolvido),
+                        value: 1
+                    });
+                });
+            });
+
+            return { nodes, links };
+        }
+
+        // Criar o grafo force-directed
+        function criarGrafoForce(dados) {
+            const width = 800;
+            const height = 600;
+
+            // Limpar o container
+            d3.select("#force-diagram").html("");
+
+            // Criar o elemento SVG
+            const svg = d3.select("#force-diagram")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .attr("viewBox", [0, 0, width, height]);
+
+            // Definir cores por tipo conforme solicitado
+            const color = d3.scaleOrdinal()
+                .domain(['titular', 'remetente', 'beneficiario', 'outro'])
+                .range(['#007bff', '#28a745', '#dc3545', '#000000']); // Azul, Verde, Vermelho, Preto
+
+            // Criar o layout force
+            const simulation = d3.forceSimulation(dados.nodes)
+                .force("link", d3.forceLink(dados.links).id(d => d.id).distance(100))
+                .force("charge", d3.forceManyBody().strength(-300))
+                .force("center", d3.forceCenter(width / 2, height / 2))
+                .force("collision", d3.forceCollide().radius(30));
+
+            // Criar as linhas (links)
+            const link = svg.append("g")
+                .attr("stroke", "#999")
+                .attr("stroke-opacity", 0.6)
+                .selectAll("line")
+                .data(dados.links)
+                .join("line")
+                .attr("stroke-width", d => Math.sqrt(d.value));
+
+            // Criar os nós
+            const node = svg.append("g")
+                .attr("stroke", "#fff")
+                .attr("stroke-width", 1.5)
+                .selectAll("circle")
+                .data(dados.nodes)
+                .join("circle")
+                .attr("r", 8)
+                .attr("fill", d => color(d.type));
+
+            // Adicionar rótulos aos nós
+            const label = svg.append("g")
+                .selectAll("text")
+                .data(dados.nodes)
+                .join("text")
+                .text(d => d.name)
+                .attr("font-size", "12px")
+                .attr("dx", 12)
+                .attr("dy", 4);
+
+            // Atualizar posições durante a simulação
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y);
+
+                label
+                    .attr("x", d => d.x)
+                    .attr("y", d => d.y);
+            });
+
+            // Adicionar interatividade
+            node.append("title")
+                .text(d => `${d.name} (${d.type})`);
+
+            // Drag behavior
+            node.call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+            function dragstarted(event) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                event.subject.fx = event.subject.x;
+                event.subject.fy = event.subject.y;
+            }
+
+            function dragged(event) {
+                event.subject.fx = event.x;
+                event.subject.fy = event.y;
+            }
+
+            function dragended(event) {
+                if (!event.active) simulation.alphaTarget(0);
+                event.subject.fx = null;
+                event.subject.fy = null;
+            }
+        }
+
+            // Verificar se há dados suficientes para criar o grafo
+            const temDados = envolvidos.titulares.length > 0 || 
+                           envolvidos.remetentes.length > 0 || 
+                           envolvidos.beneficiarios.length > 0 || 
+                           envolvidos.outros.length > 0;
+
+            if (temDados) {
+                // Criar e renderizar o grafo force-directed
+                const dadosProcessados = criarDadosGrafo(envolvidos);
+                if (dadosProcessados.nodes.length > 0) {
+                    criarGrafoForce(dadosProcessados);
+                } else {
+                    document.getElementById('force-diagram').innerHTML = '<div class="alert alert-info">Não há relações suficientes entre os envolvidos para criar o grafo.</div>';
+                }
+            } else {
+                document.getElementById('force-diagram').innerHTML = '<div class="alert alert-info">Não há dados de envolvidos para criar o grafo.</div>';
+            }
+        } catch (error) {
+            console.error('Erro ao criar grafo:', error);
+            document.getElementById('force-diagram').innerHTML = '<div class="alert alert-danger">Erro ao criar o grafo de relacionamentos.</div>';
+        }
+    });
+</script>
+{% endblock %}

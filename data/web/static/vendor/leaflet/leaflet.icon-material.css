@@ -1,0 +1,20 @@
+/**
+ * Author: Ilya Ilyankou <https://github.com/ilyankou>
+ * License: MIT
+ * Version: 1.0
+ */
+ .leaflet-container .l-icon-material {
+    position: absolute !important;
+    display: inline-block !important;
+    font-family: 'Material Icons' !important;
+    font-size: 17px !important;
+    color: inherit;
+    text-align: center;
+    z-index: 99099 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.leaflet-container .l-icon-material .material-icons {
+    font-size: 17px !important;
+}

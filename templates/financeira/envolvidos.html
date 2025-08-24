@@ -1,5 +1,18 @@
 {% extends 'layout/base.html' %}
 {% load static %}
+{% load mask %}
+
+{% block style %}
+<style>
+    #envolvidosTable thead tr:nth-child(2) th {
+        padding: 5px;
+    }
+    #envolvidosTable thead tr:nth-child(2) input {
+        width: 100%;
+        font-size: 0.9em;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -28,13 +41,26 @@
                         <th>Servidor</th>
                         <th>Ações</th>
                     </tr>
+                    <tr>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar RIF"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar Indexador"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar CPF/CNPJ"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar Nome"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar Tipo"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar Agência"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar Conta"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar PEP"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar P.O."></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar Servidor"></th>
+                        <th></th>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for e in envolvidos %}
                     <tr>
                         <td nowrap>{{ e.rif.numero }}</td>
                         <td width="1%">{{ e.indexador }}</td>
-                        <td>{{ e.cpf_cnpj_envolvido }}</td>
+                        <td nowrap>{{ e.cpf_cnpj_envolvido|mask:'cpf_cnpj' }}</td>
                         <td>{{ e.nome_envolvido }}</td>
                         <td>{{ e.tipo_envolvido }}</td>
                         <td>{{ e.agencia_envolvido }}</td>
@@ -44,8 +70,8 @@
                         <td>{{ e.int_servidor_citado }}</td>
                         <td>
                             <a href="/financeira/envolvidos/{{e.cpf_cnpj_envolvido}}/{{e.rif.id}}"
-                                class="btn btn-outline-primary" >
-                                <i class="fa fa-info-circle"></i>
+                                class="btn btn-outline-primary" title="Visualizar comunicações do envolvido">
+                                <i class="fas fa-user"></i>
                             </a>
                         </td>
                     </tr>
@@ -60,14 +86,33 @@
 {% block script %}
 <script>
     $(document).ready(function () {
-
+        // Configuração do DataTables
         var table = $('#envolvidosTable').DataTable({
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json'
             },
             pageLength: 10,
             responsive: true,
-            lengthChange: false
+            lengthChange: false,
+            orderCellsTop: true,
+            fixedHeader: true
+        });
+
+        // Aplicar filtro em cada coluna
+        $('#envolvidosTable thead tr:eq(1) th').each(function (i) {
+            var title = $(this).text();
+            
+            // Não aplicar filtro na coluna de ações
+            if (i < table.columns().nodes().length - 1) {
+                $('input', this).on('keyup change', function () {
+                    if (table.column(i).search() !== this.value) {
+                        table
+                            .column(i)
+                            .search(this.value)
+                            .draw();
+                    }
+                });
+            }
         });
     });
 </script>

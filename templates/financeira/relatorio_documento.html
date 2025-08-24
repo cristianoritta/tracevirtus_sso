@@ -1,0 +1,282 @@
+INQUÉRITO POLICIAL Nº ___
+
+
+
+RELATÓRIO TÉCNICO DE INTELIGÊNCIA FINANCEIRA
+{% for rif in rifs %}RIF: nº {{rif.numero}}{% endfor %}
+
+
+O presente Relatório Técnico de Inteligência Financeira foi produzido nos autos do Inquérito Policial acima indicado, da
+Delegacia de Repressão às Ações Criminosas Organizadas – DRACO Bagé.
+
+A análise de dados realizada através do presente Relatório Técnico de Análise Bancária leva em conta os ditames da Lei
+nº 9.613, de 3 de março de 1998, no que diz respeito aos registros das transações bancárias disponibilizados pelas
+instituições financeiras (art. 10 e seguintes). Os dados foram obtidos mediante autorização judicial, nos autos do
+Inquérito Policial acima mencionado, e transmitidos ao Sistema de Investigação de Movimentações Bancárias (SIMBA) na
+forma descrita na Carta Circular n.º 3.454/2010 do Banco Central do Brasil – cujos arquivos serão disponibilizados às
+partes, em anexo.
+
+
+ 
+Sumário
+1. SISTEMA DE INVESTIGAÇÃO DE MOVIMENTAÇÕES BANCÁRIAS 3
+2. MATERIAL ANALISADO 4
+3. METODOLOGIA 5
+4. CONTAS BANCÁRIAS ANALISADAS 7
+5. VISÃO GERAL 8
+5.1 Total movimentado pelos investigados 8
+5.2 Distribuição geográfica do dinheiro 8
+6. ANÁLISE POR INVESTIGADO 9
+FICHA RESUMO 9
+VALORES GERAIS DAS CONTAS BANCÁRIAS 9
+PRINCIPAIS CRÉDITOS 10
+PRINCIPAIS DÉBITOS 10
+MOVIMENTAÇÃO DO DINHEIRO DENTRO DAS PRÓPRIAS CONTAS BANCÁRIAS 10
+MOVIMENTAÇÃO DO DINHEIRO ENTRE INVESTIGADOS 11
+DIAGRAMA DE MOVIMENTAÇÕES FINANCEIRAS RELEVANTES 11
+OPERAÇÕES E SITUAÇÕES COM INDÍCIOS DE LAVAGEM DE DINHEIRO 12
+7. CONSIDERAÇÕES FINAIS 13
+
+
+
+ 
+1. CONSELHO DE CONTROLE DE ATIVIDADES FINANCEIRAS
+
+O Conselho de Controle de Atividades Financeiras (COAF) é a Unidade de Inteligência Financeira (UIF) do Brasil, a
+autoridade central do sistema de prevenção e combate à lavagem de dinheiro, ao financiamento do terrorismo e à
+proliferação de armas de destruição em massa (PLD/FTP), especialmente no recebimento, análise e disseminação de
+informações de inteligência financeira.
+
+Criado pela Lei nº 9.613, de 3 de março de 1998 (Lei de Lavagem de Dinheiro), e reestruturado pela Lei nº 13.974, de 7
+de janeiro de 2020, o COAF é vinculado administrativamente ao Ministério da Fazenda, dotado de autonomia técnica e
+operacional, e tem atuação em todo o território nacional.
+
+O COAF tem por objetivo prevenir a utilização dos setores econômicos para a lavagem de dinheiro e financiamento do
+terrorismo, promovendo a cooperação e o intercâmbio de informações entre os setores público e privado e é composto por
+informações enviadas pelos setores econômicos obrigados (art. 9º da Lei n.º 9.613/98), dentro de regras estabelecidas
+pelos órgãos reguladores de cada segmento, conforme preceitua o art. 11, §1ª da Lei 9.613/98 (ex: Banco Central e
+instituições financeiras, SUSEPE com seguradoras privadas, etc.).
+
+O órgão realiza as análises de inteligência financeira decorrentes de comunicações recebidas, de intercâmbio de
+informações ou de denúncias, e o resultado das análises é registrado no Relatório de Inteligência Financeira (RIF), o
+qual foi encaminhado à autoridade demandante.
+
+ 
+2. MATERIAL ANALISADO
+
+Para desenvolvimento das análises e elaboração do presente relatório foram utilizadas as informações obtidas junto ao
+COAF, mediante provocação desse órgão de investigação criminal, a partir de um procedimento de investigação criminal em
+curso – o Inquérito Policial.
+Inquérito Policial nº:
+<Digite o nº do procedimento> Data de Instauração:
+    <Data de instauração> Crime Investigado:
+        <Crime investigado>
+            Suspeitos de Lavagem de Dinheiro:
+            {% for titular in titulares%}
+            • {{titular.nome_envolvido}}, {{titular.tipo_envolvido}}{% endfor %}
+
+            A partir dessa investigação, de onde identificamos provir o dinheiro objeto de lavagem, requisitamos ao COAF
+            a elaboração do(s) relatório(s) de inteligência financeira, que é(são) objeto desta análise:
+            {% for rif in rifs %}
+            • RIF nº {{rif.numero}}{% endfor %}
+
+            Cada RIF é composto por um arquivo em formato PDF e três arquivos em formato CSV contendo informações de
+            comunicações, envolvidos e ocorrências. Esses arquivos foram importados e analisados automaticamente com o
+            uso da Plataforma IAF, onde foram gerados os hashes de verificação dos arquivos , bem como sanitizados os
+            dados. Após, foram processados com outros softwares de análise, como o TraceVirtus, I2 e PowerBI. O uso
+            conjunto dessas tecnologias permitiu a produção do presente relatório de forma automatizada, sob supervisão
+            do analista.
+
+            Na primeira parte desse relatório foram evidenciados os valores totais a débito e a crédito vinculados aos
+            titulares das contas. Na segunda parte foram detalhadas as movimentações sobre os demais envolvidos (que não
+            são titulares). É importante salientar, nessa segunda parte, que os titulares das contas podem não figurar
+            imediatamente na investigação em curso, mas eles se relacionaram diretamente com um – ou mais – dos
+            investigados, seja recebendo ou enviando dinheiro. Em razão disso, sugerimos a inclusão desses titulares,
+            também, na investigação, a fim de comprovar que a transação financeira pode ter a natureza de lavagem do
+            dinheiro de origem criminosa.
+
+            É preciso destacar que as movimentações aqui relacionadas não representam a integralidade das movimentações
+            financeiras envolvendo essas partes, uma vez que as instituições financeiras só são obrigadas a comunicar ao
+            COAF as transações que obedeçam aos critérios legais. Portanto, somente com a quebra do sigilo bancário é
+            que poderão ser identificadas todas as transações financeiras, e o montante de dinheiro transacionados entre
+            cada uma das partes.
+
+            3. CONCEITOS RELEVANTES
+
+            Com a finalidade de facilitar a leitura do presente relatório, segue a conceituação de alguns termos:
+            • Comunicação de Operação em Espécie (COE): comunicações encaminhadas automaticamente ao COAF, pelos setores
+            obrigados, quando seus clientes realizam transações em espécie (dinheiro “vivo”) acima de determinado valor
+            estabelecido em norma.
+            • Comunicação de Operação Suspeita (COS): comunicações encaminhadas ao COAF quando entes dos setores
+            obrigados percebem, em transações de seus clientes, suspeitas de lavagem de dinheiro, de financiamento do
+            terrorismo ou de outros ilícitos.
+            • Titular: o proprietário da conta favorecida pelo depósito ou objeto da retirada. O Titular pode ser o
+            próprio suspeito, ou um terceiro, que recebeu ou enviou dinheiro para o investigado.
+            • Remetente: referem-se às pessoas que remeteram (enviaram) valores para a conta comunicada ao COAF, ou
+            seja, são os CRÉDITOS.
+            • Beneficiário: referem-se às pessoas que se beneficiaram (receberam) valores da conta comunicada ao COAF,
+            ou seja, são os DÉBITOS.
+            • Responsável: o proprietário do dinheiro depositado ou o destinatário do dinheiro sacado. Obs.: Esta
+            informação é declarada pelo depositante ou sacador no ato do depósito ou saque.
+            • Depositante: a pessoa que efetuou o depósito.
+            • Sacador: a pessoa que efetuou a retirada.
+            • PEP: pessoa exposta politicamente.
+            • Segmento 41: Movimentações atípicas
+            • Segmento 42: Movimentações em espécie
+
+            4. INFORMAÇÕES GERAIS
+
+            Foi realizada a importação dos arquivos do RIF com o uso dos softwares TraceVirtus e i2 Analyst’s Notebook,
+            ferramenta que realiza a análise de vínculos entre entidades (pessoas físicas e/ou pessoas jurídicas) que
+            possuam elementos em comum ou que tiveram algum relacionamento. Segue o diagrama geral resultado dessa
+            importação.
+
+            AQUI O ANALISTA DEVE INSERIR A VISUALIZAÇÃO DE DADOS DO I2.
+            Análise de RIF > Exportar Dados
+
+
+            4.1 Movimentações financeiras dos titulares
+
+            O gráfico abaixo representa os valores a crédito e a débito movimentados pelos titulares das contas
+            comunicadas (pessoas físicas e pessoas jurídicas). É importante salientar que não está sendo considerado o
+            período em que esse valor foi movimentado, pois, cada comunicação compreende período diverso, os quais serão
+            demonstrados no decorrer do relatório.
+            Titular Créditos Débitos
+            {% for alvo in titulares %}
+            {{alvo.nome_envolvido}} R$ {{alvo.creditos}} R$ {{alvo.debitos}}
+            {% endfor %}
+
+            < Inserir um gráfico de barras aqui>
+
+                5. ANÁLISE DAS COMUNICAÇÕES POR TITULAR
+
+                A análise das comunicações por titular segue a lógica das comunicações do COAF, onde as transações
+                financeiras são reportadas a partir do titular da conta bancária que transacionou com um dos
+                investigados.
+
+                Deve ser observado que sobre o titular da conta bancária é que recaem os indicativos legais das
+                transações suspeitas de lavagem de dinheiro e, por eles transacionarem com algum(ns) do(s)
+                investigado(s) é que passam a integrar o rol da presente investigação.
+
+                Por conta disso, sugerimos à Autoridade a inclusão das seguintes pessoas nas investigações, com base na
+                análise das suas transações suspeitas:
+
+                {%  for alvo in titulares_extratos %}
+                <p>
+                6.1 {{ alvo.nome}}
+                Ficha Resumo
+                Movimentação total:
+                {{alvo.movimentacao_total}} Créditos:
+                {{alvo.creditos}} Débitos:
+                {{alvo.debitos}}
+                Nome:
+                {{alvo.nome}} CPF:
+                {{alvo.cpf}}
+                Endereço:
+                Cidade:
+
+                Antecedentes Criminais:
+                {% for antecedente in alvo.antecedentes %}
+                • {{antecedente.data_comunicacao}} | {{antecedente.ocorrencia}} – {{antecedente.fato}} ({{antecedente.
+                participacao}}){% endfor %}
+
+                Observações:
+
+
+
+
+                {{alvo.kyc}}
+
+                Foram identificadas as comunicações em que {{alvo.nome}} está relacionado. Ele figura, conforme
+                demostrado na tabela abaixo:
+                Id CPF/CNPJ Envolvido Nome Envolvido Tipo Envolvido
+                {% for comunicacao in alvo.comunicacoes %}
+                {{comunicacao.Indexador}} {{comunicacao.cpfCnpjEnvolvido}} {{comunicacao.nomeEnvolvido}}
+                {{comunicacao.tipoEnvolvido}}
+                {% endfor %}
+
+
+                {% if alvo['comunicacoes'] is not none and alvo['comunicacoes']|length > 0 %}
+                Movimentações de Comunicação Obrigatória ao COAF
+                As comunicações obrigatórias ao COAF obedecem ao disposto na Carta Circular. São essas em que
+                {{alvo.nome}} consta como titular ou representante:
+                Idx Nome Segmento Valor Descrição
+                {% for informacoes in alvo.comunicacoes_nao_suspeitas%}
+                {{ informacoes.indexador}} {{informacoes.tipoEnvolvido}}
+                {{ informacoes.nomeEnvolvido}}
+                CPF/CNPJ: {{informacoes.cpf}} {{ informacoes.CodigoSegmento }} {{ informacoes.CampoA}} {{
+                informacoes.informacoesAdicionais}}
+                {% endfor %}
+                {% endif %}
+
+                Movimentações Suspeitas Reportadas pelo COAF
+                Segue o gráfico que demonstra as transações suspeitas em que {{alvo.nome}} está relacionado(a).
+                [ INSIRA UM GRÁFICO DO i2 AQUI ]
+                {% if alvo[‘outras_informacoes’]|length > 0 %}
+                As seguintes movimentações suspeitas foram reportadas ao COAF (COS, Cód. 41), de modo exemplificativo.
+                Elas podem ser ampliadas, com a quebra de sigilo bancário.
+                Idx Nome Tipo Valor Qtd Plataforma
+                {% for informacoes in alvo.outras_informacoes %}
+                {% if informacoes.tipo_transacao == ‘Crédito’ %}
+                {{ informacoes.indexador}} {{ informacoes.nome}}
+                CPF/CNPJ: {{informacoes.cpf}} {{ informacoes.tipo_transacao}} {{ informacoes.valor}} {{
+                informacoes.transacoes}} {{ informacoes.plataforma}}
+                {% endif %}{% endfor %}
+
+                {{alvo[‘maiorescreditos’]}}
+                {{alvo[‘maioresdebitos’]}}
+                {%endif%}
+                Dos Indícios De Lavagem De Dinheiro (Ocorrências)
+                Trata-se do enquadramento normativo do órgão regulador que embasou aquela comunicação e que podem
+                configurar indícios de lavagem de dinheiro.
+                Id Ocorrência Ocorrência
+                {% for ocorrencia in alvo[‘ocorrencias’] %}
+                {{ocorrencia.idOcorrencia}} {{ocorrencia.ocorrencia}}
+                {% endfor %}
+
+                Observações do Analista
+                Com base na análise do RIF. Identificamos as seguintes informações que são suspeitas de lavagem de
+                capitais:
+                {{alvo.observacoes_analista}}
+
+
+                </p>
+                {% endfor %}
+
+
+                6. CONSIDERAÇÕES FINAIS
+
+                O presente Relatório buscou esclarecer as informações mais relevantes contidas no(s) Relatório(s) de
+                Inteligência Financeira, bem como identificar indícios do crime de lavagem de dinheiro.
+
+                Agora, cabe a Autoridade Policial verificar o relacionamento dessas pessoas com os indivíduos
+                investigados no Inquérito Policial, a fim de aprofundar as investigações sobre as movimentações
+                financeiras. Reiteramos que as comunicações apontadas pelo COAF não esgotam as movimentações financeiras
+                dos investigados e dos envolvidos, de modo que, somente com a quebra do sigilo bancário, fiscal e
+                patrimonial, será possível identificar os verdadeiros montantes de dinheiro circulante.
+
+                Destaca-se que todas as informações acima descritas dependem de investigação aprofundada sobre os temas,
+                visto que o Relatório de Inteligência Financeira apenas faz os apontamentos dos indícios de que os
+                valores movimentados são incompatíveis com o patrimônio, a atividade econômica ou ocupação profissional
+                e a capacidade financeira dos envolvidos.
+
+
+                {{ custom_queries }}
+
+
+                 
+                ANEXO DE ARQUIVOS
+                Arquivo Hash
+                {% for arquivo in arquivos %}
+                {{ arquivo.nome }} {{ arquivo.hash }}
+                {% endfor %}
+
+                 
+                ANEXO DE ENVOLVIDOS
+                {% for titular in titulares %}
+                • Titular: {{ titular.nome_envolvido }}
+                {% for envolvido in titular.envolvidos %}
+                {{ envolvido.tipo_envolvido }}: {{ envolvido.nome_envolvido }}
+                {{envolvido.cpf_cnpj_envolvido}}
+                {% endfor %}
+                {% endfor %}

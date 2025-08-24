@@ -1,19 +1,6 @@
 from django.db import models
-
-class Cooperacao(models.Model):
-    id = models.AutoField(primary_key=True)
-    caso = models.ForeignKey('app.Caso', on_delete=models.CASCADE)
-    numero = models.CharField(max_length=254)
-    inquerito = models.CharField(max_length=254)
-    processo = models.CharField(max_length=254)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.caso.numero} - {self.numero}"
-
-    class Meta:
-        verbose_name = 'Cooperacao'
-        verbose_name_plural = 'Cooperacoes'
+from django.conf import settings
+from app.models import Caso
 
 class RIF(models.Model):
     id = models.AutoField(primary_key=True)
@@ -73,16 +60,16 @@ class Envolvido(models.Model):
     caso = models.ForeignKey('app.Caso', on_delete=models.CASCADE)
     arquivo = models.ForeignKey('app.Arquivo', on_delete=models.CASCADE)
     indexador = models.IntegerField()
-    cpf_cnpj_envolvido = models.IntegerField()
+    cpf_cnpj_envolvido = models.IntegerField(null=True, blank=True)
     nome_envolvido = models.CharField(max_length=254)
     tipo_envolvido = models.CharField(max_length=254)
-    agencia_envolvido = models.IntegerField()
-    conta_envolvido = models.IntegerField()
-    data_abertura_conta = models.DateField()
-    data_atualizacao_conta = models.DateField()
-    bit_pep_citado = models.CharField(max_length=3)
-    bit_pessoa_obrigada_citado = models.CharField(max_length=3)
-    int_servidor_citado = models.CharField(max_length=3)
+    agencia_envolvido = models.IntegerField(null=True, blank=True)
+    conta_envolvido = models.IntegerField(null=True, blank=True)
+    data_abertura_conta = models.DateField(null=True, blank=True)
+    data_atualizacao_conta = models.DateField(null=True, blank=True)
+    bit_pep_citado = models.CharField(max_length=3, null=True, blank=True)
+    bit_pessoa_obrigada_citado = models.CharField(max_length=3, null=True, blank=True)
+    int_servidor_citado = models.CharField(max_length=3, null=True, blank=True)
 
     def __str__(self):
         return f"{self.caso.numero} - {self.nome_envolvido}"
@@ -174,3 +161,55 @@ class ComunicacaoNaoProcessada(models.Model):
     class Meta:
         verbose_name = 'ComunicacaoNaoProcessada'
         verbose_name_plural = 'ComunicacoesNaoProcessadas'
+
+class Prompt(models.Model):
+    modulo = models.CharField(max_length=100, help_text="Módulo onde o prompt é usado (ex: financeira)")
+    funcao = models.CharField(max_length=100, help_text="Função específica onde o prompt é usado (ex: comunicacao_detalhes)")
+    label = models.CharField(max_length=200, help_text="Nome amigável do prompt para exibição ao usuário")
+    prompt = models.TextField(help_text="Conteúdo do prompt")
+    old_versions = models.JSONField(default=list, blank=True, help_text="Versões anteriores do prompt")
+    is_active = models.BooleanField(default=True, help_text="Se o prompt está ativo")
+    description = models.TextField(blank=True, help_text="Descrição detalhada do que o prompt faz")
+    parameters = models.JSONField(default=dict, blank=True, help_text="Parâmetros esperados pelo prompt")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, help_text="Usuário que criou o prompt")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'prompts'
+        verbose_name = 'Prompt'
+        verbose_name_plural = 'Prompts'
+        unique_together = ['modulo', 'funcao', 'label']
+
+    def __str__(self):
+        return f"{self.modulo}.{self.funcao} - {self.label}"
+
+    def save(self, *args, **kwargs):
+        # Se é uma atualização e o prompt mudou, salva a versão anterior
+        if self.pk:
+            old_instance = Prompt.objects.get(pk=self.pk)
+            if old_instance.prompt != self.prompt:
+                if not self.old_versions:
+                    self.old_versions = []
+                self.old_versions.append({
+                    'prompt': old_instance.prompt,
+                    'updated_at': old_instance.updated_at.isoformat(),
+                    'updated_by': old_instance.created_by.pk if old_instance.created_by else None
+                })
+        super().save(*args, **kwargs)
+
+class AnaliseIA(models.Model):
+    id = models.AutoField(primary_key=True)
+    caso = models.ForeignKey('app.Caso', on_delete=models.CASCADE)
+    comunicacao = models.ForeignKey(Comunicacao, on_delete=models.CASCADE)
+    analise_ia = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.caso.numero} - {self.comunicacao.id_comunicacao}"
+
+    class Meta:
+        verbose_name = 'Análise IA'
+        verbose_name_plural = 'Análises IA'
+        unique_together = ['caso', 'comunicacao']  # Garante que não haverá análises duplicadas

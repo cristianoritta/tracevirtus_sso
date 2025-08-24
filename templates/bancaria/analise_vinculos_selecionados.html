@@ -1,0 +1,763 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block css %}
+<style>
+/* Estilos para o modal de markdown */
+.swal-markdown-modal .swal2-popup {
+    max-width: 800px;
+    width: 90%;
+}
+
+.swal-markdown-content {
+    text-align: left;
+    line-height: 1.6;
+}
+
+.swal-markdown-content h1,
+.swal-markdown-content h2,
+.swal-markdown-content h3,
+.swal-markdown-content h4,
+.swal-markdown-content h5,
+.swal-markdown-content h6 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+    color: #333;
+}
+
+.swal-markdown-content h1 { font-size: 1.8em; }
+.swal-markdown-content h2 { font-size: 1.6em; }
+.swal-markdown-content h3 { font-size: 1.4em; }
+.swal-markdown-content h4 { font-size: 1.2em; }
+.swal-markdown-content h5 { font-size: 1.1em; }
+.swal-markdown-content h6 { font-size: 1em; }
+
+.swal-markdown-content p {
+    margin-bottom: 1em;
+    line-height: 1.6;
+}
+
+.swal-markdown-content ul,
+.swal-markdown-content ol {
+    margin-bottom: 1em;
+    padding-left: 2em;
+}
+
+.swal-markdown-content li {
+    margin-bottom: 0.5em;
+}
+
+.swal-markdown-content blockquote {
+    border-left: 4px solid #007bff;
+    padding-left: 1em;
+    margin: 1em 0;
+    background-color: #f8f9fa;
+    padding: 1em;
+    border-radius: 4px;
+}
+
+.swal-markdown-content code {
+    background-color: #f1f3f4;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.swal-markdown-content pre {
+    background-color: #f8f9fa;
+    padding: 1em;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 1em 0;
+}
+
+.swal-markdown-content pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.swal-markdown-content strong {
+    font-weight: 600;
+}
+
+.swal-markdown-content em {
+    font-style: italic;
+}
+
+.swal-markdown-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+}
+
+.swal-markdown-content th,
+.swal-markdown-content td {
+    border: 1px solid #ddd;
+    padding: 0.5em;
+    text-align: left;
+}
+
+.swal-markdown-content th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.swal-markdown-content hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 2em 0;
+}
+
+/* Estilos para os botões de exportação do DataTable */
+.dt-buttons {
+    margin-bottom: 10px;
+}
+
+.dt-buttons .btn {
+    margin-right: 5px;
+}
+
+.dt-buttons .btn i,
+.dt-buttons .btn em {
+    margin-right: 5px;
+}
+
+/* Ajuste para o layout responsivo dos botões */
+@media (max-width: 768px) {
+    .dt-buttons {
+        text-align: center;
+        margin-bottom: 15px;
+    }
+    
+    .dt-buttons .btn {
+        margin-bottom: 5px;
+        width: 100%;
+    }
+}
+
+/* Estilos para os botões de exportação */
+.dt-buttons .btn {
+    font-size: 14px;
+    padding: 8px 16px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+}
+
+.dt-buttons .btn:before {
+    margin-right: 6px;
+    font-size: 16px;
+}
+
+/* Ícones para os botões específicos */
+.dt-buttons .btn[data-extend="csv"]:before {
+    content: "📥";
+}
+
+.dt-buttons .btn[data-extend="print"]:before {
+    content: "🖨️";
+}
+
+.dt-buttons .btn[data-extend="copy"]:before {
+    content: "📋";
+}
+
+.dt-buttons .btn:not([data-extend]):before {
+    content: "📋";
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="nk-block-head nk-block-head-sm">
+        <div class="nk-block-between">
+            <div class="nk-block-head-content">
+                <h3 class="nk-block-title page-title">{{ title }}</h3>
+                <div class="nk-block-des text-soft">
+                    <p>{{ subtitle }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seleção de Titulares e Contrapartes -->
+    <div class="card card-bordered">
+        <div class="card-inner">
+            <form id="form-selecao">
+                {% csrf_token %}
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label class="form-label" for="select-titular">Selecione um Titular</label>
+                            <select class="form-select" id="select-titular" name="titular">
+                                <option value="">Selecione...</option>
+                                {% for titular in titulares %}
+                                <option value="{{ titular.cpf_cnpj_titular }}" data-nome="{{ titular.nome_titular }}">
+                                    {{ titular.nome_titular }} ({{ titular.cpf_cnpj_titular }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label class="form-label" for="select-contraparte">Contrapartes do Titular</label>
+                            <select class="form-select" id="select-contraparte" name="contraparte" disabled>
+                                <option value="">Selecione um titular primeiro...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-4 mt-2">
+                    <div class="col-12">
+                        <button type="button" class="btn btn-primary" id="btn-adicionar" disabled>
+                            <em class="icon ni ni-plus"></em>
+                            <span>Adicionar Seleção</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Seleções -->
+    <div class="card card-bordered mt-4">
+        <div class="card-inner">
+            <h5 class="card-title">Seleções para Análise</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Titulares Selecionados:</h6>
+                    <ul id="lista-titulares" class="list-group">
+                        <!-- Titulares serão adicionados aqui -->
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>Contrapartes Selecionadas:</h6>
+                    <ul id="lista-contrapartes" class="list-group">
+                        <!-- Contrapartes serão adicionadas aqui -->
+                    </ul>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button class="btn btn-primary" id="btn-consultar" disabled>
+                        <em class="icon ni ni-search"></em>
+                        <span>Consultar Vínculos</span>
+                    </button>
+                    <button class="btn btn-success ms-2" id="btn-analise-ia" disabled>
+                        <em class="icon ni ni-ai"></em>
+                        <span>Análise com IA</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultados -->
+    <div class="card card-bordered mt-4" id="resultados" style="display: none;">
+        <div class="card-inner">
+            <h5 class="card-title">Resultados da Análise</h5>
+                         <table class="table table-hover" id="tabela-resultados">
+                 <thead>
+                     <tr>
+                         <th>Data</th>
+                         <th>Titular</th>
+                         <th>CPF/CNPJ Titular</th>
+                         <th>Contraparte</th>
+                         <th>CPF/CNPJ Contraparte</th>
+                         <th>Descrição</th>
+                         <th>Valor</th>
+                         <th>Natureza</th>
+                         <th>Cooperação</th>
+                         <th>Ação</th>
+                     </tr>
+                 </thead>
+                 <tbody>
+                     <!-- Resultados serão adicionados aqui -->
+                 </tbody>
+             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Análise com IA -->
+<div class="modal fade" id="modal-analise-ia" tabindex="-1" aria-labelledby="modal-analise-ia-label" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-analise-ia-label">Análise com IA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="analise-ia-content"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btn-copiar-analise-ia">Copiar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- Marked.js para renderização de markdown -->
+<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+<!-- DataTables Buttons CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+<!-- DataTables Buttons JS -->
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Página carregada, inicializando...');
+    // Inicializa Select2
+    $('#select-titular').select2({
+        placeholder: "Selecione um titular...",
+        allowClear: true,
+        width: '100%'
+    });
+    
+    // Inicializa Select2 para contrapartes com configuração básica
+    $('#select-contraparte').select2({
+        placeholder: "Pesquise uma contraparte...",
+        allowClear: true,
+        width: '100%',
+        language: {
+            noResults: function() {
+                return "Nenhuma contraparte encontrada";
+            },
+            searching: function() {
+                return "Pesquisando...";
+            }
+        },
+        minimumResultsForSearch: 0,
+        dropdownCssClass: 'select2-dropdown-large'
+    });
+    const selectTitular = document.getElementById('select-titular');
+    const selectContraparte = document.getElementById('select-contraparte');
+    const btnAdicionar = document.getElementById('btn-adicionar');
+    const btnConsultar = document.getElementById('btn-consultar');
+    const btnAnaliseIA = document.getElementById('btn-analise-ia');
+    const listaTitulares = document.getElementById('lista-titulares');
+    const listaContrapartes = document.getElementById('lista-contrapartes');
+    const resultados = document.getElementById('resultados');
+    
+    let titularesSelecionados = new Set();
+    let contrapartesSelecionadas = new Set();
+    let dataTable = null;
+
+    // Inicializa DataTable
+    function initDataTable() {
+        if (!dataTable) {
+            // Prepara informações sobre as seleções para o arquivo exportado
+            const titularesInfo = Array.from(titularesSelecionados).join(', ');
+            const contrapartesInfo = Array.from(contrapartesSelecionadas).join(', ');
+            
+            dataTable = $('#tabela-resultados').DataTable({
+                order: [[0, 'desc']],
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+                },
+                dom: '<"row"<"col-sm-12 col-md-6"B><"col-sm-12 col-md-6"f>>rtip',
+                buttons: [
+                    {
+                        extend: 'csv',
+                        text: 'CSV',
+                        className: 'btn btn-primary btn-sm',
+                        title: 'Análise de Vínculos - ' + new Date().toLocaleDateString('pt-BR'),
+                        exportOptions: {
+                            columns: ':visible'
+                        },
+                        customize: function(csv) {
+                            // Adiciona informações sobre a análise no início do CSV
+                            const header = 'Análise de Vínculos Selecionados\n';
+                            const date = 'Data de Exportação: ' + new Date().toLocaleDateString('pt-BR') + '\n';
+                            const titulares = 'Titulares Selecionados: ' + titularesInfo + '\n';
+                            const contrapartes = 'Contrapartes Selecionadas: ' + contrapartesInfo + '\n';
+                            const separator = '\n';
+                            return header + date + titulares + contrapartes + separator + csv;
+                        }
+                    },
+                    {
+                        extend: 'print',
+                        text: 'Imprimir',
+                        className: 'btn btn-info btn-sm',
+                        exportOptions: {
+                            columns: ':visible'
+                        },
+                        customize: function(win) {
+                            $(win.document.body).css('font-size', '10pt');
+                            $(win.document.body).find('table')
+                                .addClass('compact')
+                                .css('font-size', 'inherit');
+                            
+                            // Adiciona informações no cabeçalho da impressão
+                            $(win.document.body).prepend(
+                                '<h2>Análise de Vínculos Selecionados</h2>' +
+                                '<p><strong>Data:</strong> ' + new Date().toLocaleDateString('pt-BR') + '</p>' +
+                                '<p><strong>Titulares:</strong> ' + titularesInfo + '</p>' +
+                                '<p><strong>Contrapartes:</strong> ' + contrapartesInfo + '</p><hr>'
+                            );
+                        }
+                    },
+                    {
+                        text: 'Copiar',
+                        className: 'btn btn-warning btn-sm',
+                        action: function() {
+                            // Copia a tabela para a área de transferência
+                            const table = $('#tabela-resultados').DataTable();
+                            const data = table.rows({search: 'applied'}).data();
+                            let csvContent = 'Data,Titular,CPF/CNPJ Titular,Contraparte,CPF/CNPJ Contraparte,Descrição,Valor,Natureza,Cooperação\n';
+                            
+                            data.each(function(row) {
+                                csvContent += row.join(',') + '\n';
+                            });
+                            
+                            navigator.clipboard.writeText(csvContent).then(function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Copiado!',
+                                    text: 'Dados da tabela copiados para a área de transferência',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        }
+                    }
+                ]
+            });
+        }
+    }
+
+    // Quando um titular é selecionado, busca suas contrapartes
+    $('#select-titular').on('select2:select select2:unselect select2:clear', function(e) {
+        console.log('Titular selecionado');
+        const titularCpf = $(this).val();
+        console.log('CPF do titular:', titularCpf);
+        
+        if (titularCpf) {
+            const url = `{% url 'bancaria:analise_vinculos_selecionados' %}?titular_cpf=${titularCpf}`;
+            console.log('Fazendo requisição para:', url);
+            
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                console.log('Resposta recebida:', response);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Dados recebidos:', data);
+                
+                // Destrói o Select2 atual
+                $('#select-contraparte').select2('destroy');
+                
+                // Limpa o select
+                $('#select-contraparte').empty();
+                console.log('Select de contrapartes limpo');
+                
+                // Adiciona a opção padrão
+                $('#select-contraparte').append(new Option('Selecione uma contraparte...', '', true, true));
+                console.log('Opção padrão adicionada');
+                
+                // Adiciona as contrapartes
+                data.contrapartes.forEach(contraparte => {
+                    console.log('Adicionando contraparte:', contraparte);
+                    const optionText = `${contraparte.nome_pessoa_od} (${contraparte.cpf_cnpj_od})`;
+                    const option = new Option(optionText, contraparte.cpf_cnpj_od, false, false);
+                    
+                    // Armazena o nome como data attribute e também como propriedade do objeto
+                    $(option).data('nome', contraparte.nome_pessoa_od);
+                    option.nome = contraparte.nome_pessoa_od;
+                    
+                    $('#select-contraparte').append(option);
+                });
+                
+                // Reconfigura o Select2 com as novas opções
+                $('#select-contraparte').select2({
+                    placeholder: "Pesquise uma contraparte...",
+                    allowClear: true,
+                    width: '100%',
+                    language: {
+                        noResults: function() {
+                            return "Nenhuma contraparte encontrada";
+                        },
+                        searching: function() {
+                            return "Pesquisando...";
+                        }
+                    },
+                    minimumResultsForSearch: 0,
+                    dropdownCssClass: 'select2-dropdown-large'
+                });
+                
+                // Habilita o select
+                $('#select-contraparte').prop('disabled', false);
+                console.log('Select de contrapartes atualizado e habilitado');
+            })
+            .catch(error => {
+                console.error('Erro na requisição:', error);
+            });
+        } else {
+            // Destrói o Select2 atual
+            $('#select-contraparte').select2('destroy');
+            
+            // Limpa e reseta o select
+            $('#select-contraparte').empty().append('<option value="">Selecione um titular primeiro...</option>');
+            $('#select-contraparte').prop('disabled', true);
+            
+            // Reconfigura o Select2 básico
+            $('#select-contraparte').select2({
+                placeholder: "Selecione um titular primeiro...",
+                allowClear: true,
+                width: '100%',
+                disabled: true
+            });
+        }
+        btnAdicionar.disabled = true;
+    });
+
+    // Habilita o botão de adicionar quando uma contraparte é selecionada
+    $('#select-contraparte').on('select2:select select2:unselect select2:clear', function(e) {
+        console.log('Contraparte selecionada/alterada:', e.type);
+        const contraparteCpf = $(this).val();
+        console.log('CPF da contraparte:', contraparteCpf);
+        btnAdicionar.disabled = !contraparteCpf;
+    });
+
+    // Adiciona a seleção às listas
+    btnAdicionar.addEventListener('click', function() {
+        // Obtém dados do titular usando Select2
+        const titularData = $('#select-titular').select2('data')[0];
+        const titularCpf = titularData.id;
+        const titularNome = $(titularData.element).data('nome');
+
+        // Obtém dados da contraparte usando Select2
+        const contraparteData = $('#select-contraparte').select2('data')[0];
+        const contraparteCpf = contraparteData.id;
+        const contraparteNome = contraparteData.text.split(' (')[0]; // Remove o CPF do texto
+
+        // Adiciona titular se ainda não existe
+        if (!titularesSelecionados.has(titularCpf)) {
+            titularesSelecionados.add(titularCpf);
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.innerHTML = `
+                ${titularNome} (${titularCpf})
+                <button class="btn btn-sm btn-danger remover-titular" data-cpf="${titularCpf}">
+                    <em class="icon ni ni-trash"></em>
+                </button>
+            `;
+            listaTitulares.appendChild(li);
+        }
+
+        // Adiciona contraparte se ainda não existe
+        if (!contrapartesSelecionadas.has(contraparteCpf)) {
+            contrapartesSelecionadas.add(contraparteCpf);
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.innerHTML = `
+                ${contraparteNome} (${contraparteCpf})
+                <button class="btn btn-sm btn-danger remover-contraparte" data-cpf="${contraparteCpf}">
+                    <em class="icon ni ni-trash"></em>
+                </button>
+            `;
+            listaContrapartes.appendChild(li);
+        }
+
+        // Reseta os selects
+        selectTitular.value = '';
+        
+        // Destrói e reconstrói o Select2 de contrapartes
+        $('#select-contraparte').select2('destroy');
+        $('#select-contraparte').empty().append('<option value="">Selecione um titular primeiro...</option>');
+        $('#select-contraparte').prop('disabled', true);
+        
+        // Reconfigura o Select2 básico
+        $('#select-contraparte').select2({
+            placeholder: "Selecione um titular primeiro...",
+            allowClear: true,
+            width: '100%',
+            disabled: true
+        });
+        
+        btnAdicionar.disabled = true;
+
+        // Habilita o botão de consulta se houver pelo menos uma seleção de cada
+        btnConsultar.disabled = titularesSelecionados.size === 0 || contrapartesSelecionadas.size === 0;
+        btnAnaliseIA.disabled = titularesSelecionados.size === 0 || contrapartesSelecionadas.size === 0;
+    });
+
+    // Remove titular
+    listaTitulares.addEventListener('click', function(e) {
+        if (e.target.closest('.remover-titular')) {
+            const cpf = e.target.closest('.remover-titular').dataset.cpf;
+            titularesSelecionados.delete(cpf);
+            e.target.closest('li').remove();
+            btnConsultar.disabled = titularesSelecionados.size === 0 || contrapartesSelecionadas.size === 0;
+        }
+    });
+
+    // Remove contraparte
+    listaContrapartes.addEventListener('click', function(e) {
+        if (e.target.closest('.remover-contraparte')) {
+            const cpf = e.target.closest('.remover-contraparte').dataset.cpf;
+            contrapartesSelecionadas.delete(cpf);
+            e.target.closest('li').remove();
+            btnConsultar.disabled = titularesSelecionados.size === 0 || contrapartesSelecionadas.size === 0;
+        }
+    });
+
+    // Consulta os vínculos
+    btnConsultar.addEventListener('click', function() {
+        const formData = new FormData();
+        titularesSelecionados.forEach(cpf => formData.append('titulares[]', cpf));
+        contrapartesSelecionadas.forEach(cpf => formData.append('contrapartes[]', cpf));
+
+        fetch('', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (dataTable) {
+                dataTable.destroy();
+            }
+
+            const tbody = document.querySelector('#tabela-resultados tbody');
+            tbody.innerHTML = '';
+
+                         data.data.forEach(registro => {
+                 const tr = document.createElement('tr');
+                 tr.innerHTML = `
+                     <td>${new Date(registro.data_lancamento).toLocaleDateString()}</td>
+                     <td>${registro.nome_titular}</td>
+                     <td>${registro.cpf_cnpj_titular}</td>
+                     <td>${registro.nome_pessoa_od}</td>
+                     <td>${registro.cpf_cnpj_od}</td>
+                     <td>${registro.descricao_lancamento}</td>
+                     <td>${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(registro.valor_transacao)}</td>
+                     <td>${registro.natureza_lancamento === 'C' ? 'Crédito' : 'Débito'}</td>
+                     <td>${registro.cooperacao__numero}</td>
+                     <td>
+                         <button class="btn btn-sm btn-primary btn-detalhes" 
+                                 data-cpf="${registro.cpf_cnpj_od}" 
+                                 data-nome="${registro.nome_pessoa_od}">
+                             <em class="icon ni ni-eye"></em> Detalhes
+                         </button>
+                     </td>
+                 `;
+                 tbody.appendChild(tr);
+             });
+
+            initDataTable();
+            
+            // Adiciona atributos data-extend aos botões após a inicialização
+            setTimeout(function() {
+                $('.dt-buttons .btn').each(function() {
+                    const $btn = $(this);
+                    const text = $btn.text().trim();
+                    
+                    if (text === 'CSV') {
+                        $btn.attr('data-extend', 'csv');
+                    } else if (text === 'Imprimir') {
+                        $btn.attr('data-extend', 'print');
+                    } else if (text === 'Copiar') {
+                        $btn.attr('data-extend', 'copy');
+                    }
+                });
+            }, 100);
+            
+                         resultados.style.display = 'block';
+             
+             // Adiciona evento de clique para os botões de detalhes
+             document.querySelectorAll('.btn-detalhes').forEach(btn => {
+                 btn.addEventListener('click', function() {
+                     const cpf = this.getAttribute('data-cpf');
+                     const nome = this.getAttribute('data-nome');
+                     
+                     // Redireciona para a página de detalhes
+                     window.open(`{% url 'bancaria:detalhes_pessoa' %}?cpf=${cpf}&nome=${encodeURIComponent(nome)}`, '_blank');
+                 });
+             });
+         });
+     });
+
+    // Análise com IA
+    btnAnaliseIA.addEventListener('click', function() {
+        const formData = new FormData();
+        titularesSelecionados.forEach(cpf => formData.append('titulares[]', cpf));
+        contrapartesSelecionadas.forEach(cpf => formData.append('contrapartes[]', cpf));
+
+        // Mostra loading
+        btnAnaliseIA.disabled = true;
+        btnAnaliseIA.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Analisando...';
+
+        fetch('{% url "bancaria:analise_ia_vinculos" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Converte markdown para HTML
+                const htmlContent = marked.parse(data.analise);
+                
+                // Mostra no modal
+                $('#analise-ia-content').html(htmlContent);
+                $('#modal-analise-ia').modal('show');
+
+                // btn-copiar-analise-ia
+                $('#btn-copiar-analise-ia').on('click', function() {
+                    const analise = $('#analise-ia-content').text();
+                    navigator.clipboard.writeText(analise);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Copiado para área de transferência',
+                        text: 'A análise com IA foi copiada para a área de transferência'
+                    });
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: data.error || 'Erro ao executar análise com IA'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Erro',
+                text: 'Erro ao executar análise com IA'
+            });
+        })
+        .finally(() => {
+            // Restaura o botão
+            btnAnaliseIA.disabled = false;
+            btnAnaliseIA.innerHTML = '<em class="icon ni ni-ai"></em><span>Análise com IA</span>';
+        });
+    });
+});
+</script>
+{% endblock %}

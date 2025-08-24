@@ -17,3 +17,11 @@ def mul(value, arg):
         return float(value) * float(arg)
     except (ValueError, ZeroDivisionError):
         return 0 
+
+@register.filter
+def subtract(value, arg):
+    """Subtrai o argumento do valor"""
+    try:
+        return float(value) - float(arg)
+    except (ValueError, TypeError):
+        return 0 

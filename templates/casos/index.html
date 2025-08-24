@@ -62,6 +62,7 @@
                         <div class="card-inner p-0">
                             <div class="nk-tb-list nk-tb-ulist">
                                 <div class="nk-tb-item nk-tb-head">
+                                    <div class="nk-tb-col"><span class="sub-text">Id</span></div>
                                     <div class="nk-tb-col"><span class="sub-text">Número</span></div>
                                     <div class="nk-tb-col tb-col-mb"><span class="sub-text">Nome</span></div>
                                     <div class="nk-tb-col tb-col-md"><span class="sub-text">Status</span></div>
@@ -89,6 +90,9 @@
 
                                 {% for caso in casos %}
                                 <div class="nk-tb-item">
+                                    <div class="nk-tb-col">
+                                        <span class="tb-amount">#{{ caso.id }}</span>
+                                    </div>
                                     <div class="nk-tb-col">
                                         <a href="#" class="project-title">
                                             <div class="project-info">

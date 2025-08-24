@@ -1,0 +1,469 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block css %}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+<style>
+    .fc-event-title {
+        white-space: normal !important;
+        font-size: 0.8rem;
+    }
+
+    .fc-event-main-frame {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .fc-daygrid-event-dot {
+        display: none;
+    }
+    .fc-more-link {
+        float: right;
+    }
+    .fc-toolbar-chunk:nth-child(2) {
+        display: none;
+    }
+
+    /* Estilos para o Sankey Diagram */
+    .sankey-container {
+        width: 100%;
+        height: 400px;
+        margin: 20px 0;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background: #f8f9fa;
+    }
+
+    .sankey-node {
+        cursor: pointer;
+    }
+
+    .sankey-node:hover {
+        opacity: 0.8;
+    }
+
+    .sankey-link {
+        fill: none;
+        stroke-opacity: 0.4;
+    }
+
+    .sankey-link:hover {
+        stroke-opacity: 0.8;
+    }
+
+    .sankey-label {
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .sankey-value {
+        font-size: 10px;
+        fill: #666;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="card card-bordered">
+    <div class="card-inner">
+        <div class="d-flex justify-content-center mb-3">
+            <div class="me-2">
+                <select id="month-select" class="form-select"></select>
+            </div>
+            <div>
+                <select id="year-select" class="form-select"></select>
+            </div>
+        </div>
+        <div id='calendar'></div>
+    </div>
+</div>
+
+<!-- Modal para exibir transações -->
+<div class="modal fade" id="transacoesModal" tabindex="-1" aria-labelledby="transacoesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transacoesModalLabel">Transações do Dia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="pessoas-cards" class="mb-4"></div>
+                <hr>
+                <h6 class="mb-3">Detalhamento das Transações</h6>
+                <table id="transacoesTable" class="table table-striped" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Titular</th>
+                            <th>CPF/CNPJ</th>
+                            <th>Descrição</th>
+                            <th>Valor</th>
+                            <th>Natureza</th>
+                            <th>Origem/Destino</th>
+                            <th>Doc. O/D</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+                <hr>
+                <h6 class="mb-3">Fluxo de Transações (Diagrama Sankey)</h6>
+                <div id="sankey-container" class="sankey-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/pt-br.js'></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://unpkg.com/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var calendarEl = document.getElementById('calendar');
+        var transacoesModal = new bootstrap.Modal(document.getElementById('transacoesModal'));
+        var table;
+
+        // Função para criar o Sankey Diagram
+        function createSankeyDiagram(data) {
+            const container = document.getElementById('sankey-container');
+            container.innerHTML = '';
+
+            if (!data.data || data.data.length === 0) {
+                container.innerHTML = '<div class="alert alert-info text-center">Nenhum dado disponível para o diagrama.</div>';
+                return;
+            }
+
+            // --- Geração de nós e links sem ciclos ---
+            const nodes = [];
+            const nodeMap = new Map(); // id -> index
+            const links = [];
+
+            // Helper para adicionar nós
+            function addNode(id, nome, grupo) {
+                if (!nodeMap.has(id)) {
+                    const index = nodes.length;
+                    nodeMap.set(id, index);
+                    nodes.push({ id: id, name: nome, group: grupo, value: 0 });
+                }
+                return nodeMap.get(id);
+            }
+
+            // Percorrer transações
+            data.data.forEach(t => {
+                const valor = parseFloat(t.valor_transacao || 0);
+                if (valor <= 0) return;
+
+                const titular = t.nome_titular || 'Desconhecido';
+                const od       = (t.nome_pessoa_od && t.nome_pessoa_od.trim() !== '') ? t.nome_pessoa_od : 'Desconhecido';
+
+                if (t.natureza_lancamento === 'C') {
+                    // Fluxo: ORIGEM (SRC_)  -> TITULAR (TIT_)
+                    const srcId  = `SRC_${od}`;
+                    const titId  = `TIT_${titular}`;
+                    const srcIdx = addNode(srcId, od, 0);
+                    const titIdx = addNode(titId, titular, 1);
+                    nodes[srcIdx].value += valor;
+                    nodes[titIdx].value += valor;
+
+                    const existing = links.find(l => l.source === srcIdx && l.target === titIdx);
+                    if (existing) {
+                        existing.value += valor;
+                    } else {
+                        links.push({ source: srcIdx, target: titIdx, value: valor });
+                    }
+                } else {
+                    // Fluxo: TITULAR (TIT_) -> DESTINO (DST_)
+                    const titId  = `TIT_${titular}`;
+                    const dstId  = `DST_${od}`;
+                    const titIdx = addNode(titId, titular, 1);
+                    const dstIdx = addNode(dstId, od, 2);
+                    nodes[titIdx].value += valor;
+                    nodes[dstIdx].value += valor;
+
+                    const existing = links.find(l => l.source === titIdx && l.target === dstIdx);
+                    if (existing) {
+                        existing.value += valor;
+                    } else {
+                        links.push({ source: titIdx, target: dstIdx, value: valor });
+                    }
+                }
+            });
+
+            if (nodes.length === 0 || links.length === 0) {
+                container.innerHTML = '<div class="alert alert-info text-center">Não há conexões suficientes para criar o diagrama.</div>';
+                return;
+            }
+
+            // --- Construir Sankey ---
+            const width = container.clientWidth || 800;
+            const height = 400;
+
+            const svg = d3.select(container)
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            try {
+                const sankey = d3.sankey()
+                    .nodeWidth(15)
+                    .nodePadding(10)
+                    .nodeAlign(d3.sankeyLeft)
+                    .extent([[1, 1], [width - 1, height - 5]]);
+
+                const { nodes: sankeyNodes, links: sankeyLinks } = sankey({
+                    nodes: nodes.map(d => Object.assign({}, d)),
+                    links: links.map(d => Object.assign({}, d))
+                });
+
+                // ---- Escala de cor contínua (verde → azul → vermelho) ----
+                const colorByX = d3.scaleLinear()
+                    .domain([0, width / 2, width])
+                    .range(['#28a745', '#007bff', '#dc3545'])
+                    .interpolate(d3.interpolateRgb);
+
+                // Links
+                svg.append('g')
+                    .selectAll('path')
+                    .data(sankeyLinks)
+                    .join('path')
+                    .attr('d', d3.sankeyLinkHorizontal())
+                    .attr('stroke', d => {
+                        const midX = (d.source.x1 + d.target.x0) / 2;
+                        return colorByX(midX);
+                    })
+                    .attr('stroke-width', d => Math.max(1, d.width))
+                    .attr('fill', 'none')
+                    .attr('opacity', 0.6);
+
+                // Nós
+                svg.append('g')
+                    .selectAll('rect')
+                    .data(sankeyNodes)
+                    .join('rect')
+                    .attr('x', d => d.x0)
+                    .attr('y', d => d.y0)
+                    .attr('height', d => d.y1 - d.y0)
+                    .attr('width', d => d.x1 - d.x0)
+                    .attr('fill', d => {
+                        const midX = (d.x0 + d.x1) / 2;
+                        return colorByX(midX);
+                    })
+                    .attr('stroke', '#000');
+
+                // Labels
+                svg.append('g')
+                    .selectAll('text')
+                    .data(sankeyNodes)
+                    .join('text')
+                    .attr('x', d => (d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6))
+                    .attr('y', d => (d.y1 + d.y0) / 2)
+                    .attr('dy', '0.35em')
+                    .attr('text-anchor', d => (d.x0 < width / 2 ? 'start' : 'end'))
+                    .text(d => d.name)
+                    .style('font-size', '10px')
+                    .style('font-weight', 'bold');
+
+            } catch (error) {
+                console.error('Erro ao criar Sankey diagram:', error);
+                container.innerHTML = '<div class="alert alert-danger text-center">Erro ao criar o diagrama. Verifique os dados.</div>';
+            }
+        }
+
+        //--- Selectors ---
+        const monthSelect = document.getElementById('month-select');
+        const yearSelect = document.getElementById('year-select');
+        const months = [
+            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ];
+        months.forEach((month, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = month;
+            monthSelect.appendChild(option);
+        });
+
+        const currentYear = new Date().getFullYear();
+        for (let i = currentYear - 10; i <= currentYear + 5; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i;
+            yearSelect.appendChild(option);
+        }
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            locale: 'pt-br',
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,dayGridWeek'
+            },
+            events: '{% url "bancaria:calendario_eventos" %}',
+            eventContent: function(arg) {
+                let eventHtml = `<b>${arg.event.title}</b><br><small>${arg.event.extendedProps.titulares || ''}</small>`;
+                return { html: eventHtml };
+            },
+            datesSet: function(dateInfo) {
+                const currentDate = dateInfo.view.currentStart;
+                monthSelect.value = currentDate.getMonth();
+                yearSelect.value = currentDate.getFullYear();
+            },
+            dateClick: function (info) {
+                document.getElementById('transacoesModalLabel').innerText = 'Transações do Dia ' + info.dateStr;
+
+                // Carregar dados das transações
+                fetch(`{% url "bancaria:transacoes_dia" %}?data=${info.dateStr}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Transações recebidas para Sankey:', data.data);
+                        // Criar cards para cada pessoa
+                        const pessoasCards = document.getElementById('pessoas-cards');
+                        pessoasCards.innerHTML = '';
+                        
+                        if (data.pessoas && data.pessoas.length > 0) {
+                            data.pessoas.forEach(pessoa => {
+                                // Determinar cor do card baseado nos valores
+                                let cardClass = 'card-primary';
+                                if (pessoa.total_credito === 0 && pessoa.total_debito > 0) {
+                                    cardClass = 'card-danger'; // Só débito = vermelho
+                                } else if (pessoa.total_debito === 0 && pessoa.total_credito > 0) {
+                                    cardClass = 'card-success'; // Só crédito = verde
+                                } else if (pessoa.total_credito > 0 && pessoa.total_debito > 0) {
+                                    cardClass = 'card-info'; // Ambos = azul
+                                }
+                                
+                                const card = document.createElement('div');
+                                card.className = `card ${cardClass} mb-3`;
+                                card.innerHTML = `
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-6">
+                                                <h6 class="card-title mb-1">${pessoa.nome_titular}</h6>
+                                                <small class="text-muted">${pessoa.cpf_cnpj_titular}</small>
+                                            </div>
+                                            <div class="col-md-6 text-end">
+                                                <div class="row">
+                                                    <div class="col-4">
+                                                        <div class="text-success">
+                                                            <strong>Crédito</strong><br>
+                                                            <span class="h6">${parseFloat(pessoa.total_credito).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <div class="text-danger">
+                                                            <strong>Débito</strong><br>
+                                                            <span class="h6">${parseFloat(pessoa.total_debito).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <div class="text-primary">
+                                                            <strong>Saldo</strong><br>
+                                                            <span class="h6">${pessoa.saldo}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted">${pessoa.total_transacoes} transação(ões)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                                pessoasCards.appendChild(card);
+                            });
+                        } else {
+                            pessoasCards.innerHTML = '<div class="alert alert-info">Nenhuma movimentação registrada para este dia.</div>';
+                        }
+
+                        // Criar Sankey Diagram
+                        createSankeyDiagram(data);
+
+                        // Carregar tabela
+                        if (table) {
+                            table.destroy();
+                        }
+
+                        table = $('#transacoesTable').DataTable({
+                            "processing": true,
+                            "serverSide": false,
+                            "data": data.data || [],
+                            "columns": [
+                                { "data": "nome_titular" },
+                                { "data": "cpf_cnpj_titular" },
+                                { "data": "descricao_lancamento" },
+                                { 
+                                    "data": "valor_transacao",
+                                    "render": function(data, type, row) {
+                                        return parseFloat(data).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                                    } 
+                                },
+                                {
+                                    "data": "natureza_lancamento",
+                                    "render": function(data, type, row) {
+                                        if (data === 'C') {
+                                            return '<span class="badge bg-success">Crédito</span>';
+                                        } else {
+                                            return '<span class="badge bg-danger">Débito</span>';
+                                        }
+                                    }
+                                },
+                                { "data": "nome_pessoa_od" },
+                                { "data": "cpf_cnpj_od" }
+                            ],
+                            "language": {
+                                "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Portuguese-Brasil.json"
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Erro ao carregar dados:', error);
+                        document.getElementById('pessoas-cards').innerHTML = '<div class="alert alert-danger">Erro ao carregar dados.</div>';
+                    });
+
+                transacoesModal.show();
+            }
+        });
+
+        calendar.render();
+
+        //--- Event Listeners for selectors ---
+        console.log('Configurando event listeners para os selects...');
+        console.log('monthSelect:', monthSelect);
+        console.log('yearSelect:', yearSelect);
+        
+        // Função para atualizar o calendário (escopo global)
+        window.atualizarCalendario = function() {
+            const year = yearSelect.value;
+            const month = monthSelect.value;
+            console.log('Atualizando calendário - Ano:', year, 'Mês:', month);
+            calendar.gotoDate(new Date(year, month, 1));
+        }
+        
+        // Usando jQuery para garantir compatibilidade
+        $('#month-select').on('change', function() {
+            console.log('Evento change do monthSelect disparado (jQuery)!');
+            console.log('Valor selecionado:', this.value);
+            atualizarCalendario();
+        });
+
+        $('#year-select').on('change', function() {
+            console.log('Evento change do yearSelect disparado (jQuery)!');
+            console.log('Valor selecionado:', this.value);
+            atualizarCalendario();
+        });
+
+        // Teste programático removido - jQuery está funcionando
+
+        // Seta a data inicial nos selects
+        const initialDate = calendar.getDate();
+        
+        monthSelect.value = initialDate.getMonth();
+        yearSelect.value = initialDate.getFullYear();
+    });
+</script>
+{% endblock %} 

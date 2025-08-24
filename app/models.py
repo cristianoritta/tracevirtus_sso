@@ -75,6 +75,13 @@ class Caso(models.Model):
     class Meta:
         verbose_name = 'Caso'
         verbose_name_plural = 'Casos'
+    
+    def save(self, *args, **kwargs):
+        # Se este caso está sendo definido como ativo
+        if self.ativo:
+            # Desativa todos os outros casos
+            Caso.objects.exclude(id=self.id).update(ativo=False)
+        super().save(*args, **kwargs)
 
 class Investigado(models.Model):
     TIPO_CHOICES = [
@@ -133,3 +140,36 @@ class Arquivo(models.Model):
 
 
 
+########################################################################
+#
+# TABELAS DO MÓDULO DE RELATÓRIOS
+#
+########################################################################
+class Relatorio(models.Model):
+    TIPO_CHOICES = [
+        ('financeiro', 'Financeiro'),
+        ('bancaria', 'Bancária'),
+        ('patrimonial', 'Patrimonial'),
+    ]
+    STATUS_CHOICES = [
+        ('ativo', 'Ativo'),
+        ('inativo', 'Inativo'),
+    ]
+
+    id = models.AutoField(primary_key=True)
+    nome = models.CharField(max_length=254)
+    descricao = models.TextField()
+    tipo = models.CharField(max_length=254, choices=TIPO_CHOICES)
+    status = models.CharField(max_length=254, choices=STATUS_CHOICES)
+    arquivo = models.FileField(upload_to='relatorios/')
+    historico_atualizacoes = models.JSONField()
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.nome} - {self.tipo} - {self.status}"
+
+    class Meta:
+        verbose_name = 'Relatório'
+        verbose_name_plural = 'Relatórios'

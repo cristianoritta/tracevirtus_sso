@@ -1,0 +1,139 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Criar Novo Prompt{% endblock %}
+
+{% block content %}
+<div class="nk-content">
+    <div class="container-fluid">
+        <div class="nk-content-inner">
+            <div class="nk-content-body">
+                <div class="nk-block">
+                    <div class="nk-block-head">
+                        <div class="nk-block-head-content">
+                            <h2 class="nk-block-title">Criar Novo Prompt</h2>
+                            <div class="nk-block-des">
+                                <p>Crie um novo prompt para ser utilizado pelo sistema de IA.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-inner">
+                            <form id="promptForm" method="POST">
+                                {% csrf_token %}
+                                <div class="row g-4">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label class="form-label" for="modulo">Módulo *</label>
+                                            <div class="form-control-wrap">
+                                                <input type="text" class="form-control" id="modulo" name="modulo" required>
+                                                <div class="form-note">Ex: financeira, app, user</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label class="form-label" for="funcao">Função *</label>
+                                            <div class="form-control-wrap">
+                                                <input type="text" class="form-control" id="funcao" name="funcao" required>
+                                                <div class="form-note">Ex: comunicacao_detalhes, relatorio</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-group">
+                                            <label class="form-label" for="label">Label *</label>
+                                            <div class="form-control-wrap">
+                                                <input type="text" class="form-control" id="label" name="label" required>
+                                                <div class="form-note">Nome amigável do prompt para exibição</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-group">
+                                            <label class="form-label" for="description">Descrição</label>
+                                            <div class="form-control-wrap">
+                                                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                                                <div class="form-note">Descrição detalhada do que o prompt faz</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-group">
+                                            <label class="form-label" for="prompt">Prompt *</label>
+                                            <div class="form-control-wrap">
+                                                <textarea class="form-control" id="prompt" name="prompt" rows="10" required></textarea>
+                                                <div class="form-note">Conteúdo do prompt que será enviado para a IA</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-group">
+                                            <label class="form-label" for="parameters">Parâmetros (JSON)</label>
+                                            <div class="form-control-wrap">
+                                                <textarea class="form-control" id="parameters" name="parameters" rows="3">{}</textarea>
+                                                <div class="form-note">Parâmetros esperados pelo prompt em formato JSON</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-group">
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="is_active" name="is_active" checked>
+                                                <label class="custom-control-label" for="is_active">Prompt ativo</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group mt-4">
+                                    <button type="submit" class="btn btn-primary">
+                                        <em class="icon ni ni-save"></em>
+                                        <span>Salvar Prompt</span>
+                                    </button>
+                                    <a href="{% url 'financeira:prompts_list' %}" class="btn btn-outline-secondary">
+                                        <em class="icon ni ni-arrow-left"></em>
+                                        <span>Voltar</span>
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('promptForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('{% url "financeira:prompt_create" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Prompt criado com sucesso!');
+            window.location.href = '{% url "financeira:prompts_list" %}';
+        } else {
+            alert('Erro: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao processar a requisição.');
+    });
+});
+</script>
+{% endblock %} 

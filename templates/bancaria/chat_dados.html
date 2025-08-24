@@ -1,0 +1,214 @@
+{% extends "layout/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <h4 class="card-title mb-0">{{ title }}</h4>
+            <small class="text-muted">{{ subtitle }}</small>
+          </div>
+        </div>
+        <div class="card-body">
+          <form method="post" class="mb-3">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="prompt">Pergunta</label>
+              <textarea id="prompt" name="prompt" class="form-control" rows="3"
+                placeholder="Ex.: Mostre créditos acima de 10 mil do titular João entre 2023-01-01 e 2023-03-31">{{ prompt_usuario }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Consultar</button>
+            <button type="button" class="btn btn-secondary"
+              onclick="window.location.href='{% url 'bancaria:chat_dados' %}'">Limpar</button>
+            <button type="button" class="btn btn-outline-secondary" onclick="copiarResposta()"
+              title="Copiar resposta para área de transferência">
+              <i class="icon fas fa-copy"></i><span>Copiar Resposta</span>
+            </button>
+          </form>
+
+          {% if erro %}
+          <div class="alert alert-danger">{{ erro }}</div>
+          {% endif %}
+
+          {% if filtros_json %}
+          <div class="alert alert-secondary">
+            <strong>Filtros aplicados:</strong>
+            <code>{{ filtros_json }}</code>
+          </div>
+          {% endif %}
+
+          {% if analise_markdown_html %}
+          <div class="mb-4">
+            <h5>Análise (IA)</h5>
+            <div class="border rounded p-3" style="background: #fafafa;">
+              {{ analise_markdown_html|safe }}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- KPIs -->
+          <div class="row mb-3">
+            <div class="col-md-3 col-sm-6 mb-2">
+              <div class="card shadow-sm h-100">
+                <div class="card-body">
+                  <div class="text-muted">Volume financeiro total</div>
+                  <div class="h4 mb-0">{{ kpi_total_str }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-2">
+              <div class="card shadow-sm h-100">
+                <div class="card-body">
+                  <div class="text-muted">Créditos</div>
+                  <div class="h4 mb-0 text-success">{{ kpi_creditos_str }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-2">
+              <div class="card shadow-sm h-100">
+                <div class="card-body">
+                  <div class="text-muted">Débitos</div>
+                  <div class="h4 mb-0 text-danger">{{ kpi_debitos_str }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-2">
+              <div class="card shadow-sm h-100">
+                <div class="card-body">
+                  <div class="text-muted">Saldo</div>
+                  <div class="h4 mb-0">{{ kpi_saldo_str }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table id="tabela-registros" class="table table-striped table-sm" style="width:100%">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Titular</th>
+                  <th>CPF/CNPJ</th>
+                  <th>Descrição</th>
+                  <th>Valor</th>
+                  <th>Nat.</th>
+                  <th>Contraparte</th>
+                  <th>CPF/CNPJ OD</th>
+                  <th>Banco</th>
+                  <th>Agência</th>
+                  <th>Conta</th>
+                </tr>
+                <tr>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Pesquisar Data"></th>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Pesquisar Titular"></th>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Pesquisar CPF/CNPJ"></th>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Pesquisar Descrição"></th>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Pesquisar Valor"></th>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Pesquisar Nat."></th>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Pesquisar Contraparte"></th>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Pesquisar CPF/CNPJ OD"></th>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Pesquisar Banco"></th>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Pesquisar Agência"></th>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Pesquisar Conta"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in registros %}
+                <tr>
+                  <td>{{ r.data_lancamento }}</td>
+                  <td>{{ r.nome_titular }}</td>
+                  <td>{{ r.cpf_cnpj_titular }}</td>
+                  <td>{{ r.descricao_lancamento }}</td>
+                  <td>{{ r.valor_transacao }}</td>
+                  <td>{{ r.natureza_lancamento }}</td>
+                  <td>{{ r.nome_pessoa_od }}</td>
+                  <td>{{ r.cpf_cnpj_od }}</td>
+                  <td>{{ r.banco }}</td>
+                  <td>{{ r.numero_agencia }}</td>
+                  <td>{{ r.numero_conta }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block script %}
+<script>
+  // Inicializa DataTable com filtros por coluna
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!window.jQuery || !$.fn.DataTable) {
+      console.warn('DataTables não encontrado. Certifique-se de incluir os assets do DataTables no base.html.');
+      return;
+    }
+
+    const $table = $('#tabela-registros');
+
+    // Garantir instancia única (destrói se já existir)
+    if ($.fn.DataTable.isDataTable('#tabela-registros')) {
+      $table.DataTable().destroy();
+    }
+
+    let tabela = $table.DataTable({
+        paging: true,
+        pageLength: 25,
+        lengthMenu: [10, 25, 50, 100],
+        orderCellsTop: true,
+        fixedHeader: true,
+        destroy: true,
+        // Remove o filtro global (f) e mantém paginação única no rodapé
+        dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'>>t<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        language: {
+          url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json'
+        }
+      });
+
+    // Aplicar filtros por coluna apenas uma vez
+    if (!$table.data('filtersBound')) {
+      $('#tabela-registros thead tr:eq(1) th').each(function (i) {
+        $('input', this).on('keyup change clear', function () {
+          if (tabela.column(i).search() !== this.value) {
+            tabela.column(i).search(this.value).draw();
+          }
+        });
+      });
+      $table.data('filtersBound', true);
+    }
+
+    // Pós-segurança: se por algum motivo houver duas áreas de paginação/info, manter apenas uma
+    const $wrapper = $('#tabela-registros_wrapper');
+    $wrapper.find('div.dataTables_paginate').not(':last').remove();
+    $wrapper.find('div.dataTables_info').not(':first').remove();
+  });
+
+  function copiarResposta() {
+    const analise = document.querySelector('.border.rounded.p-3');
+    if (analise) {
+      navigator.clipboard.writeText(analise.innerText)
+        .then(() => {
+          // Feedback visual temporário
+          const btn = document.querySelector('[onclick="copiarResposta()"]');
+          const textoOriginal = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+          setTimeout(() => {
+            btn.innerHTML = textoOriginal;
+          }, 2000);
+        })
+        .catch(err => {
+          console.error('Erro ao copiar texto:', err);
+          alert('Não foi possível copiar o texto. Por favor, tente novamente.');
+        });
+    }
+  }
+</script>
+{% endblock %}

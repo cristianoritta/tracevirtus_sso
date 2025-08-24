@@ -1,4 +1,6 @@
 {% extends 'layout/base.html' %}
+{% load static %}
+{% load mask %}
 
 {% block content %}
 {% csrf_token %}
@@ -76,7 +78,7 @@
                                 {% for caso_investigado in investigados %}
                                 <div class="nk-tb-item" id="investigado-{{ caso_investigado.investigado.id }}">
                                     <div class="nk-tb-col">
-                                        <span class="tb-amount">{{ caso_investigado.investigado.cpf_cnpj }}</span>
+                                        <span class="tb-amount">{{ caso_investigado.investigado.cpf_cnpj|mask:'cpf_cnpj' }}</span>
                                     </div>
                                     <div class="nk-tb-col tb-col-mb">
                                         <div class="user-card">

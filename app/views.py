@@ -5,9 +5,11 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 import logging
-from .models import Caso, Investigado, CasoInvestigado
+from .models import Caso, Investigado, CasoInvestigado, Relatorio
 from financeira.models import RIF, Comunicacao, Envolvido, InformacaoAdicional, Ocorrencia
 from .forms import CasoForm, InvestigadoForm, AdicionarInvestigadoForm
+from django.utils import timezone
+from .forms import RelatorioForm
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +18,15 @@ logger = logging.getLogger(__name__)
 
 @login_required(login_url='/login')
 def home(request):
-    return render(request, 'home/index.html')
+    casos = Caso.objects.filter(created_by=request.user)
+    caso_ativo = casos.filter(ativo=True).first()
+    
+    # Calcular o volume financeiro por comunicação
+    volume_financeiro_por_comunicacao = {}
+    for comunicacao in caso_ativo.comunicacao_set.all():
+        volume_financeiro_por_comunicacao[f"{comunicacao.rif} - Ind. {comunicacao.indexador}"] = comunicacao.campo_a
+    
+    return render(request, 'home/index.html', {'caso': caso_ativo, 'casos': casos, 'volume_financeiro_por_comunicacao': volume_financeiro_por_comunicacao})
 
 
 @login_required(login_url='/login')
@@ -271,3 +281,133 @@ def excluir_investigado(request, investigado_id):
     messages.success(
         request, f'Investigado {investigado_nome} excluído permanentemente do sistema!')
     return redirect('investigados', id=request.POST.get('caso_id', 1))
+
+
+########################################################################
+#
+# CRUD DE RELATÓRIOS
+#
+########################################################################
+
+@login_required
+def relatorios_list(request):
+    """Lista todos os relatórios"""
+    relatorios = Relatorio.objects.all().order_by('-created_at')
+    context = {
+        'relatorios': relatorios,
+        'title': 'Relatórios'
+    }
+    return render(request, 'relatorios/list.html', context)
+
+@login_required
+def relatorio_create(request):
+    """Cria um novo relatório"""
+    if request.method == 'POST':
+        form = RelatorioForm(request.POST, request.FILES)
+        if form.is_valid():
+            relatorio = form.save(commit=False)
+            relatorio.created_by = request.user
+            relatorio.historico_atualizacoes = {
+                'atualizacoes': [
+                    {
+                        'data': timezone.now().isoformat(),
+                        'usuario': request.user.username,
+                        'acao': 'Criação do relatório',
+                        'descricao': f'Relatório "{relatorio.nome}" criado'
+                    }
+                ]
+            }
+            relatorio.save()
+            messages.success(request, 'Relatório criado com sucesso!')
+            return redirect('/relatorios')
+    else:
+        form = RelatorioForm()
+    
+    context = {
+        'form': form,
+        'title': 'Criar Relatório',
+        'action': 'create'
+    }
+    return render(request, 'relatorios/form.html', context)
+
+@login_required
+def relatorio_detail(request, pk):
+    """Exibe os detalhes de um relatório"""
+    relatorio = get_object_or_404(Relatorio, pk=pk)
+    context = {
+        'relatorio': relatorio,
+        'title': f'Detalhes - {relatorio.nome}'
+    }
+    return render(request, 'relatorios/detail.html', context)
+
+@login_required
+def relatorio_update(request, pk):
+    """Atualiza um relatório existente"""
+    relatorio = get_object_or_404(Relatorio, pk=pk)
+    
+    if request.method == 'POST':
+        form = RelatorioForm(request.POST, request.FILES, instance=relatorio)
+        if form.is_valid():
+            # Adiciona entrada no histórico
+            historico = relatorio.historico_atualizacoes
+            if not historico:
+                historico = {'atualizacoes': []}
+            
+            historico['atualizacoes'].append({
+                'data': timezone.now().isoformat(),
+                'usuario': request.user.username,
+                'acao': 'Atualização do relatório',
+                'descricao': f'Relatório "{relatorio.nome}" atualizado'
+            })
+            
+            relatorio = form.save(commit=False)
+            relatorio.historico_atualizacoes = historico
+            relatorio.save()
+            
+            messages.success(request, 'Relatório atualizado com sucesso!')
+            return redirect('relatorio_detail', pk=relatorio.pk)
+    else:
+        form = RelatorioForm(instance=relatorio)
+    
+    context = {
+        'form': form,
+        'relatorio': relatorio,
+        'title': f'Editar - {relatorio.nome}',
+        'action': 'update'
+    }
+    return render(request, 'relatorios/form.html', context)
+
+@login_required
+def relatorio_delete(request, pk):
+    """Remove um relatório"""
+    relatorio = get_object_or_404(Relatorio, pk=pk)
+    
+    if request.method == 'POST':
+        nome = relatorio.nome
+        relatorio.delete()
+        messages.success(request, f'Relatório "{nome}" removido com sucesso!')
+        return redirect('relatorios_list')
+    
+    context = {
+        'relatorio': relatorio,
+        'title': f'Remover - {relatorio.nome}'
+    }
+    return render(request, 'relatorios/delete.html', context)
+
+@login_required
+def relatorio_download(request, pk):
+    """Faz download do arquivo do relatório"""
+    relatorio = get_object_or_404(Relatorio, pk=pk)
+    
+    if relatorio.arquivo:
+        response = HttpResponse(relatorio.arquivo, content_type='application/octet-stream')
+        response['Content-Disposition'] = f'attachment; filename="{relatorio.arquivo.name}"'
+        return response
+    else:
+        messages.error(request, 'Arquivo não encontrado!')
+        return redirect('relatorio_detail', pk=pk)
+
+def relatorio_documentacao(request):
+    """Exibe a documentação de dados dos relatórios"""
+    
+    return render(request, 'relatorios/documentacao.html')

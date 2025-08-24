@@ -1,0 +1,257 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% load mask %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="nk-block-head nk-block-head-sm">
+        <div class="nk-block-between">
+            <div class="nk-block-head-content">
+                <h3 class="nk-block-title page-title">{{ title }}</h3>
+                <div class="nk-block-des text-soft">
+                    <p>{{ subtitle }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if no_data %}
+    <div class="card card-bordered">
+        <div class="card-inner">
+            <div class="nk-exception-gfx">
+                <img class="w-100" src="{% static 'img/illustrations/empty.svg' %}" alt="">
+            </div>
+            <div class="nk-exception-text">
+                <h4>Nenhum dado encontrado</h4>
+                <p>Importe arquivos de extrato detalhado para visualizar a análise.</p>
+                <a href="{% url 'bancaria:index' %}" class="btn btn-primary">Ir para Cooperações</a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Cards de Métricas -->
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <div class="card card-bordered h-100">
+                <div class="card-inner">
+                    <div class="card-title-group align-start mb-2">
+                        <div class="card-title">
+                            <h6 class="title">Total Movimentado</h6>
+                        </div>
+                    </div>
+                    <div class="align-end flex-sm-wrap g-4 flex-md-nowrap">
+                        <div class="nk-sale-data">
+                            <span class="amount">{{ total_movimentado|real }}</span>
+                            <span class="sub-title">em {{ total_transacoes }} transações</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-bordered h-100">
+                <div class="card-inner">
+                    <div class="card-title-group align-start mb-2">
+                        <div class="card-title"><h6 class="title">Total de Créditos</h6></div>
+                    </div>
+                    <div class="nk-sale-data"><span class="amount text-success">{{ total_credito|real }}</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-bordered h-100">
+                <div class="card-inner">
+                    <div class="card-title-group align-start mb-2">
+                        <div class="card-title"><h6 class="title">Total de Débitos</h6></div>
+                    </div>
+                    <div class="nk-sale-data"><span class="amount text-danger">{{ total_debito|real }}</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-bordered h-100">
+                <div class="card-inner">
+                    <div class="card-title-group align-start mb-2">
+                        <div class="card-title"><h6 class="title">Contas Únicas</h6></div>
+                    </div>
+                    <div class="nk-sale-data"><span class="amount">{{ contas_unicas }}</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos (Linha e Pizza) -->
+    <div class="row mb-3">
+        <div class="col-lg-12">
+            <div class="card card-bordered h-100">
+                <div class="card-inner">
+                    <div class="card-title-group">
+                        <div class="card-title">
+                            <h6 class="title">Movimentação por Mês (C/D)</h6>
+                        </div>
+                    </div>
+                    <canvas id="movimentacaoTempoChart" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráficos de Barras (Maiores Titulares) -->
+    <div class="row mb-3">
+        <div class="col-lg-6">
+            <div class="card card-bordered h-100">
+                <div class="card-inner">
+                    <h6 class="title">Top 10 Titulares (Créditos)</h6>
+                    <canvas id="maioresTitularesCreditoChart" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card card-bordered h-100">
+                <div class="card-inner">
+                    <h6 class="title">Top 10 Titulares (Débitos)</h6>
+                    <canvas id="maioresTitularesDebitoChart" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de OD e Tabela de Maiores Transações -->
+    <div class="row mb-3">
+        <div class="col-lg-6">
+            <div class="card card-bordered h-100">
+                <div class="card-inner">
+                    <h6 class="title">Top 10 Origem/Destino</h6>
+                    <canvas id="maioresODChart" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card card-bordered h-100">
+                <div class="card-inner">
+                    <h6 class="title">Top 10 Maiores Transações</h6>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Titular</th>
+                                <th>Descrição</th>
+                                <th class="text-end">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in maiores_transacoes %}
+                            <tr>
+                                <td>{{ t.data_lancamento|date:"d/m/y" }}</td>
+                                <td>{{ t.nome_titular|truncatechars:20 }}</td>
+                                <td>{{ t.descricao_lancamento|truncatechars:25 }}</td>
+                                <td class="text-end text-{% if t.natureza_lancamento|lower == 'c' %}success{% else %}danger{% endif %}">
+                                    {{ t.valor_transacao|real }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    {% if not no_data %}
+    const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+
+    // 1. Gráfico de Movimentação no Tempo
+    const movimentacaoData = JSON.parse('{{ movimentacao_tempo_json|escapejs }}');
+    const movimentacaoCtx = document.getElementById('movimentacaoTempoChart').getContext('2d');
+    new Chart(movimentacaoCtx, {
+        type: 'line',
+        data: {
+            labels: movimentacaoData.map(d => new Date(d.mes).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })),
+            datasets: [
+                {
+                    label: 'Créditos',
+                    data: movimentacaoData.map(d => d.credito),
+                    borderColor: 'rgba(28, 200, 138, 1)',
+                    backgroundColor: 'rgba(28, 200, 138, 0.2)',
+                    fill: true,
+                    tension: 0.3
+                },
+                {
+                    label: 'Débitos',
+                    data: movimentacaoData.map(d => d.debito),
+                    borderColor: 'rgba(244, 67, 54, 1)',
+                    backgroundColor: 'rgba(244, 67, 54, 0.2)',
+                    fill: true,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { ticks: { callback: (value) => formatCurrency(value) } } }
+        }
+    });
+
+    // 2. Gráfico de Distribuição por Natureza
+    
+
+    
+
+    // 3. Gráficos de Maiores Titulares
+    const maioresTitularesCreditoData = JSON.parse('{{ maiores_titulares_credito_json|escapejs }}');
+    const maioresTitularesCreditoCtx = document.getElementById('maioresTitularesCreditoChart').getContext('2d');
+    new Chart(maioresTitularesCreditoCtx, {
+        type: 'bar',
+        data: {
+            labels: maioresTitularesCreditoData.map(d => d.nome_titular),
+            datasets: [{
+                label: 'Total Creditado',
+                data: maioresTitularesCreditoData.map(d => d.total),
+                backgroundColor: 'rgba(28, 200, 138, 0.6)',
+            }]
+        },
+        options: { indexAxis: 'y', responsive: true, scales: { x: { ticks: { callback: (value) => formatCurrency(value) } } } }
+    });
+
+    const maioresTitularesDebitoData = JSON.parse('{{ maiores_titulares_debito_json|escapejs }}');
+    const maioresTitularesDebitoCtx = document.getElementById('maioresTitularesDebitoChart').getContext('2d');
+    new Chart(maioresTitularesDebitoCtx, {
+        type: 'bar',
+        data: {
+            labels: maioresTitularesDebitoData.map(d => d.nome_titular),
+            datasets: [{
+                label: 'Total Debitado',
+                data: maioresTitularesDebitoData.map(d => d.total),
+                backgroundColor: 'rgba(244, 67, 54, 0.6)',
+            }]
+        },
+        options: { indexAxis: 'y', responsive: true, scales: { x: { ticks: { callback: (value) => formatCurrency(value) } } } }
+    });
+    
+    // 4. Gráfico de Maiores OD
+    const maioresODData = JSON.parse('{{ maiores_od_json|escapejs }}');
+    const maioresODCtx = document.getElementById('maioresODChart').getContext('2d');
+    new Chart(maioresODCtx, {
+        type: 'bar',
+        data: {
+            labels: maioresODData.map(d => d.nome_pessoa_od),
+            datasets: [{
+                label: 'Valor Total',
+                data: maioresODData.map(d => d.total),
+                backgroundColor: 'rgba(78, 115, 223, 0.6)',
+            }]
+        },
+        options: { indexAxis: 'y', responsive: true, scales: { x: { ticks: { callback: (value) => formatCurrency(value) } } } }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %} 

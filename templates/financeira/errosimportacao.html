@@ -1,0 +1,212 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% load mask %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="dashboard-title">Erros de Importação</h3>
+            <p class="dashboard-subtitle">Envolvidos em que não foi possível identificar as informações adicionais</p>
+        </div>
+    </div>
+
+    <!-- Tabela de Indexadores -->
+    <div class="row mt-4">
+        <div class="col-lg-4">
+            <div class="card card-bordered mb-3">
+                <div class="card-inner">
+                    <div class="card-title-group align-start mb-2">
+                        <div class="card-title">
+                            <h6 class="title">Total de Envolvidos</h6>
+                        </div>
+                        <div class="card-tools">
+                            <em class="card-hint icon ni ni-users"></em>
+                        </div>
+                    </div>
+                    <div class="card-amount">
+                        <span class="amount text-primary">{{ total_envolvidos }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-bordered mb-3">
+                <div class="card-inner">
+                    <div class="card-title-group align-start mb-2">
+                        <div class="card-title">
+                            <h6 class="title">Envolvidos Sem Informações</h6>
+                        </div>
+                        <div class="card-tools">
+                            <em class="card-hint icon ni ni-alert-circle"></em>
+                        </div>
+                    </div>
+                    <div class="card-amount">
+                        <span class="amount text-danger">{{ total_sem_info }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-bordered mb-3">
+                <div class="card-inner">
+                    <div class="card-title-group align-start mb-2">
+                        <div class="card-title">
+                            <h6 class="title">Percentual Sem Informações</h6>
+                        </div>
+                        <div class="card-tools">
+                            <em class="card-hint icon ni ni-percent"></em>
+                        </div>
+                    </div>
+                    <div class="card-amount">
+                        <span class="amount text-danger">{{ percentual_sem_info }}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card card-bordered">
+                <div class="card-inner">
+                    <div class="card-title-group">
+                        <div class="card-title">
+                            <h5 class="title">Indexadores</h5>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Indexador</th>
+                                    <th>Total de Envolvidos</th>
+                                    <th>Sem Informações</th>
+                                    <th>Percentual</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in contagem_por_indexador %}
+                                <tr>
+                                    <td>{{ item.indexador }}</td>
+                                    <td>{{ item.total }}</td>
+                                    <td>{{ item.sem_info }}</td>
+                                    <td>{% widthratio item.sem_info item.total 100 %}%</td>
+                                    <td>
+                                        {% if item.sem_info > 0 %}
+                                        <a href="/financeira/comunicacao/{{item.comunicacao_id}}"
+                                            class="btn btn-outline-primary" title="Detalhes da comunicação">
+                                            <i class="fas fa-folder-open"></i>
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela Principal -->
+    <div class="card card-bordered mt-4">
+        <div class="card-inner table-responsive">
+            <table class="erros-table nk-tb-list nk-tb-ulist" data-auto-responsive="false">
+                <thead>
+                    <tr class="nk-tb-item nk-tb-head">
+                        <th class="nk-tb-col"><span class="sub-text">RIF</span></th>
+                        <th class="nk-tb-col"><span class="sub-text">Indexador</span></th>
+                        <th class="nk-tb-col"><span class="sub-text">Comunicante</span></th>
+                        <th class="nk-tb-col"><span class="sub-text">Tipo de Envolvimento</span></th>
+                        <th class="nk-tb-col"><span class="sub-text">Envolvido</span></th>
+                        <th class="nk-tb-col"><span class="sub-text">CPF/CNPJ</span></th>
+                        <th class="nk-tb-col"><span class="sub-text">Valor</span></th>
+                        <th class="nk-tb-col nk-tb-col-tools text-end">
+                            <span class="sub-text">Ações</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for envolvido in envolvidos_sem_info %}
+                    <tr>
+                        <td>{{ envolvido.rif_numero }}</td>
+                        <td>{{ envolvido.indexador }}</td>
+                        <td>{{ envolvido.nome_comunicante }}</td>
+                        <td>{{ envolvido.tipo_envolvido }}</td>
+                        <td>{{ envolvido.titular }}</td>
+                        <td>{{ envolvido.cpf_cnpj|mask:"cpf_cnpj" }}</td>
+                        <td>{{ envolvido.valor|real }}</td>
+                        <td class="nk-tb-col nk-tb-col-tools">
+                            <ul class="nk-tb-actions gx-1">
+                                <li>
+                                    <div class="drodown">
+                                        <a href="#" class="btn btn-icon" data-bs-toggle="modal"
+                                            data-bs-target="#modalInfo{{ envolvido.comunicacao_id }}">
+                                            <em class="icon ni ni-info"></em>
+                                        </a>
+                                        <a href="{% url 'financeira:processar_envolvido_especifico' comunicacao_id=envolvido.comunicacao_id envolvido_id=envolvido.id %}"
+                                            class="btn btn-icon" title="Reprocessar somente este envolvido">
+                                            <i class="fas fa-check-circle text-warning"></i>
+                                        </a>
+                                    </div>
+                                </li>
+                            </ul>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% for envolvido in envolvidos_sem_info %}
+<!-- Modal de Informações -->
+<div class="modal fade" tabindex="-1" id="modalInfo{{ envolvido.comunicacao_id }}">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Informações Adicionais</h5>
+                <a href="#" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <em class="icon ni ni-cross"></em>
+                </a>
+            </div>
+            <div class="modal-body">
+                <div class="card">
+                    <div class="card-inner">
+                        {{ envolvido.informacoes_adicionais }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function () {
+        // Inicializa o DataTable com configurações personalizadas
+        $('.erros-table').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+            },
+            responsive: true,
+            autoWidth: false,
+            pageLength: 10,
+            lengthChange: false,
+            ordering: true,
+            order: [[1, 'asc']], // Ordena por Indexador
+            columnDefs: [
+                { orderable: false, targets: -1 } // Desabilita ordenação na coluna de ações
+            ]
+        });
+
+        // Inicializa os modais do Bootstrap
+        var modals = document.querySelectorAll('.modal');
+        modals.forEach(function (modal) {
+            new bootstrap.Modal(modal);
+        });
+    });
+</script>
+{% endblock %}

@@ -1,5 +1,29 @@
 {% extends 'layout/base.html' %}
 {% load static %}
+{% load mask %}
+
+{% block style %}
+<link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.2.3/css/fixedHeader.dataTables.min.css">
+<style>
+    .dataTables_filter {
+        display: none;
+    }
+    
+    thead input {
+        width: 100%;
+        padding: 3px;
+        box-sizing: border-box;
+    }
+    
+    .table thead th {
+        vertical-align: top;
+    }
+    
+    .table thead tr:first-child th {
+        border-bottom: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -10,42 +34,384 @@
             <p class="dashboard-subtitle">Processamento da "coluna M" do caso: {{ caso.numero }}</p>
         </div>
     </div>
+
+    <!-- Gráfico de Colunas -->
+    <div class="row">
+        <div class="col-lg-10">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">Quantidade por Indexador</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <canvas id="indexadorChart"></canvas>
+                        </div>
+                        <div class="col-lg-6">
+                            <div id="pieChartContainer" class="text-center">
+                                <p class="mb-3">Clique em uma barra para ver detalhes</p>
+                                <canvas id="pieChart" style="max-height: 300px !important;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card card-bordered mb-3">
+                        <div class="card-inner">
+                            <div class="card-title-group align-start mb-2">
+                                <div class="card-title">
+                                    <h6 class="title">Total de Envolvidos</h6>
+                                </div>
+                                <div class="card-tools">
+                                    <em class="card-hint icon ni ni-users"></em>
+                                </div>
+                            </div>
+                            <div class="card-amount">
+                                <span class="amount text-primary">{{ total_envolvidos }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-bordered mb-3">
+                        <div class="card-inner">
+                            <div class="card-title-group align-start mb-2">
+                                <div class="card-title">
+                                    <h6 class="title">Envolvidos Sem Informações</h6>
+                                </div>
+                                <div class="card-tools">
+                                    <em class="card-hint icon ni ni-alert-circle"></em>
+                                </div>
+                            </div>
+                            <div class="card-amount">
+                                <span class="amount text-danger">{{ total_sem_info }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-bordered mb-3">
+                        <div class="card-inner">
+                            <div class="card-title-group align-start mb-2">
+                                <div class="card-title">
+                                    <h6 class="title">Percentual Sem Informações</h6>
+                                </div>
+                                <div class="card-tools">
+                                    <em class="card-hint icon ni ni-percent"></em>
+                                </div>
+                            </div>
+                            <div class="card-amount">
+                                <span class="amount text-danger">{{ percentual_sem_info }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {% if informacoes_adicionais %}
-    <table class="table table-bordered mt-3">
-        <thead>
-            <tr>
-                <th>Comunicação</th>
-                <th>Indexador</th>
-                <th>Nome</th>
-                <th>CPF/CNPJ</th>
-                <th>Tipo</th>
-                <th>Valor</th>
-                <th>Quantidade</th>
-                <th>Plataforma</th>
-                <th width="%"></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for info in informacoes_adicionais %}
-            <tr>
-                <td>{{ info.comunicacao.rif.numero }}</td>
-                <td>{{ info.indexador }}</td>
-                <td>{{ info.nome }}</td>
-                <td>{{ info.cpf }}</td>
-                <td>{{ info.tipo_transacao }}</td>
-                <td>R$ {{ info.valor }}</td>
-                <td>{{ info.transacoes }}</td>
-                <td>{{ info.plataforma }}</td>
-                <td>
-                    <a href="#" class="btn btn-primary">Editar</a>
-                    <a href="#" class="btn btn-danger">Excluir</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="card-title">Informações Adicionais - {{ caso.numero }}</h4>
+            <div>
+                <a href="{% url 'financeira:upload_planilha' %}" class="btn btn-success">
+                    <i class="icon fas fa-upload"></i><span>Upload de Planilha</span>
+                </a>
+                <a href="{% url 'financeira:download_vinculos_csv' %}" class="btn btn-primary">
+                    <i class="icon fas fa-download"></i><span>Exportar</span>
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <table id="infoTable" class="table table-bordered display">
+                <thead>
+                    <tr>
+                        <th>RIF</th>
+                        <th>Indexador</th>
+                        <th>Nome</th>
+                        <th>CPF/CNPJ</th>
+                        <th>Tipo</th>
+                        <th>Valor</th>
+                        <th>Quantidade</th>
+                        <th>Plataforma</th>
+                        <th>Ações</th>
+                    </tr>
+                    <tr>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar RIF"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar Indexador"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar Nome"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar CPF/CNPJ"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar Tipo"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar Valor"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar Quantidade"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filtrar Plataforma"></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for info in informacoes_adicionais %}
+                    <tr>
+                        <td>{{ info.numero_rif }}</td>
+                        <td>{{ info.indexador }}</td>
+                        <td>{{ info.nome }}</td>
+                        <td>{{ info.cpf|mask:'cpf_cnpj' }}</td>
+                        <td>{{ info.tipo_transacao }}</td>
+                        <td nowrap>{{ info.valor|mask:'moeda' }}</td>
+                        <td>{{ info.transacoes }}</td>
+                        <td>{{ info.plataforma }}</td>
+                        <td nowrap>
+                            <a href="{% url 'financeira:comunicacao_detalhes' info.comunicacao_id %}" target="_blank" class="btn btn-outline-primary">
+                                <i class="fa fa-folder-open"></i>
+                            </a>
+                            <button class="btn btn-danger"
+                                hx-delete="{% url 'financeira:informacoes_adicionais_delete' info.id %}"
+                                hx-confirm="Tem certeza que deseja excluir esta informação adicional?"
+                                hx-swap="outerHTML swap:1s">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
     {% else %}
     <div class="alert alert-info mt-3">Nenhuma informação adicional cadastrada para este caso.</div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block script %}
+<!-- Dados do Django em JSON -->
+<script type="application/json" id="dados-informacoes">
+[
+    {% for info in informacoes_adicionais %}
+    {
+        "indexador": "{{ info.indexador }}",
+        "nome": "{{ info.nome|escapejs }}",
+        "valor": "{{ info.valor }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+]
+</script>
+
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/fixedheader/3.2.3/js/dataTables.fixedHeader.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function () {
+        // Função para converter número do formato BR para US
+        function convertBRNumberToUS(valor) {
+            if (typeof valor === 'number') return valor;
+            return parseFloat(valor.replace(/\./g, '').replace(',', '.'));
+        }
+
+        // Verifica se a tabela já foi inicializada e destrói se necessário
+        if ($.fn.DataTable.isDataTable('#infoTable')) {
+            $('#infoTable').DataTable().destroy();
+        }
+
+        // Inicializa DataTables
+        const table = $('#infoTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/pt-BR.json'
+            },
+            order: [[1, 'asc']], // Ordena por indexador
+            pageLength: 25,
+            lengthChange: false,
+            responsive: true,
+            destroy: true, // Permite reinicialização
+            orderCellsTop: true,
+            fixedHeader: true
+        });
+
+        // Aplica o filtro de pesquisa em cada coluna
+        table.columns().every(function(index) {
+            const column = this;
+            const header = $(table.column(index).header());
+            const input = $('input', header.closest('table').find('thead tr:eq(1) th').eq(index));
+            
+            input.on('keyup change', function() {
+                if (column.search() !== this.value) {
+                    column.search(this.value).draw();
+                }
+            });
+
+            // Previne que o Enter submeta o formulário
+            input.on('keypress', function(e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        // Prepara dados para os gráficos
+        const dadosCompletos = {};
+
+        // Lê os dados do JSON incorporado
+        const dadosJson = document.getElementById('dados-informacoes').textContent;
+        const informacoesAdicionais = JSON.parse(dadosJson);
+
+        // Processa os dados
+        informacoesAdicionais.forEach(function (info) {
+            var indexador = info.indexador;
+            if (!dadosCompletos[indexador]) {
+                dadosCompletos[indexador] = {
+                    count: 0,
+                    detalhes: []
+                };
+            }
+            dadosCompletos[indexador].count++;
+            dadosCompletos[indexador].detalhes.push({
+                nome: info.nome,
+                valor: info.valor
+            });
+        });
+
+        // Configuração de cores base
+        const coresBase = [
+            'rgba(54, 162, 235, 0.5)',   // Azul
+            'rgba(255, 99, 132, 0.5)',   // Rosa
+            'rgba(75, 192, 192, 0.5)',   // Verde água
+            'rgba(255, 206, 86, 0.5)',   // Amarelo
+            'rgba(153, 102, 255, 0.5)',  // Roxo
+            'rgba(255, 159, 64, 0.5)',   // Laranja
+            'rgba(199, 199, 199, 0.5)',  // Cinza
+            'rgba(83, 102, 255, 0.5)',   // Azul escuro
+            'rgba(255, 99, 255, 0.5)',   // Rosa escuro
+            'rgba(159, 159, 64, 0.5)'    // Verde oliva
+        ];
+
+        // Função para gerar cores dinâmicas
+        function gerarCores(quantidade) {
+            const cores = [];
+            for (let i = 0; i < quantidade; i++) {
+                if (i < coresBase.length) {
+                    cores.push(coresBase[i]);
+                } else {
+                    // Gera uma cor aleatória se precisarmos de mais cores
+                    const hue = (i * 137.508) % 360; // Distribuição uniforme de cores
+                    cores.push(`hsla(${hue}, 70%, 60%, 0.5)`);
+                }
+            }
+            return cores;
+        }
+
+        // Cria o gráfico de barras
+        const ctxBar = document.getElementById('indexadorChart').getContext('2d');
+        const barChart = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(dadosCompletos).sort((a, b) => a - b),
+                datasets: [{
+                    label: 'Quantidade de Registros',
+                    data: Object.keys(dadosCompletos).sort((a, b) => a - b).map(k => dadosCompletos[k].count),
+                    backgroundColor: coresBase[0],
+                    borderColor: coresBase[0].replace('0.5', '1'),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Distribuição por Indexador'
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+                onClick: (e, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const indexador = Object.keys(dadosCompletos).sort((a, b) => a - b)[index];
+                        atualizaGraficoPizza(indexador);
+                    }
+                }
+            }
+        });
+
+        // Cria o gráfico de pizza (inicialmente vazio)
+        const ctxPie = document.getElementById('pieChart').getContext('2d');
+        let pieChart = null;
+
+        function atualizaGraficoPizza(indexador) {
+            const detalhes = dadosCompletos[indexador].detalhes;
+            const cores = gerarCores(detalhes.length);
+
+            const dadosPizza = {
+                labels: detalhes.map(d => d.nome.length > 20 ? d.nome.substring(0, 20) + '...' : d.nome),
+                datasets: [{
+                    data: detalhes.map(d => d.valor),
+                    backgroundColor: cores,
+                    borderColor: cores.map(cor => cor.replace('0.5', '1')),
+                    borderWidth: 1
+                }]
+            };
+
+            if (pieChart) {
+                pieChart.destroy();
+            }
+
+            pieChart = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: dadosPizza,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%', // Controla o tamanho do buraco no meio
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: `Distribuição de Valores - Indexador ${indexador}`
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const valor = context.raw.toLocaleString('pt-BR', {
+                                        style: 'currency',
+                                        currency: 'BRL'
+                                    });
+                                    return `${context.label}: ${valor}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Atualiza o texto informativo
+            const containerText = document.querySelector('#pieChartContainer p');
+            if (containerText) {
+                containerText.textContent = `Detalhes do Indexador ${indexador} - ${detalhes.length} registro(s)`;
+            }
+        }
+
+        // Configuração do HTMX para recarregar a página após exclusão
+        document.body.addEventListener('htmx:afterRequest', function (evt) {
+            if (evt.detail.successful) {
+                // Recarrega a página após exclusão bem-sucedida
+                location.reload();
+            }
+        });
+    });
+</script>
 {% endblock %}

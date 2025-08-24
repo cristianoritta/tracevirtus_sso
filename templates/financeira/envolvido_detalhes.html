@@ -1,0 +1,91 @@
+{% load static %}
+{% load mask %}
+
+<div class="container-fluid">
+    <div class="mb-3">
+        <h3>Comunicações do Envolvido</h3>
+        <p>RIF: {{ rif.numero }}</p>
+        <a href="{% url 'financeira:financeira_envolvidos' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5>{{ envolvido.nome_envolvido }}</h5>
+            <p><strong>CPF/CNPJ:</strong> {{ envolvido.cpf_cnpj_envolvido|mask:'cpf_cnpj' }}</p>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table id="comunicacoesTable" class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Nº RIF</th>
+                    <th>Indexador</th>
+                    <th>Nome Comunicante</th>
+                    <th>Titular</th>
+                    <th>Participação</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in comunicacoes %}
+                <tr>
+                    <td>{{ c.rif.numero }}</td>
+                    <td>{{ c.indexador }}</td>
+                    <td>{{ c.nome_comunicante }}</td>
+                    <td>{{ c.titular.nome_envolvido|default:"Não identificado" }}</td>
+                    <td>{{ c.envolvido.tipo_envolvido }}</td>
+                    <td>
+                        <a href="/financeira/comunicacao/{{ c.id }}" class="btn btn-sm btn-outline-primary" target="_blank" title="Detalhes">
+                            <i class="fa fa-folder-open"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Informações -->
+<div class="modal fade" id="infoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Informações Adicionais</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="infoModalBody"></div>
+        </div>
+    </div>
+</div>
+
+<div id="infoData" style="display: none;">
+    {% for c in comunicacoes %}
+    <div id="info-content-{{ forloop.counter }}">
+        <p>{{ c.informacoes_adicionais }}</p>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#comunicacoesTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+            },
+            pageLength: 10,
+            responsive: true
+        });
+    });
+
+    function showInfoModal(comunicacaoId) {
+        const infoContent = $('#info-content-' + comunicacaoId);
+        if (infoContent.length > 0) {
+            $('#infoModalBody').html(infoContent.html());
+            $('#infoModal').modal('show');
+        }
+    }
+</script>

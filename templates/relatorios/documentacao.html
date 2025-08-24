@@ -1,0 +1,415 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    Documentação de Dados dos Relatórios
+                </div>
+
+                <div class="card-body">
+
+
+                    <pre style="white-space: pre-wrap; font-size: 1.2em;">
+                    # Documentação - Relatório Financeiro do Caso
+
+                    ## 📊 Estrutura de Dados Retornados
+                    
+                    O dicionário `data` retornado pela função `relatorio_documento` contém as seguintes chaves principais:
+                    
+                    ### 1. **rifs** (QuerySet de objetos RIF)
+                    **Descrição:** Lista de todos os RIFs (Relatórios de Inteligência Financeira) associados ao caso.
+                    
+                    **Campos disponíveis:**
+                    - `id`: Identificador único do RIF
+                    - `numero`: Número do RIF
+                    - `caso`: Referência ao caso associado
+                    
+                    **Como acessar:**
+                    ```django
+                    {% for rif in rifs %}
+                        RIF nº { { rif.numero } } - ID: { { rif.id } }
+                    {% endfor %}
+                    ```
+                    
+                    ---
+                    
+                    ### 2. **comunicacoes** (QuerySet de objetos Comunicacao)
+                    **Descrição:** Todas as comunicações financeiras registradas no caso.
+                    
+                    **Campos principais:**
+                    - `campo_a`: Valor monetário principal
+                    - `campo_b`: Créditos
+                    - `campo_c`: Débitos
+                    - `informacoes_adicionais`: Detalhes textuais
+                    - `indexador`: CPF/CNPJ do envolvido
+                    
+                    **Como acessar:**
+                    ```django
+                    { { % for com in comunicacoes % } }
+                        Valor: { { com.campo_a } }
+                        Informações: { { com.informacoes_adicionais } }
+                    { { % endfor % } }
+                    ```
+                    
+                    ---
+                    
+                    ### 3. **envolvidos** (QuerySet de objetos Envolvido)
+                    **Descrição:** Pessoas físicas ou jurídicas envolvidas no caso.
+                    
+                    **Campos disponíveis:**
+                    - `cpf_cnpj_envolvido`: Documento de identificação
+                    - `nome_envolvido`: Nome completo
+                    - `tipo_envolvido`: "Titular" ou "Representante"
+                    - `indexador`: Chave de indexação
+                    
+                    **Como acessar:**
+                    ```django
+                    { { % for envolvido in envolvidos % } }
+                        { { envolvido.nome_envolvido } } ({ { envolvido.tipo_envolvido } })
+                        CPF/CNPJ: { { envolvido.cpf_cnpj_envolvido } }
+                    { { % endfor % } }
+                    ```
+                    
+                    ---
+                    
+                    ### 4. **investigados** (QuerySet)
+                    **Descrição:** Lista de pessoas sob investigação no caso.
+                    
+                    **Como acessar:**
+                    ```django
+                    { { % for investigado in investigados % } }
+                        Investigado: { { investigado.nome } }
+                    { { % endfor % } }
+                    ```
+                    
+                    ---
+                    
+                    ### 5. **titulares** (Lista de dicionários)
+                    **Descrição:** Envolvidos do tipo "Titular" com dados agregados de movimentação financeira.
+                    
+                    **Campos por titular:**
+                    - `cpf_cnpj_envolvido`: Documento
+                    - `nome_envolvido`: Nome
+                    - `movimentacao`: Total movimentado (formatado)
+                    - `creditos`: Total de créditos (formatado)
+                    - `debitos`: Total de débitos (formatado)
+                    
+                    **Como acessar:**
+                    ```django
+                    { { % for titular in titulares % } }
+                        { { titular.nome_envolvido } }
+                        CPF/CNPJ: { { titular.cpf_cnpj_envolvido } }
+                        Movimentação Total: { { titular.movimentacao } }
+                        Créditos: { { titular.creditos } } | Débitos: { { titular.debitos } }
+                    { { % endfor % } }
+                    ```
+                    
+                    ---
+                    
+                    ### 6. **representantes** (Lista de dicionários)
+                    **Descrição:** Envolvidos do tipo "Representante".
+                    
+                    **Estrutura similar aos titulares**
+                    
+                    **Como acessar:**
+                    ```django
+                    { { % for rep in representantes % } }
+                        Representante: { { rep.nome_envolvido } }
+                    { { % endfor % } }
+                    ```
+                    
+                    ---
+                    
+                    ### 7. **ocorrencias** (QuerySet de objetos Ocorrencia)
+                    **Descrição:** Eventos ou ocorrências registradas no caso.
+                    
+                    **Campos:**
+                    - `ocorrencia`: Descrição da ocorrência
+                    - `rif`: RIF associado
+                    
+                    **Como acessar:**
+                    ```django
+                    { { % for ocor in ocorrencias % } }
+                        { { ocor.ocorrencia } }
+                    { { % endfor % } }
+                    ```
+                    
+                    ---
+                    
+                    ### 8. **movimentacao** (String formatada)
+                    **Descrição:** Valor total movimentado em todo o caso (soma de todas as comunicações).
+                    
+                    **Como acessar:**
+                    ```django
+                    Total Movimentado no Caso: { { movimentacao } }
+                    ```
+                    
+                    ---
+                    
+                    ### 9. **titulares_extratos** (Lista de dicionários complexos)
+                    **Descrição:** Análise detalhada por titular com extrato completo de movimentações.
+                    
+                    **Estrutura por titular:**
+                    ```python
+                    {
+                        'nome': str,                    # Nome do titular
+                        'investigado': bool,             # Se é investigado
+                        'cpf': str,                      # CPF/CNPJ
+                        'kyc': str,                      # Análise KYC (Know Your Client)
+                        'movimentacao_total': str,       # Total movimentado formatado
+                        'creditos': str,                 # Total de créditos formatado
+                        'debitos': str,                  # Total de débitos formatado
+                        'comunicacoes': list,            # Lista de comunicações do titular
+                        'comunicacoes_nao_suspeitas': list,  # Comunicações não suspeitas
+                        'outras_informacoes': list,      # Informações adicionais
+                        'observacoes_analista': str,     # Observações do analista
+                        'ocorrencias': list              # Ocorrências relacionadas
+                    }
+                    ```
+                    
+                    **Como acessar:**
+                    ```django
+                    { { % for extrato in titulares_extratos % } }
+                        
+                            { { extrato.nome } }
+                            CPF: { { extrato.cpf } }
+                            Movimentação Total: { { extrato.movimentacao_total } }
+                            
+                            Comunicações:
+                            { { % for com in extrato.comunicacoes % } }
+                                RIF { { com.numero_rif } }: { { com.campo_a } }
+                            { { % endfor % } }
+                            
+                            Ocorrências:
+                            { { % for ocor in extrato.ocorrencias % } }
+                                { { ocor.ocorrencia } }
+                            { { % endfor % } }
+                        
+                    { { % endfor % } }
+                    ```
+                    
+                    ---
+                    
+                    ## 🎯 Casos de Uso Comuns
+                    
+                    ### 1. **Relatório Resumido do Caso**
+                    ```django
+                    
+                        Relatório do Caso
+                        Total de RIFs: { { rifs|length } }
+                        Total de Comunicações: { { comunicacoes|length } }
+                        Movimentação Total: { { movimentacao } }
+                        
+                        
+                        Principais Envolvidos
+                        { { % for titular in titulares % } }
+                            
+                                { { titular.nome_envolvido } }
+                                { { titular.movimentacao } }
+                            
+                        { { % endfor % } }
+                    
+                    ```
+                    
+                    ### 2. **Extrato Detalhado por Titular**
+                    ```django
+                    { { % for extrato in titulares_extratos % } }
+                                { { extrato.nome } }
+                                { { % if extrato.investigado % } }
+                                    INVESTIGADO
+                                { { % endif % } }
+                            
+                            
+                                    Movimentação Total
+                                    { { extrato.movimentacao_total } }
+                                
+                                
+                                    Créditos
+                                    { { extrato.creditos } }
+                                
+                                
+                                    Débitos
+                                    { { extrato.debitos } }
+                                
+                            
+                            
+                            { { % if extrato.kyc % } }
+                                
+                                    Análise KYC
+                                    { { extrato.kyc } }
+                                
+                            { { % endif % } }
+                            
+                            { { % if extrato.observacoes_analista % } }
+                                    Observações do Analista
+                                    { { extrato.observacoes_analista } }
+                                
+                            { { % endif % } }
+                    { { % endfor % } }
+                    ```
+                    
+                    ### 3. **Dashboard de RIFs**
+                    ```django
+                        RIFs do Caso
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Comunicações</th>
+                                    <th>Envolvidos</th>
+                                    <th>Ocorrências</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                { { % for rif in rifs % } }
+                                <tr>
+                                    <td>{ { rif.numero } }</td>
+                                    <td>
+                                        { { % for com in comunicacoes % } }
+                                            { { % if com.rif.id == rif.id % } }
+                                                +1
+                                            { { % endif % } }
+                                        { { % endfor % } }
+                                    </td>
+                                    <td>
+                                        { { % for env in envolvidos % } }
+                                            { { % if env.rif.id == rif.id % } }
+                                                { { env.nome_envolvido } }<br>
+                                            { { % endif % } }
+                                        { { % endfor % } }
+                                    </td>
+                                    <td>
+                                        { { % for ocor in ocorrencias % } }
+                                            { { % if ocor.rif.id == rif.id % } }
+                                                • { { ocor.ocorrencia|truncatewords:10 } }<br>
+                                            { { % endif % } }
+                                        { { % endfor % } }
+                                    </td>
+                                </tr>
+                                { { % endfor % } }
+                            </tbody>
+                        </table>
+                    
+                    ```
+                    
+                    ### 4. **Análise de Rede de Relacionamentos**
+                    ```django
+                        Rede de Relacionamentos Financeiros
+                        
+                        { { % for extrato in titulares_extratos % } }
+                                { { extrato.nome } }
+                                
+                                Transações com:
+                                { { % for info in extrato.outras_informacoes % } }
+                                    { { info|truncatewords:20 } }
+                                { { % endfor % } }
+                            
+                        { { % endfor % } }
+                    
+                    ```
+                    
+                    ### 5. **Relatório de Ocorrências por RIF**
+                    ```django
+                        { { % regroup ocorrencias by rif.numero as ocorrencias_agrupadas % } }
+                        
+                        { { % for grupo in ocorrencias_agrupadas % } }
+                                RIF nº { { grupo.grouper } }
+                                    { { % for ocor in grupo.list % } }
+                                        { { ocor.ocorrencia } }
+                                    { { % endfor % } }
+                        { { % endfor % } }
+                    
+                    ```
+                    
+                    ---
+                    
+                    ## 💡 Insights e Melhores Práticas
+                    
+                    ### 1. **Filtros Úteis**
+                    ```django
+                    Apenas titulares com movimentação acima de R$ 100.000
+                    { { % for titular in titulares % } }
+                        { { % if titular.movimentacao|slice:"3:"|remove:"." > 100000 % } }
+                            Alta movimentação: { { titular.nome_envolvido } }
+                        { { % endif % } }
+                    { { % endfor % } }
+                    
+                    Contar comunicações suspeitas
+                    { { % for extrato in titulares_extratos % } }
+                        Comunicações suspeitas: 
+                        { { extrato.comunicacoes|length|sub:extrato.comunicacoes_nao_suspeitas|length } }
+                    { { % endfor % } }
+                    ```
+                    
+                    ### 2. **Agregações e Totalizações**
+                    ```django
+                    Somar todos os créditos
+                    { { % with total_creditos=0 % } }
+                        { { % for titular in titulares % } }
+                            Lógica de soma aqui
+                        { { % endfor % } }
+                    { { % endwith % } }
+                    
+                    Percentual de participação
+                    { { % for titular in titulares % } }
+                        Participação: { { % widthratio titular.movimentacao movimentacao 100 % } }%
+                    { { % endfor % } }
+                    ```
+                    
+                    ### 3. **Formatação Condicional**
+                    ```django
+                    { { % for extrato in titulares_extratos % } }
+                        <div class="titular { { % if extrato.investigado % } }destaque-investigado{ { % endif % } }">
+                            { { extrato.nome } }
+                            
+                            { { % if extrato.ocorrencias|length > 5 % } }
+                                <span class="alerta">⚠️ Múltiplas ocorrências
+                            { { % endif % } }
+                        
+                    { { % endfor % } }
+                    ```
+                    
+                    ### 4. **Exportação de Dados**
+                    ```django
+                    Formato CSV
+                    { { % for titular in titulares % } }
+                    { { titular.nome_envolvido } };{ { titular.cpf_cnpj_envolvido } };{ { titular.movimentacao } }
+                    { { % endfor % } }
+                    
+                    Formato JSON simplificado
+                    {
+                        "caso": {
+                            "total_movimentado": "{ { movimentacao } }",
+                            "total_rifs": { { rifs|length } },
+                            "titulares": [
+                                { { % for t in titulares % } }
+                                {
+                                    "nome": "{ { t.nome_envolvido } }",
+                                    "cpf": "{ { t.cpf_cnpj_envolvido } }",
+                                    "valor": "{ { t.movimentacao } }"
+                                }{ { % if not forloop.last % } },{ { % endif % } }
+                                { { % endfor % } }
+                            ]
+                        }
+                    }
+                    ```
+                    
+                    ## 📝 Notas Importantes
+                    
+                    - A formatação monetária é feita pela função `moeda()` - certifique-se de que está configurada corretamente
+                    </pre>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+{% endblock %}

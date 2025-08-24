@@ -1,0 +1,87 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="nk-block-head nk-block-head-sm">
+        <div class="nk-block-between">
+            <div class="nk-block-head-content">
+                <h3 class="nk-block-title page-title">{{ title }}</h3>
+                <div class="nk-block-des text-soft">
+                    <p>{{ subtitle }}</p>
+                </div>
+            </div>
+            <div class="nk-block-head-content">
+                <div class="toggle-wrap nk-block-tools-toggle">
+                    <div class="toggle-expand-content" data-content="pageMenu">
+                        <ul class="nk-block-tools g-3">
+                            <li class="nk-block-tools-opt">
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalImportarArquivos">
+                                    <em class="icon ni ni-upload"></em>
+                                    <span>Importar Novo Arquivo</span>
+                                </button>
+                            </li>
+                            <li class="nk-block-tools-opt">
+                                <a href="{% url 'bancaria:index' %}" class="btn btn-outline-light">
+                                    <em class="icon ni ni-arrow-left"></em>
+                                    <span>Voltar</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Arquivos -->
+    <div class="nk-block">
+        <div class="card card-bordered card-stretch">
+            <div class="card-inner-group">
+                <div class="card-inner">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nome do Arquivo</th>
+                                <th>Data de Importação</th>
+                                <th>Registros</th>
+                                <th>Hash</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for arquivo in arquivos %}
+                            <tr>
+                                <td>{{ arquivo.nome }}</td>
+                                <td>{{ arquivo.created_at|date:"d/m/Y H:i" }}</td>
+                                <td>{{ arquivo.total_registros }}</td>
+                                <td><small class="text-muted">{{ arquivo.hash|truncatechars:20 }}</small></td>
+                                <td class="text-end">
+                                    <button class="btn btn-danger btn-sm" hx-delete="{% url 'bancaria:delete_arquivo' arquivo.id %}"
+                                        hx-target="closest tr" hx-swap="outerHTML swap:1s"
+                                        hx-confirm="Tem certeza que deseja excluir este arquivo? Todos os registros associados serão removidos.">
+                                        <em class="icon ni ni-trash"></em>
+                                        <span>Excluir</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">
+                                    <span class="text-muted">Nenhum arquivo importado para esta cooperação.</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Incluir Modal de Importação -->
+{% include 'bancaria/partials/importar.html' %}
+
+{% endblock %} 

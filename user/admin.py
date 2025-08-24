@@ -60,20 +60,3 @@ class TermosUsoAdmin(admin.ModelAdmin):
     search_fields = ('usuario__nome_completo', 'ip')
     readonly_fields = ('created_at', 'updated_at')
     ordering = ('-created_at',)
-
-@admin.register(Planos)
-class PlanosAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'faces', 'reconhecimentos', 'valor_regular', 'valor_promocional', 'periodo', 'publico')
-    list_filter = ('publico',)
-    search_fields = ('nome',)
-    readonly_fields = ('created_at', 'updated_at')
-    ordering = ('valor_promocional',)
-
-@admin.register(Assinatura)
-class AssinaturaAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'plano', 'status', 'valor', 'data_pagamento', 'vencimento', 'forma_pagamento')
-    list_filter = ('status', 'forma_pagamento', 'plano')
-    search_fields = ('usuario__nome_completo', 'usuario__cpf', 'id_transacao', 'codigo_fatura')
-    readonly_fields = ('created_at', 'updated_at')
-    ordering = ('-created_at',)
-    date_hierarchy = 'created_at'

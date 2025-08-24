@@ -1,3 +1,5 @@
+{% load mask %}
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12 p-4">
@@ -15,7 +17,9 @@
                         </div>
                         <div class="col-md-4">
                             <strong>CPF/CNPJ:</strong>
-                            <p>{{ envolvido.cpf_cnpj_envolvido }}</p>
+                            <p>
+                                {{ envolvido.cpf_cnpj_envolvido|mask:'cpf_cnpj' }}
+                            </p>
                         </div>
                     </div>
                     <!-- Abas -->
@@ -110,7 +114,9 @@
                                         <td>{{ env.indexador }}</td>
                                         <td>{{ env.nome_envolvido }}</td>
                                         <td>{{ env.tipo_envolvido }}</td>
-                                        <td>{{ env.cpf_cnpj_envolvido }}</td>
+                                        <td>
+                                            {{ env.cpf_cnpj_envolvido|mask:'cpf_cnpj' }}
+                                        </td>
                                     </tr>
                                     {% empty %}
                                     <tr>

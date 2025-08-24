@@ -1,5 +1,6 @@
 {% extends 'layout/base.html' %}
 {% load static %}
+{% load mask %}
 
 {% block content %}
 <div class="nk-block-head nk-block-head-sm" style="margin-top: 20px;">
@@ -22,7 +23,7 @@
                     <select class="form-select js-select2" name="usuario" id="usuario">
                         <option value="">Selecione</option>
                         {% for user in usuarios %}
-                            <option value="{{ user.cpf }}" {% if request.GET.usuario == user.cpf %}selected{% endif %}>{{ user.nome_completo }}</option>
+                            <option value="{{ user.cpf }}" {% if request.GET.usuario == user.cpf %}selected{% endif %}>{{ user.nome_completo }} ({{ user.cpf|mask:'cpf_cnpj' }})</option>
                         {% endfor %}
                     </select>
                 </div>
