@@ -17,14 +17,15 @@ ENV LANG=pt_BR.UTF-8
 ENV LANGUAGE=pt_BR:pt
 ENV LC_ALL=pt_BR.UTF-8
 
-# Instala as dependências do sistema necessárias para Django e MySQL
+# Instala as dependências do sistema necessárias para Django e PostgreSQL
 RUN apt-get update && \
     apt-get install -y \
     python3-dev \
-    default-libmysqlclient-dev \
+    libpq-dev \
     build-essential \
     pkg-config \
     git \
+    gcc \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -39,8 +40,9 @@ WORKDIR /app
 # Copia apenas o requirements.txt primeiro para aproveitar o cache do Docker
 COPY requirements.txt .
 
-# Instala as dependências Python
+# Instala as dependências Python, incluindo explicitamente o psycopg2-binary
 RUN pip install --upgrade pip && \
+    pip install psycopg2-binary && \
     pip install -r requirements.txt
 
 # Copia o resto dos arquivos do projeto
