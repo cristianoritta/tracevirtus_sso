@@ -1,0 +1,116 @@
+version: '3.8'
+
+x-environment: &app-environment
+  
+  APP_NAME: "TRACE"
+  ENVIRONMENT: "prod"
+  SECRET_KEY: "dmodornmw@c9^@q36i)0(mys)cow_54o)1n1=-c8kp11jdh49f-tgi$u^8i1=ylx_u1wy&+vqxo%$uh-_wl3%9%iw1mlgg@+f(h"
+  DEBUG: "False"
+  ALLOWED_HOSTS: "localhost,127.0.0.1,38.242.219.32,mpce.new.seg.br,www.mpce.new.seg.br"
+  USE_X_FORWARDED_HOST: "True"
+  SECURE_PROXY_SSL_HEADER: "HTTP_X_FORWARDED_PROTO,https"
+  CSRF_TRUSTED_ORIGINS: "https://mpce.new.seg.br,https://www.mpce.new.seg.br"
+  
+  #CONFIGURAÇÃO DO SSO
+  CLIENT_ID: "fT2urCYqkcwe7m0BxmmVAsYa3kLUxIdZXCiOLCCf"
+  CLIENT_SECRET: "aGFtDnyFJ6mtcSU894c9WwdStyf0M2DtXFwIitFKrztJJ2h0kpMW5nTzzjoKiNpRqgDOsK1Uj64uaK0KaCmdsRaAuJfRtVw0ICbmIQeidDcSFOQRYobTgP247V3Uwfpf"
+  REDIRECT_URI: "https://mpce.new.seg.br/login_sso/callback"
+  SSO_SERVER: "https://auth.new.seg.br"
+  CODE_VERIFIER: "_zxG6ByphQn7Z9Ru9KUUBho2cUyDlLI-E-tHk1vJFbZqKxVacx_MNA"
+  CODE_CHALLENGE: "xIujH0sQhzHM4qvAwyeQrvwwKhT-KQL-21XmIZoRDto"
+
+  DB_ENGINE: "django.db.backends.postgresql"
+  DB_NAME: "trace"
+  DB_USER: "postgres"
+  DB_PASSWORD: "parceriadesucesso"
+  DB_HOST: "postgres"
+  DB_PORT: "5432"
+
+  #CAPTCHA
+  2CAPTCHA_USERNAME: "u97978d52571a05cf-zone-custom"
+  2CAPTCHA_PASSWORD: "u97978d52571a05cf"
+  2CAPTCHA_PROXY_DNS: "43.152.113.55:2334"
+
+  # Email
+  EMAIL_HOST: "smtp.gmail.com"
+  EMAIL_PORT: "587"
+  EMAIL_HOST_USER: "s.newseg@gmail.com"
+  EMAIL_HOST_PASSWORD: "uugj plxl kori hvsp"
+  DEFAULT_FROM_EMAIL: "s.newseg@gmail.com"
+  EMAIL_USE_TLS: "True"
+  EMAIL_USE_SSL: "False"
+
+  #TELEGRAM
+  TELEGRAM_TOKEN: "7723335023:AAGSqbc-3yIF7MsfWJUcU63MVo4s6g-zStw"
+  TELEGRAM_GROUP_ID: "-4737001993"
+
+  ASAAS_HOMOLOG_KEY: "$$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjJmZWFkYTQyLTNhYmQtNDk2Yy05OGE3LTMyN2ZhNjA2MGFkMzo6JGFhY2hfMTBmMjczNzUtZWViMC00ZmIzLWIwZDEtNzkyYzg1MzUyMDE4"
+  ASAAS_PROD_KEY: "$$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjMzOWQxOWQyLTU5MjctNGU5Ny1hNGU1LWZmNTNjNGQ3NzU2Mjo6JGFhY2hfZDgxMmMwMjQtNTU0ZC00N2MxLTg0MDgtMDA2MmE3Y2MwNzBk"
+
+  ASAAS_HOMOLOG_URL: "https://api-sandbox.asaas.com/"
+  ASAAS_PROD_URL: "https://api.asaas.com/"
+
+# -------------------------------------------------------------
+services:
+  
+  django:
+    # gerar a imagem: docker build -t mpce .
+    container_name: django
+    image: mpce
+    command: >
+      bash -c "
+      python manage.py collectstatic --noinput &&
+      python manage.py makemigrations &&
+      python manage.py migrate --noinput &&
+      gunicorn --workers 4 --bind 0.0.0.0:8000 --timeout 120 core.wsgi:application"
+    volumes:
+      - /var/www/mpce:/app
+    environment: *app-environment
+    networks:
+      - mpce_network
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        # ---------- LIMITE MÁXIMO ----------
+        limits:
+          # até 2 vCPU (0.01 = 1%)
+          cpus: "2.0"
+          # até 2 GB de RAM
+          memory: 2048M
+        # ---------- RESERVA MÍNIMA ----------
+        reservations:
+          # garante 0,5 vCPU sempre disponível
+          cpus: "0.5"
+          # garante 512 MB sempre disponível
+          memory: 512M
+      restart_policy:
+        condition: any
+
+  nginx:
+    image: nginx:latest
+    network_mode: host
+    ports:
+      - target: 9994
+        published: 9994
+        mode: host
+    volumes:
+      - /var/www/mpce/nginx/nginx_servidor.conf:/etc/nginx/nginx.conf
+      - /var/www/mpce/data/web/static:/data/web/static
+      - /var/www/mpce/data/web/media:/data/web/media
+    depends_on:
+      - app
+    deploy:
+      restart_policy:
+        condition: any
+    networks:
+      - mpce_network
+      - npm_public
+
+networks:
+  mpce_network:
+    external: true
+  npm_public:
+    external: true

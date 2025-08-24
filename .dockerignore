@@ -1,0 +1,70 @@
+# Arquivos de ambiente e configuração sensível
+.env
+.env.*
+*.env
+
+# Arquivos Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Controle de versão
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.yaml
+
+# Documentação
+README.md
+*.md
+docs/
+
+# Arquivos temporários
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Logs e dados temporários
+logs/
+*.log
+data/web/media/
+data/web/logs/
+
+# Arquivos de backup
+*.bak
+*.backup
+
+# Node modules (se houver)
+node_modules/
+npm-debug.log*
+
+# Arquivos de sistema
+.env.example
+cookie.txt
+keys/ 

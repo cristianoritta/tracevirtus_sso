@@ -94,12 +94,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 if os.getenv('ENVIRONMENT') == 'prod':
     DATABASES = {
         'default': {
-        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.mysql'),
-        'NAME': os.getenv('MYSQL_DB', ''),
-        'USER': os.getenv('MYSQL_USER', ''),
-        'PASSWORD': os.getenv('MYSQL_PASSWORD', ''),
-        'HOST': os.getenv('MYSQL_HOST', 'localhost'),
-        'PORT': os.getenv('MYSQL_PORT', '3306'),
+            'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': os.getenv('DB_NAME', ''),
+            'USER': os.getenv('DB_USER', ''),
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
         }
     }
 else:
