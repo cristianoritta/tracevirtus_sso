@@ -143,11 +143,22 @@ def importar_arquivos(request):
         arquivo.seek(0)  # Reset file pointer after reading for hash
 
         # Verifica se o arquivo já foi processado
-        if Arquivo.objects.filter(hash=file_hash, caso=caso).exists():
+        if Arquivo.objects.filter(hash=file_hash, external_id=cooperacao.id, tipo='cooperacao_bancaria', caso=caso).exists():
             return JsonResponse({'error': 'Este arquivo já foi processado anteriormente'}, status=400)
 
         # Processa o arquivo com pandas
         if arquivo.name.endswith('.csv'):
+            # Salva o arquivo temporariamente para processamento
+            import os
+            temp_path = os.path.join(settings.MEDIA_ROOT, 'uploads', 'dados', arquivo.name)
+            os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+            
+            with open(temp_path, 'wb+') as destination:
+                for chunk in arquivo.chunks():
+                    destination.write(chunk)
+            
+            print(f"[DEBUG] Arquivo salvo temporariamente em: {temp_path}")
+            
             # Testa os encodings possíveis com diferentes separadores
             df = None
             sep = ";"
@@ -155,23 +166,45 @@ def importar_arquivos(request):
             for encoding in ['utf-8-sig', 'utf-8', 'latin1', 'iso-8859-1', 'cp1252']:
                 try:
                     # Tenta ler as primeiras linhas para detectar o formato
-                    df = pd.read_csv(arquivo, sep=sep, encoding=encoding, nrows=5)
+                    df = pd.read_csv(temp_path, sep=sep, encoding=encoding)
                     # Se chegou aqui, encontrou a combinação correta
-                    print(f"[DEBUG] Formato detectado - encoding: {encoding}, separador: {sep}")
+                    print(f"[DEBUG] Testando o enconding para leitura do arquivo {arquivo.name} - encoding: {encoding}, separador: {sep}")
+                    
                     # Agora lê o arquivo completo com os parâmetros corretos
-                    arquivo.seek(0)
-                    df = pd.read_csv(arquivo, sep=sep, encoding=encoding)
+                    df = pd.read_csv(temp_path, sep=sep, encoding=encoding)
+                    
+                    print(f"[DEBUG] ***** Formato confirmado: encoding: {encoding}, separador: {sep}")
+                    
+                    # DEBUG com a quantidade de linhas
+                    print("[DEBUG] Quantidade de linhas:", len(df))
+                    print(df.head(15))
+                    
                     break
                 except Exception as e:
                     print(f"[DEBUG] Tentativa falhou - encoding: {encoding}, sep: {sep}, erro: {e}")
-                    arquivo.seek(0)
                     continue
-                
-                if df is not None:
-                    break
             
             if df is None:
-                raise Exception("Não foi possível ler o arquivo CSV com nenhuma combinação de encoding e separador")
+                # Tenta uma abordagem primaria, lendo o arquivo com o separador ;, linha a linha, e depois monta o dataframe
+                print("[DEBUG] Tentando uma abordagem primaria, lendo o arquivo com o separador ;, linha a linha, e depois monta o dataframe")
+                
+                with open(arquivo.name, 'r') as file:
+                    for line in file:
+                        print(line)
+                        df.append(line.split(';'))
+                
+                df = pd.DataFrame(df)
+                df.columns = df.iloc[0]
+                df = df.iloc[1:]
+                
+                print("[DEBUG] Dataframe montado")
+                
+                print(df.head())
+                
+            if df is None:
+                messages.error(request, "Não foi possível ler o arquivo CSV com nenhuma combinação de encoding e separador")
+                return redirect('bancaria:index')
+            
         elif arquivo.name.endswith('.xlsx'):
             # Testa os encodings possíveis
             for encoding in ['utf-8', 'latin1', 'iso-8859-1', 'cp1252']:
@@ -181,6 +214,7 @@ def importar_arquivos(request):
                 except Exception as e:
                     print("[DEBUG] Erro ao ler arquivo XLSX:", e)
                     continue
+        
         elif arquivo.name.endswith('.zip'):
             # Cria um dataframe vazio
             df = pd.DataFrame()
@@ -1106,6 +1140,7 @@ def unificar_dados(request):
         return redirect('bancaria:unificar_dados')
 
     # GET request
+    print("[DEBUG] Listando titulares")
     titulares = ExtratoDetalhado.objects.filter(
         caso=caso_ativo
     ).exclude(
@@ -1117,6 +1152,46 @@ def unificar_dados(request):
     ).distinct().order_by('cpf_cnpj_titular', 'nome_titular')
 
     # UNIFICAR OS CPFs de _OD
+    print("[DEBUG] Unificando os CPFs de _OD")
+    
+    # Primeiro, vamos encontrar todos os CPFs/CNPJs que têm nomes diferentes
+    cpfs_com_nomes_diferentes = ExtratoDetalhado.objects.filter(
+        caso=caso_ativo
+    ).exclude(
+        cpf_cnpj_od__isnull=True
+    ).exclude(
+        cpf_cnpj_od=''
+    ).values('cpf_cnpj_od').annotate(
+        total_nomes=Count('nome_pessoa_od', distinct=True)
+    ).filter(total_nomes__gt=1)
+    
+    print("[DEBUG] CPFs com nomes diferentes:", cpfs_com_nomes_diferentes.count())
+    
+    # Para cada CPF com nomes diferentes, vamos encontrar o nome mais frequente
+    for cpf_info in cpfs_com_nomes_diferentes:
+        cpf = cpf_info['cpf_cnpj_od']
+        
+        # Encontra o nome mais frequente para este CPF
+        nome_mais_frequente = ExtratoDetalhado.objects.filter(
+            caso=caso_ativo,
+            cpf_cnpj_od=cpf
+        ).values('nome_pessoa_od').annotate(
+            total=Count('nome_pessoa_od')
+        ).order_by('-total').first()
+        
+        if nome_mais_frequente:
+            nome_correto = nome_mais_frequente['nome_pessoa_od']
+            print(f"[DEBUG] CPF {cpf} - Nome mais frequente: {nome_correto}")
+            
+            # Atualiza todos os registros deste CPF para usar o nome mais frequente
+            ExtratoDetalhado.objects.filter(
+                caso=caso_ativo,
+                cpf_cnpj_od=cpf
+            ).update(nome_pessoa_od=nome_correto)
+            
+            print(f"[DEBUG] Registros atualizados para CPF {cpf}")
+    
+    # Agora obtém a lista atualizada de pessoas_od
     pessoas_od = ExtratoDetalhado.objects.filter(
         caso=caso_ativo
     ).exclude(
@@ -1124,9 +1199,9 @@ def unificar_dados(request):
     ).exclude(
         cpf_cnpj_od=''
     ).values(
-        'cpf_cnpj_od'
+        'cpf_cnpj_od', 'nome_pessoa_od'
     ).distinct().order_by('cpf_cnpj_od')
-
+    
     # Atualiza CPFs que terminam em .0
     ExtratoDetalhado.objects.filter(
         caso=caso_ativo,
