@@ -4,7 +4,7 @@ from unidecode import unidecode
 from django.utils import timezone
 import json
 from .models import RIF, Comunicacao, Envolvido, Ocorrencia, InformacaoAdicional, KYC, AnaliseIA, Prompt
-from app.models import Caso, Arquivo, Relatorio
+from app.models import Caso, Arquivo, Relatorio, CasoAtivoUsuario
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 import pandas as pd
@@ -30,6 +30,7 @@ import time
 import re
 import logging
 from typing import Optional
+from app.utils import _buscar_caso_ativo
 
 logger = logging.getLogger(__name__)
 pd.options.mode.chained_assignment = None
@@ -37,31 +38,6 @@ pd.options.mode.chained_assignment = None
 #########################################################################################################################
 # FUNÇÕES DE APOIO
 #########################################################################################################################
-
-
-def _buscar_caso_ativo(request: 'Request') -> 'Caso':
-    """Busca o caso ativo a partir da sessão do usuário.
-
-    Esta função verifica se há um caso ativo na sessão do usuário.
-    Se não houver, busca o primeiro caso ativo disponível.
-
-    Args:
-        request (Request): Requisição HTTP atual.
-
-    Returns:
-        Caso: Instância do caso ativo.
-    """
-    # Busca o caso ativo
-    caso_ativo = Caso.objects.filter(ativo=True).first()
-    
-    if not caso_ativo:
-        messages.error(
-            request, 'Nenhum caso ativo encontrado. Por favor, cadastre um caso para continuar.')
-        return redirect('casos')
-
-    return caso_ativo
-
-
 def _buscar_titular_ocorrencia(ocorrencia: 'Ocorrencia') -> Optional['Envolvido']:
     """Busca o titular associado a uma ocorrência específica.
 
@@ -220,7 +196,7 @@ def replace_ignorando_acentos(texto, busca, substituto_func):
 def financeira_index(request):
 
     # Testa se tem um caso ativo.
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo:
         messages.error(
             request, 'Nenhum caso ativo encontrado. Por favor, cadastre ou ative um caso para continuar.')
@@ -334,7 +310,7 @@ def cadastrar_rif(request):
             outras_informacoes = request.POST.get('outras_informacoes')
 
             # Buscar caso ativo
-            caso_ativo = Caso.objects.filter(ativo=True).first()
+            caso_ativo = _buscar_caso_ativo(request)
             if not caso_ativo:
                 return JsonResponse({
                     'success': False,
@@ -452,7 +428,7 @@ def financeira_comunicacoes(request):
 @login_required
 def financeira_envolvidos(request):
     # Busca o caso ativo
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo:
         messages.error(
             request, 'Nenhum caso ativo encontrado. Por favor, cadastre um caso para continuar.')
@@ -482,7 +458,7 @@ def financeira_ocorrencias(request):
     """
 
     # Busca o caso ativo
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo:
         messages.error(
             request, 'Nenhum caso ativo encontrado. Por favor, cadastre um caso para continuar.')
@@ -729,7 +705,7 @@ def financeira_informacoesadicionais(request):
 
 @login_required
 def financeira_analisedevinculos(request):
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo:
         messages.error(
             request, 'Nenhum caso ativo encontrado. Por favor, cadastre um caso para continuar.')
@@ -803,7 +779,7 @@ def download_vinculos_csv(request):
     """Endpoint para download dos dados de vínculos em formato CSV"""
     from core.templatetags.mask import real, mask
 
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo:
         messages.error(request, 'Nenhum caso ativo encontrado.')
         return redirect('casos')
@@ -896,7 +872,7 @@ def download_vinculos_csv(request):
 @login_required
 def download_vinculos_anx(request):
     """Endpoint para download dos dados de vínculos em formato ANX"""
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo:
         messages.error(request, 'Nenhum caso ativo encontrado.')
         return redirect('casos')
@@ -989,7 +965,7 @@ def financeira_dashboard(request):
 def financeira_errosimportacao(request):
     """Mostra envolvidos que não têm informações adicionais"""
     # Busca o caso ativo
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo:
         messages.error(request, 'Nenhum caso ativo encontrado.')
         return redirect('casos')
@@ -1101,7 +1077,7 @@ def financeira_errosimportacao(request):
 def listar_rifs(request):
     """Retorna uma lista de RIFs em formato JSON para o modal de importação"""
     # Busca o caso ativo
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
 
     rifs = RIF.objects.filter(caso=caso_ativo).select_related(
         'caso').order_by('-created_at')
@@ -1114,7 +1090,7 @@ def importar_arquivos(request):
     """Importa os arquivos de comunicações, envolvidos e ocorrências para uma RIF"""
 
     # Busca o caso ativo
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo:
         messages.error(request, 'Nenhum caso ativo encontrado.')
         return redirect('casos')
@@ -2962,7 +2938,7 @@ def financeira_chat_api(request):
                 return JsonResponse({'error': 'Prompt não fornecido.'}, status=400)
 
             # 1. Obter caso ativo
-            caso_ativo = Caso.objects.filter(ativo=True).first()
+            caso_ativo = _buscar_caso_ativo(request)
             if not caso_ativo:
                 print("[DEBUG] ERRO: Nenhum caso ativo encontrado.")
                 return JsonResponse({'error': 'Nenhum caso ativo encontrado.'}, status=400)
@@ -3470,7 +3446,7 @@ def informacoes_adicionais_delete(request, info_id):
         info_adicional = get_object_or_404(InformacaoAdicional, id=info_id)
 
         # Verifica se o usuário tem permissão (se pertence ao caso ativo)
-        caso_ativo = Caso.objects.filter(ativo=True).first()
+        caso_ativo = _buscar_caso_ativo(request)
         if not caso_ativo or info_adicional.caso != caso_ativo:
             messages.error(
                 request, 'Você não tem permissão para excluir esta informação.')
@@ -3507,7 +3483,7 @@ def upload_planilha(request):
     """
     if request.method == 'GET':
         # Busca o caso ativo
-        caso_ativo = Caso.objects.filter(ativo=True).first()
+        caso_ativo = _buscar_caso_ativo(request)
         if not caso_ativo:
             messages.error(request, 'Nenhum caso ativo encontrado.')
             return redirect('casos')
@@ -3525,7 +3501,7 @@ def upload_planilha(request):
     elif request.method == 'POST':
         try:
             # Busca o caso ativo
-            caso_ativo = Caso.objects.filter(ativo=True).first()
+            caso_ativo = _buscar_caso_ativo(request)
             if not caso_ativo:
                 return JsonResponse({
                     'success': False,

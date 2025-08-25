@@ -1,7 +1,7 @@
 <!-- Modal de Importação -->
 <div class="modal fade" id="modalImportarArquivos" tabindex="-1" aria-labelledby="modalImportarArquivosLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content bg-white">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalImportarArquivosLabel">Importar Arquivos</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -10,11 +10,29 @@
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="mb-3">
+                        <label for="cooperacao" class="form-label">Cooperação *</label>
+                        <select class="form-select" id="cooperacao" name="cooperacao" required>
+                            <option value="">Selecione uma cooperação</option>
+                            {% for cooperacao in cooperacoes %}
+                                <option value="{{ cooperacao.id }}">{{ cooperacao }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
                         <label for="arquivo" class="form-label">Arquivo de Cooperação *</label>
                         <div class="custom-file">
                             <input type="file" class="form-control" id="arquivo" name="arquivo" required>
                         </div>
-                        <div class="form-text">Selecione o arquivo de cooperação bancária para importar.</div>
+                        <div class="form-text">
+                            Selecione o arquivo de cooperação bancária para importar.
+                            <br><br>
+                            <ul>
+                                <li class="text-black"><strong>Arquivos suportados:</strong></li>
+                                <li class="text-black">Extrato Detalhado (Excel)</li>
+                                <li class="text-black">Arquivo .zip com 5 arquivos em texto do BACEN</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

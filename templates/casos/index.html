@@ -95,7 +95,7 @@
                                         </td>
                                         <td>
                                             <span class="tb-status">
-                                                {% if caso.ativo %}
+                                                {% if caso.get_ativo %}
                                                 <a href="{% url 'caso_ativo' caso.id %}"
                                                     class="btn btn-icon btn-trigger" data-bs-toggle="tooltip"
                                                     data-bs-placement="top" title="Ativar/Desativar">

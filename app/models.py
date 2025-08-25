@@ -76,12 +76,26 @@ class Caso(models.Model):
         verbose_name = 'Caso'
         verbose_name_plural = 'Casos'
     
-    def save(self, *args, **kwargs):
-        # Se este caso está sendo definido como ativo
-        if self.ativo:
-            # Desativa todos os outros casos
-            Caso.objects.exclude(id=self.id).update(ativo=False)
-        super().save(*args, **kwargs)
+    def get_ativo(self):
+        return CasoAtivoUsuario.objects.filter(caso=self).first()
+
+# Usuários autorizados a acessar um caso
+class CasoUsuario(models.Model):
+    id = models.AutoField(primary_key=True)
+    caso = models.ForeignKey(Caso, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+# Caso ativo por Usuario
+class CasoAtivoUsuario(models.Model):
+    id = models.AutoField(primary_key=True)
+    caso = models.ForeignKey(Caso, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
 
 class Investigado(models.Model):
     TIPO_CHOICES = [

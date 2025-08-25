@@ -1,0 +1,129 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="nk-content-inner">
+        <div class="nk-content-body">
+            <div class="nk-block-head nk-block-head-sm">
+                <div class="nk-block-between">
+                    <div class="nk-block-head-content">
+                        <h3 class="nk-block-title page-title">{{ title }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nk-block">
+                <div class="card">
+                    <div class="card-inner">
+                        <form method="post">
+                            {% csrf_token %}
+
+                            {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                            {% endif %}
+
+                            <div class="row g-4">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label"
+                                            for="{{ form.instituicao.id_for_label }}">Instituição</label>
+                                        {{ form.instituicao }}
+                                        {% if form.instituicao.errors %}
+                                        <div class="invalid-feedback">{{ form.instituicao.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.nome.id_for_label }}">Nome</label>
+                                        {{ form.nome }}
+                                        {% if form.nome.errors %}
+                                        <div class="invalid-feedback">{{ form.nome.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group">
+                                        <label class="form-label"
+                                            for="{{ form.endereco.id_for_label }}">Endereço</label>
+                                        {{ form.endereco }}
+                                        {% if form.endereco.errors %}
+                                        <div class="invalid-feedback">{{ form.endereco.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-lg-2">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.numero.id_for_label }}">Número</label>
+                                        {{ form.numero }}
+                                        {% if form.numero.errors %}
+                                        <div class="invalid-feedback">{{ form.numero.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-lg-2">
+                                    <div class="form-group">
+                                        <label class="form-label"
+                                            for="{{ form.complemento.id_for_label }}">Complemento</label>
+                                        {{ form.complemento }}
+                                        {% if form.complemento.errors %}
+                                        <div class="invalid-feedback">{{ form.complemento.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-lg-2">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.bairro.id_for_label }}">Bairro</label>
+                                        {{ form.bairro }}
+                                        {% if form.bairro.errors %}
+                                        <div class="invalid-feedback">{{ form.bairro.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-lg-2">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.cep.id_for_label }}">CEP</label>
+                                        {{ form.cep }}
+                                        {% if form.cep.errors %}
+                                        <div class="invalid-feedback">{{ form.cep.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.parent.id_for_label }}">
+                                            Unidade Vinculada
+                                        </label>
+                                        <select name="parent" id="{{ form.parent.id_for_label }}"
+                                            class="form-select">
+                                            <option value="">Nenhuma</option>
+                                            {% if form.instance.parent %}
+                                            <option value="{{ form.instance.parent.id }}" selected>
+                                                {{ form.instance.parent.nome }}
+                                            </option>
+                                            {% endif %}
+                                            {% for unidade in unidades %}
+                                            <option value="{{ unidade.id }}">{{ unidade.nome }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        {% if form.parent.errors %}
+                                        <div class="invalid-feedback">{{ form.parent.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group mt-4">
+                                <a href="{% url 'unidade_list' %}" class="btn btn-outline-secondary"><em class="icon ni ni-arrow-left"></em> Voltar</a>
+                                <button type="submit" class="btn btn-primary">{{ button_text }}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

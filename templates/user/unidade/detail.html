@@ -1,0 +1,142 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="nk-content-inner">
+        <div class="nk-content-body">
+            <div class="nk-block-head nk-block-head-sm">
+                <div class="nk-block-between">
+                    <div class="nk-block-head-content">
+                        <h3 class="nk-block-title page-title">Detalhes da Unidade</h3>
+                    </div>
+                    <div class="nk-block-head-content">
+                        <div class="toggle-wrap nk-block-tools-toggle">
+                            <a href="{% url 'unidade_update' unidade.pk %}" class="btn btn-primary">
+                                <em class="icon ni ni-edit"></em>
+                                <span>Editar</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nk-block">
+                <div class="card mb-3">
+                    <div class="card-inner">
+                        <div class="nk-block">
+                            <div class="row g-gs">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label">Instituição</label>
+                                        <div class="form-control-wrap">
+                                            <input type="text" class="form-control" value="{{ unidade.instituicao }}"
+                                                readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label">Nome</label>
+                                        <div class="form-control-wrap">
+                                            <input type="text" class="form-control" value="{{ unidade.nome }}" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Endereço</label>
+                                        <div class="form-control-wrap">
+                                            <input type="text" class="form-control" value="{{ unidade.endereco }}"
+                                                readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-2">
+                                    <div class="form-group">
+                                        <label class="form-label">Número</label>
+                                        <div class="form-control-wrap">
+                                            <input type="text" class="form-control" value="{{ unidade.numero }}"
+                                                readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-2">
+                                    <div class="form-group">
+                                        <label class="form-label">Complemento</label>
+                                        <div class="form-control-wrap">
+                                            <input type="text" class="form-control" value="{{ unidade.complemento }}"
+                                                readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-2">
+                                    <div class="form-group">
+                                        <label class="form-label">Bairro</label>
+                                        <div class="form-control-wrap">
+                                            <input type="text" class="form-control" value="{{ unidade.bairro }}"
+                                                readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-2">
+                                    <div class="form-group">
+                                        <label class="form-label">CEP</label>
+                                        <div class="form-control-wrap">
+                                            <input type="text" class="form-control" value="{{ unidade.cep }}" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Unidades Vinculadas</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Vínculo</th>
+                                    <th width="1%">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for unidade in unidade_pai %}
+                                <tr>
+                                    <td>{{ unidade.nome }}</td>
+                                    <td><span class="text-primary">Órgão Pai</span></td>
+                                    <td>
+                                        <a href="{% url 'unidade_detail' unidade.id %}" class="btn btn-primary">
+                                            <em class="icon ni ni-eye"></em>
+                                            <span>Abrir</span>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% for unidade in unidades_vinculadas %}
+                                <tr>
+                                    <td>{{ unidade.nome }}</td>
+                                    <td><span class="text-secondary">Subordinada</span></td>
+                                    <td>
+                                        <a href="{% url 'unidade_detail' unidade.id %}" class="btn btn-primary">
+                                            <em class="icon ni ni-eye"></em>
+                                            <span>Abrir</span>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

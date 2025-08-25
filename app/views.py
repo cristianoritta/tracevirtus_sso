@@ -5,11 +5,12 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 import logging
-from .models import Caso, Investigado, CasoInvestigado, Relatorio
+from .models import Caso, Investigado, CasoInvestigado, Relatorio, CasoAtivoUsuario
 from financeira.models import RIF, Comunicacao, Envolvido, InformacaoAdicional, Ocorrencia
 from .forms import CasoForm, InvestigadoForm, AdicionarInvestigadoForm
 from django.utils import timezone
 from .forms import RelatorioForm
+from app.utils import _buscar_caso_ativo
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 @login_required(login_url='/login')
 def home(request):
     casos = Caso.objects.filter(created_by=request.user)
-    caso_ativo = casos.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     
     volume_financeiro_por_comunicacao = {}
     volume_financeiro_bancaria = {}
@@ -35,6 +36,7 @@ def home(request):
 @login_required(login_url='/login')
 def casos(request):
     casos = Caso.objects.all()
+
     return render(request, 'casos/index.html', {'casos': casos})
 
 
@@ -94,8 +96,13 @@ def excluir_caso(request, id):
 @login_required(login_url='/login')
 def caso_ativo(request, id):
     caso = get_object_or_404(Caso, id=id, created_by=request.user)
-    caso.ativo = not caso.ativo
-    caso.save()
+    
+    # Apaga todos os casos ativos para o usuario
+    CasoAtivoUsuario.objects.filter(usuario=request.user).delete()
+    
+    # Cria um novo caso ativo para o usuario
+    CasoAtivoUsuario.objects.create(usuario=request.user, caso=caso)
+    
     return redirect('casos')
 
 
@@ -259,7 +266,7 @@ def detalhes_investigado(request, caso_id, investigado_id):
     casos_relacionados = CasoInvestigado.objects.filter(
         investigado=investigado)
     total_casos = casos_relacionados.count()
-    casos_ativos = casos_relacionados.filter(caso__ativo=True).count()
+    casos_ativos = casos_relacionados.filter(caso__get_ativo=True).count()
     casos_andamento = casos_relacionados.filter(
         caso__status='andamento').count()
 

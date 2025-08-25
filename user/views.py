@@ -1,6 +1,6 @@
 from user.models import CustomUser, Instituicao, Cargo, Cidades, UFs, CategoriaInstituicao
 from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.db.models import Q
 from django.db import transaction
@@ -13,6 +13,8 @@ from utils.jwt_funcoes import ler_jwt, carregar_chave_publica
 from django.core.paginator import Paginator
 from user.models import UserLogs
 from django.contrib.auth.decorators import login_required, user_passes_test
+from user.models import Unidade
+from user.forms import UnidadeForm
 
 logger = logging.getLogger(__name__)
 
@@ -373,3 +375,81 @@ def dados_usuario(request):
         logger.error(f"Erro ao acessar dados do usuário: {str(e)}")
         messages.error(request, "Erro ao carregar seus dados.")
         return redirect('home')
+
+
+##############################################################################################################################################
+# UNIDADES
+##############################################################################################################################################
+
+@login_required
+def unidade_list(request):
+    unidades = Unidade.objects.all().select_related('instituicao', 'parent')
+    return render(request, 'user/unidade/list.html', {'unidades': unidades})
+
+@login_required
+def unidade_create(request):
+    if request.method == 'POST':
+        form = UnidadeForm(request.POST)
+        if form.is_valid():
+            unidade = form.save(commit=False)
+            unidade.created_by = request.user
+            unidade.updated_by = request.user
+            unidade.save()
+            messages.success(request, 'Unidade criada com sucesso!')
+            return redirect('unidade_list')
+        else:
+            messages.error(request, 'Por favor, corrija os erros abaixo.')
+    else:
+        form = UnidadeForm()
+    
+    return render(request, 'user/unidade/form.html', {
+        'form': form,
+        'title': 'Nova Unidade',
+        'button_text': 'Criar Unidade',
+        'unidades': Unidade.objects.all().select_related('instituicao', 'parent')
+    })
+
+@login_required
+def unidade_update(request, pk):
+    unidade = get_object_or_404(Unidade, pk=pk)
+    
+    if request.method == 'POST':
+        form = UnidadeForm(request.POST, instance=unidade)
+        if form.is_valid():
+            unidade = form.save(commit=False)
+            unidade.updated_by = request.user
+            unidade.save()
+            messages.success(request, 'Unidade atualizada com sucesso!')
+            return redirect('unidade_list')
+        else:
+            messages.error(request, 'Por favor, corrija os erros abaixo.')
+    else:
+        form = UnidadeForm(instance=unidade)
+    
+    return render(request, 'user/unidade/form.html', {
+        'form': form,
+        'unidade': unidade,
+        'title': 'Editar Unidade',
+        'button_text': 'Atualizar Unidade',
+        'unidades': Unidade.objects.all().select_related('instituicao', 'parent').exclude(id=unidade.id),
+    })
+
+@login_required
+def unidade_delete(request, pk):
+    unidade = get_object_or_404(Unidade, pk=pk)
+    
+    if request.method == 'POST':
+        unidade.delete()
+        messages.success(request, 'Unidade excluída com sucesso!')
+        return redirect('unidade_list')
+    
+    return render(request, 'user/unidade/delete.html', {'unidade': unidade})
+
+@login_required
+def unidade_detail(request, pk):
+    unidade = get_object_or_404(Unidade, pk=pk)
+    
+    unidade_pai = Unidade.objects.filter(id=unidade.parent_id)
+    unidades_vinculadas = Unidade.objects.filter(parent=unidade)
+    
+    return render(request, 'user/unidade/detail.html', {'unidade': unidade, 'unidade_pai': unidade_pai, 'unidades_vinculadas': unidades_vinculadas})

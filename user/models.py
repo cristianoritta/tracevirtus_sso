@@ -48,6 +48,7 @@ class Unidade(models.Model):
     complemento = models.CharField(max_length=255)
     bairro = models.CharField(max_length=255)
     cep = models.CharField(max_length=9)
+    parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='unidade_parent')
     
     #auditoria
     created_at = models.DateTimeField(auto_now_add=True)
@@ -131,6 +132,9 @@ class CustomUser(AbstractUser):
     cargo = models.ForeignKey(Cargo, on_delete=models.SET_NULL, null=True, blank=True, related_name='cargo_usuario')
     cidade = models.ForeignKey(Cidades, on_delete=models.SET_NULL, null=True, blank=True, related_name='cidade_usuario')
     uf_residencia = models.CharField(max_length=250, null=True, blank=True)
+    
+    #permissões
+    is_admin = models.BooleanField(default=False) # Usuários com permissão de admin tem acesso a todas as unidades e casos
     
     #auditoria 
     created_at = models.DateTimeField(auto_now_add=True)

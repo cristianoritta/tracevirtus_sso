@@ -32,7 +32,9 @@ from django.db.models.functions import Concat
 from django.http import JsonResponse
 from datetime import datetime
 import json
-
+from app.utils import _buscar_caso_ativo
+import zipfile
+from django.conf import settings
 
 # Helper function for currency formatting
 def moeda(valor):
@@ -45,13 +47,10 @@ def moeda(valor):
 def index(request):
     
     # Testa se tem caso ativo
-    caso = Caso.objects.filter(ativo=True).first()
-    if not caso:
-        messages.error(request, 'Nenhum caso ativo encontrado. Por favor, cadastre ou ative um caso para continuar.')
-        return redirect('casos')
+    caso = _buscar_caso_ativo(request)
     
     # Obtém todas as cooperações bancárias
-    cooperacoes = Cooperacao.objects.select_related('caso').all().order_by('-created_at')
+    cooperacoes = Cooperacao.objects.filter(caso=caso).select_related('caso').all().order_by('-created_at')
     
     for i, cooperacao in enumerate(cooperacoes):
         cooperacoes[i].arquivos = Arquivo.objects.filter(external_id=cooperacao.id, tipo='cooperacao_bancaria').count()
@@ -64,7 +63,7 @@ def index(request):
             processo = request.POST.get('processo')
             
             # Testa se tem um caso ativo.
-            caso = Caso.objects.filter(ativo=True).first()
+            caso = _buscar_caso_ativo(request)
             if not caso:
                 messages.error(
                     request, 'Nenhum caso ativo encontrado. Por favor, cadastre um caso para continuar.')
@@ -98,6 +97,9 @@ def delete_cooperacao(request, id):
     cooperacao.delete()
     return JsonResponse({'message': 'Cooperação excluída com sucesso'})
 
+#########################################################################################################################
+# UPLOAD DOS ARQUIVOS
+#########################################################################################################################
 @login_required
 @require_http_methods(["POST"])
 def importar_arquivos(request):
@@ -107,20 +109,33 @@ def importar_arquivos(request):
 
         arquivo = request.FILES['arquivo']
         
+        cooperacao_id = request.POST.get('cooperacao')
+        cooperacao = Cooperacao.objects.get(id=cooperacao_id)
+        
         # Verifica se é um arquivo de extrato detalhado
         if not arquivo.name.lower().find('extratodetalhado') > -1:
-            return JsonResponse({'error': 'Arquivo não é um extrato detalhado'}, status=400)
+            print("[DEBUG] Arquivo não é um extrato detalhado", arquivo.name)
+            
+            # Testa se o arquivo é um arquivo .zip
+            if not arquivo.name.lower().endswith('.zip'):
+                return JsonResponse({'error': 'Arquivo não é um arquivo .zip'}, status=400)
 
         # Obtém o caso ativo
-        caso = Caso.objects.filter(ativo=True).first()
+        caso = _buscar_caso_ativo(request)
         if not caso:
             return JsonResponse({'error': 'Nenhum caso ativo encontrado'}, status=400)
 
-        # Obtém a cooperação ativa
-        cooperacao = Cooperacao.objects.filter(caso=caso).first()
-        if not cooperacao:
-            return JsonResponse({'error': 'Nenhuma cooperação encontrada para o caso ativo'}, status=400)
-
+        # DESCOMPACTA O ARQUIVO .ZIP E PROCURA OS ARQUIVOS _EXTRATO e _ORIGEM_DESTINO.txt
+        with zipfile.ZipFile(arquivo, 'r') as zip_ref:
+            # Extrair para a pasta de uploads de dados
+            zip_ref.extractall(os.path.join(settings.MEDIA_ROOT, 'uploads', 'dados'))
+            print("[DEBUG] Arquivo descompactado com sucesso")
+        
+            # Procura os arquivos que terminam com _EXTRATO e _ORIGEM_DESTINO.txt
+            arquivos = [f for f in zip_ref.namelist()]
+            if len(arquivos) < 5:
+                return JsonResponse({'error': 'Arquivo .zip inválido.'}, status=400)
+        
         # Salva o arquivo
         file_hash = hashlib.sha256(arquivo.read()).hexdigest()
         arquivo.seek(0)  # Reset file pointer after reading for hash
@@ -134,33 +149,269 @@ def importar_arquivos(request):
             df = pd.read_csv(arquivo, sep=';')
         elif arquivo.name.endswith('.xlsx'):
             df = pd.read_excel(arquivo)
+        elif arquivo.name.endswith('.zip'):
+            # Cria um dataframe vazio
+            df = pd.DataFrame()
+            
+            print("[DEBUG] Processando os 5 arquivos do BACEN")
+            
+            def converter_data(data):
+                if pd.isna(data):
+                    return None
+                
+                data = str(data)
+                
+                # Remove o .0 se existir
+                if data.endswith('.0'):
+                    data = data[:-2]
+                
+                # Remove espaços em branco
+                data = data.strip()
+                
+                # Se a string estiver vazia após a limpeza
+                if not data:
+                    return None
+                    
+                try:
+                    return datetime.strptime(data, '%d%m%Y').strftime('%Y-%m-%d')
+                except ValueError:
+                    return None
+            
+            def formatar_moeda(valor):
+                valor = str(valor)
+
+                if not valor or len(valor) < 3:
+                    return valor
+                
+                if valor.find(',') != -1:
+                    return float(valor.replace(',', '.'))
+
+                valor = str(int(valor[0:-2])) + '.' + str(valor[-2:])
+                return valor
+            
+            # CRIA O DATAFRAME COM BASE NOS 5 ARQUIVOS
+            # Abre todos os arquivos que foram descompactados
+            for arquivo in arquivos:
+                print("[DEBUG] Arquivo:", arquivo)
+                
+                # Monta o caminho completo para o arquivo descompactado
+                caminho_arquivo = os.path.join(settings.MEDIA_ROOT, 'uploads', 'dados', arquivo)
+                
+                # Verifica se o arquivo existe
+                if not os.path.exists(caminho_arquivo):
+                    print(f"[DEBUG] Arquivo não encontrado: {caminho_arquivo}")
+                    continue
+                
+                print(f"[DEBUG] Processando arquivo: {caminho_arquivo}")
+                
+                df = pd.read_csv(caminho_arquivo, sep='\t', header=None, skip_blank_lines=True, on_bad_lines='skip')
+                print("[DEBUG] Arquivo lido com sucesso")
+                
+                # **********
+                # * AGENCIAS
+                # **********
+                if arquivo.endswith('AGENCIAS.txt'):
+                    print("[DEBUG] Processando arquivo AGENCIAS.txt")
+                    
+                    df_agencias = df
+                    df_agencias.columns = [
+                        'id', 'agencia', 'nome_agencia', 'endereco', 'cidade', 'uf', 
+                        'pais', 'cep', 'telefone', 'data_abertura', 'data_fechamento'
+                    ]
+                    df_agencias['banco'] = df['id']
+                    df_agencias['data_abertura'] = df['data_abertura'].apply(converter_data)
+                    df_agencias['data_fechamento'] = None
+                
+                # **********
+                # *   CONTAS
+                # **********
+                if arquivo.endswith('CONTAS.txt'):
+                    print("[DEBUG] Processando arquivo CONTAS.txt")
+                    
+                    df_contas = df
+                    df_contas.columns = [
+                        'banco', 'agencia', 'conta', 'tipo_conta', 'data_abertura',
+                        'data_encerramento', 'movimentacao'
+                    ]
+                    df_contas['data_abertura'] = df_contas['data_abertura'].apply(converter_data)
+                    df_contas['data_encerramento'] = df_contas['data_encerramento'].apply(converter_data)
+
+
+                # **********
+                # *  EXTRATO
+                # **********
+                if arquivo.endswith('EXTRATO.txt'):
+                    print("[DEBUG] Processando arquivo EXTRATO.txt")
+                    
+                    df_extratos = df
+                    df_extratos.columns  = [
+                        'chave_extrato', 'banco', 'agencia', 'conta',
+                        'tipo_conta', 'data_lancamento', 'documento', 'descricao', 'tipo',
+                        'valor', 'natureza', 'saldo', 'natureza_saldo', 'local_transacao'
+                    ]
+                    df_extratos['data_lancamento'] = df['data_lancamento'].apply(converter_data)
+                    df_extratos['valor'] = df['valor'].apply(formatar_moeda)                    
+
+                # **********
+                # *  ORIGEM_DESTINO
+                # **********
+                if arquivo.endswith('ORIGEM_DESTINO.txt'):
+                    print("[DEBUG] Processando arquivo ORIGEM_DESTINO.txt")
+                    
+                    df_origens_destinos = df
+                    df_origens_destinos.columns = [
+                        'codigo_chave', 'chave_extrato', 'valor', 'documento',
+                        'banco_destino', 'agencia_destino', 'conta_destino', 'tipo_conta',
+                        'tipo_pessoa', 'cpf_cnpj', 'nome_pessoa', 'documento_pessoa',
+                        'codigo_barras', 'endossante_cheque', 'documento_endossante', 'situacao_identificacao',
+                        'observacao', 'documento_transacao'
+                    ]
+                    df_origens_destinos['valor'] = df['valor'].apply(formatar_moeda)
+                    df_origens_destinos['tipo_pessoa'] = df['tipo_pessoa'].apply(lambda x: 'PF' if x == 1 else 'PJ' if x == 2 else None)
+
+
+                # ************
+                # *  TITULARES
+                # ************
+                if arquivo.endswith('TITULARES.txt'):
+                    print("[DEBUG] Processando arquivo TITULARES.txt")
+                    
+                    df_titulares = df
+                    df_titulares.columns = [
+                        'banco', 'agencia', 'conta', 'tipo_conta',
+                        'tipo_titular', 'pessoa_investigada', 'tipo_pessoa', 'cpf_cnpj',
+                        'nome', 'nome_documento', 'documento', 'endereco',
+                        'cidade', 'uf', 'pais', 'cep', 'telefone',
+                        'renda', 'data_renda', 'inicio_relacionamento', 'fim_relacionamento'
+                    ]
+                    df_titulares['cep'] = df['cep']
+                    df_titulares['renda'] = df['renda'].apply(formatar_moeda)
+                    df_titulares['data_renda'] = df['data_renda'].apply(converter_data)
+                    df_titulares['inicio_relacionamento'] = df['inicio_relacionamento'].apply(converter_data)
+                    df_titulares['fim_relacionamento'] = df['fim_relacionamento'].apply(converter_data)
+                    
+            
+            print("[DEBUG] Adicionando número do caso")
+            # Adiciona o número do caso ao DataFrame de extratos
+            df_extratos['numero_caso'] = caso.numero
+            
+            print("[DEBUG] Concatenando os dataframes")
+            df = pd.concat([df_agencias, df_contas, df_extratos, df_origens_destinos, df_titulares])
+            print("[DEBUG] Dataframes concatenados")
+            
+            # Primeiro, fazer o merge entre extratos e origens_destinos
+            df = pd.merge(
+                df_extratos,
+                df_origens_destinos,
+                how='left',
+                left_on='chave_extrato',
+                right_on='chave_extrato',
+                suffixes=('', '_od')  # Evita sufixos _x e _y
+            )
+
+            # Adicionar informações dos titulares
+            df = pd.merge(
+                df,
+                df_titulares,
+                how='left',
+                on=['banco', 'agencia', 'conta'],
+                suffixes=('', '_titular')  # Evita sufixos _x e _y
+            )
+
+            # Adicionar informações dos bancos
+            df = pd.merge(
+                df,
+                df_agencias[['id', 'nome_agencia']],  # Usando as colunas corretas
+                how='left',
+                left_on='banco',
+                right_on='id',
+                suffixes=('', '_agencia')  # Evita sufixos _x e _y
+            )
+
+            # Renomear colunas para o padrão desejado
+            df = df.rename(columns={
+                'nome_agencia': 'nome_banco',  # Ajustando o nome da coluna
+                'descricao': 'descricao_lancamento',
+                'documento': 'numero_documento',
+                'documento_transacao': 'observacao',
+                'banco_destino': 'numero_banco_od',
+                'agencia_destino': 'numero_agencia_od',
+                'conta_destino': 'numero_conta_od',
+                'nome_pessoa': 'nome_pessoa_od',
+                'cpf_cnpj_x': 'cpf_cnpj',
+                'cpf_cnpj_y': 'cpf_cnpj_od'
+            })
+
+            # Primeiro, vamos ver quais colunas temos disponíveis
+            print("[DEBUG] Colunas após merge:", df.columns.tolist())
+
+            print("[DEBUG] Colunas disponíveis:", df.columns.tolist())
+            
+            # Selecionar as colunas usando os nomes corretos
+            colunas = [
+                # Dados do Caso
+                'numero_caso',
+                
+                # Dados da Conta
+                'banco', 'nome_banco', 'agencia', 'conta', 'tipo_conta',
+                
+                # Dados do Titular
+                'nome', 'cpf_cnpj_titular',
+                
+                # Dados da Transação
+                'descricao_lancamento', 'data_lancamento', 'numero_documento',
+                'local_transacao', 'valor', 'natureza',
+                'saldo', 'natureza_saldo',
+                
+                # Dados de Origem/Destino
+                'cpf_cnpj', 'nome_pessoa_od', 'tipo_pessoa',
+                'numero_banco_od', 'numero_agencia_od', 'numero_conta_od',
+                'observacao', 'endossante_cheque', 'documento_endossante'
+            ]
+
+            # Selecionar as colunas
+            df = df[colunas]
+
+            # Adicionar coluna CNAB vazia
+            df['cnab'] = ''
+            
+            # Renomear as colunas para o padrão desejado
+            df = df.rename(columns={
+                'banco': 'numero_banco',
+                'agencia': 'numero_agencia',
+                'conta': 'numero_conta',
+                'tipo_conta': 'tipo',
+                'nome': 'nome_titular',
+                'cpf_cnpj_titular': 'cpf_cnpj_titular',
+                'descricao_lancamento': 'descricao_lancamento',
+                'numero_documento': 'numero_documento',
+                'valor': 'valor_transacao',
+                'natureza': 'natureza_lancamento',
+                'saldo': 'valor_saldo',
+                'natureza_saldo': 'natureza_saldo',
+                'cpf_cnpj': 'cpf_cnpj_od',
+                'nome_pessoa_od': 'nome_pessoa_od',
+                'tipo_pessoa': 'tipo_pessoa_od',
+                'observacao': 'observacao',
+                'endossante_cheque': 'nome_endossante_cheque',
+                'documento_endossante': 'doc_endossante_cheque'
+            })
+            
+            # Adicionar coluna numero_documento_transacao vazia
+            df['numero_documento_transacao'] = ''
+            
         else:
             return JsonResponse({'error': 'Formato de arquivo não suportado'}, status=400)
 
         print("[DEBUG] Arquivo lido com sucesso")
 
-        # Conta o número de registros antes de qualquer processamento
-        total_registros = len(df)
-        print("[DEBUG] Total de registros:", total_registros)
-
-        # Salva o arquivo no sistema
-        arquivo_salvo = Arquivo.objects.create(
-            caso=caso,
-            nome=arquivo.name,
-            hash=file_hash,
-            tipo='cooperacao_bancaria',
-            external_id=cooperacao.id,
-            registros=total_registros
-        )
-        print("[DEBUG] Arquivo salvo com sucesso")
-
+        # Processa o DataFrame antes de salvar
         # Remove colunas desnecessárias se existirem
         colunas_remover = ['NUMERO_CASO', 'NOME_BANCO']
         for coluna in colunas_remover:
             if coluna in df.columns:
                 df = df.drop(coluna, axis=1)
         print("[DEBUG] Colunas removidas")
-        
         
         # Converte nomes das colunas para minúsculo
         df.columns = df.columns.str.lower()
@@ -193,9 +444,41 @@ def importar_arquivos(request):
         print("[DEBUG] Colunas renomeadas")
 
         # Converte tipos de dados
-        df['data_lancamento'] = pd.to_datetime(df['data_lancamento'], format='%d/%m/%Y', errors='coerce')
-        df['valor_transacao'] = df['valor_transacao'].str.replace(',', '.').astype(float)
-        df['valor_saldo'] = df['valor_saldo'].str.replace(',', '.').astype(float)
+        def converter_valor(valor):
+            if pd.isna(valor):
+                return 0.0
+            if isinstance(valor, (int, float)):
+                return float(valor)
+            try:
+                # Remove caracteres não numéricos exceto , e .
+                valor_str = str(valor).replace('R$', '').replace(' ', '')
+                # Substitui vírgula por ponto
+                valor_str = valor_str.replace(',', '.')
+                # Converte para float
+                return float(valor_str)
+            except:
+                return 0.0
+
+        # Converte data_lancamento
+        def converter_data(data):
+            if pd.isna(data):
+                return None
+            try:
+                return pd.to_datetime(data, format='%d%m%Y').date()
+            except:
+                try:
+                    return pd.to_datetime(data).date()
+                except:
+                    return None
+        
+        print("[DEBUG] Convertendo datas")
+        df['data_lancamento'] = df['data_lancamento'].apply(converter_data)
+        print("[DEBUG] Datas convertidas")
+        
+        print("[DEBUG] Convertendo valores monetários")
+        # Converte valores monetários
+        df['valor_transacao'] = df['valor_transacao'].apply(converter_valor)
+        df['valor_saldo'] = df['valor_saldo'].apply(converter_valor)
         print("[DEBUG] Tipos de dados convertidos")
 
         # Trata campos numéricos, convertendo NaN para string vazia
@@ -224,6 +507,24 @@ def importar_arquivos(request):
             if campo in df.columns:
                 df[campo] = df[campo].fillna('').astype(str)
         print("[DEBUG] Campos tratados")
+
+        # Conta o número de registros após o processamento
+        total_registros = len(df)
+        print("[DEBUG] Total de registros:", total_registros)
+        
+        if 'name' in arquivo:
+            arquivo = arquivo.name
+
+        # Salva o arquivo no sistema
+        arquivo_salvo = Arquivo.objects.create(
+            caso=caso,
+            nome=arquivo,
+            hash=file_hash,
+            tipo='cooperacao_bancaria',
+            external_id=cooperacao.id,
+            registros=total_registros
+        )
+        print("[DEBUG] Arquivo salvo com sucesso")
 
         # Cria os registros no banco de dados
         registros = []
@@ -272,7 +573,7 @@ def importar_arquivos(request):
 
 @login_required
 def gerar_relatorio_bancario(request):
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo:
         messages.error(request, 'Nenhum caso ativo encontrado.')
         return redirect('casos:index')
@@ -572,7 +873,7 @@ def listar_arquivos(request, cooperacao_id):
     cooperacao = get_object_or_404(Cooperacao, id=cooperacao_id)
     
     # Verifica se a cooperação pertence ao caso ativo
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo or cooperacao.caso != caso_ativo:
         messages.error(request, 'Esta cooperação não pertence ao caso ativo.')
         return redirect('bancaria:index')
@@ -605,7 +906,7 @@ def delete_arquivo(request, id):
     arquivo = get_object_or_404(Arquivo, id=id)
     
     # Verifica se o arquivo pertence ao caso ativo
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo or arquivo.caso != caso_ativo:
         return JsonResponse({'error': 'Este arquivo não pertence ao caso ativo'}, status=403)
     
@@ -619,7 +920,7 @@ def delete_arquivo(request, id):
 
 @login_required
 def dashboard(request):
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo:
         messages.error(request, 'Nenhum caso ativo encontrado.')
         return redirect('casos:index')
@@ -706,7 +1007,7 @@ def dashboard(request):
 
 @login_required
 def extrato_detalhado(request):
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo:
         messages.error(request, 'Nenhum caso ativo encontrado.')
         return redirect('casos:index')
@@ -733,7 +1034,7 @@ def extrato_detalhado(request):
 
 @login_required
 def unificar_dados(request):
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo:
         messages.error(request, 'Nenhum caso ativo encontrado.')
         return redirect('casos:index')
@@ -765,7 +1066,7 @@ def unificar_dados(request):
             nome_pessoa_od=nome_manter
         )
         
-        messages.success(request, f'Nomes para o CPF/CNPJ {cpf_cnpj} foram unificados para "{nome_manter}".')
+        messages.success(request, f'Nomes para o CPF/CNPJ {cpf_cnpj} foram unificados para {nome_manter}.')
         return redirect('bancaria:unificar_dados')
 
     # GET request
@@ -844,7 +1145,7 @@ def listar_titulares(request, cooperacao_id):
 
 @login_required
 def analise_de_vinculos(request):
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo:
         messages.error(request, 'Nenhum caso ativo encontrado.')
         return redirect('casos:index')
@@ -903,7 +1204,7 @@ def analise_de_vinculos(request):
 
 @login_required
 def download_vinculos_csv(request):
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo:
         return HttpResponse("Nenhum caso ativo encontrado.", status=404)
 
@@ -1018,7 +1319,7 @@ def transacoes_dia(request):
 
 @login_required
 def analise_vinculos_selecionados(request):
-    caso_ativo = Caso.objects.filter(ativo=True).first()
+    caso_ativo = _buscar_caso_ativo(request)
     if not caso_ativo:
         messages.error(request, 'Nenhum caso ativo encontrado.')
         return redirect('casos:index')
@@ -1090,7 +1391,7 @@ def analise_ia_vinculos(request):
         return JsonResponse({'success': False, 'error': 'Método não permitido'}, status=405)
 
     try:
-        caso_ativo = Caso.objects.filter(ativo=True).first()
+        caso_ativo = _buscar_caso_ativo(request)
         if not caso_ativo:
             return JsonResponse({'success': False, 'error': 'Nenhum caso ativo encontrado'}, status=400)
 
@@ -1209,7 +1510,7 @@ def detalhes_pessoa(request):
             return JsonResponse({'error': 'CPF não fornecido'}, status=400)
         
         # Obtém o caso ativo
-        caso_ativo = Caso.objects.filter(ativo=True).first()
+        caso_ativo = _buscar_caso_ativo(request)
         if not caso_ativo:
             return JsonResponse({'error': 'Nenhum caso ativo encontrado'}, status=400)
         
@@ -1706,7 +2007,7 @@ def chat_dados(request):
         # Limitar ao caso ativo (se existir) para contexto
         caso_ativo = None
         try:
-            caso_ativo = Caso.objects.filter(ativo=True).first()
+            caso_ativo = _buscar_caso_ativo(request)
         except Exception:
             pass
 
