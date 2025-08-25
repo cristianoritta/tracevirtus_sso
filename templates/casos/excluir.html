@@ -1,0 +1,45 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="nk-content-inner">
+        <div class="nk-content-body">
+            <div class="nk-block-head nk-block-head-sm">
+                <div class="nk-block-between">
+                    <div class="nk-block-head-content">
+                        <h3 class="nk-block-title page-title">Excluir Caso</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="nk-block">
+                <div class="card">
+                    <div class="card-inner">
+                        <div class="alert alert-danger">
+                            <h5 class="alert-heading">Confirmação de Exclusão</h5>
+                            <p>Você está prestes a excluir o caso <strong>{{ caso.numero }} - {{ caso.nome }}</strong>.
+                            </p>
+                            <p>Esta ação irá excluir permanentemente:</p>
+                            <ul>
+                                <li>Todos os investigados vinculados ao caso</li>
+                                <li>Todos os arquivos do caso</li>
+                                <li>Todos os registros bancários</li>
+                                <li>Todos os registros financeiros (RIFs, comunicações, etc)</li>
+                                <li>Todos os relatórios associados</li>
+                            </ul>
+                            <p>Esta ação não pode ser desfeita. Você tem certeza que deseja continuar?</p>
+                        </div>
+
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <a href="{% url 'casos' %}" class="btn btn-outline-secondary">Cancelar</a>
+                                <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

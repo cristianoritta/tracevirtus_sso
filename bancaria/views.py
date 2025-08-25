@@ -43,6 +43,13 @@ def moeda(valor):
 
 @login_required
 def index(request):
+    
+    # Testa se tem caso ativo
+    caso = Caso.objects.filter(ativo=True).first()
+    if not caso:
+        messages.error(request, 'Nenhum caso ativo encontrado. Por favor, cadastre ou ative um caso para continuar.')
+        return redirect('casos')
+    
     # Obtém todas as cooperações bancárias
     cooperacoes = Cooperacao.objects.select_related('caso').all().order_by('-created_at')
     

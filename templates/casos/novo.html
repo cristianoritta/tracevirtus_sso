@@ -43,12 +43,12 @@
                             <div class="row g-4">
                                 <div class="col-lg-6">
                                     <div class="form-group">
-                                        <label class="form-label" for="{{ form.nome.id_for_label }}">{{ form.nome.label }}</label>
+                                        <label class="form-label" for="{{ form.nome.id_for_label }}">{{ form.nome.label }} <span class="text-danger">*</span></label>
                                         {{ form.nome }}
                                         {% if form.nome.errors %}
                                             <div class="form-note-error">
                                                 {% for error in form.nome.errors %}
-                                                    <span>{{ error }}</span>
+                                                    <span class='text-danger'>{{ error }}</span>
                                                 {% endfor %}
                                             </div>
                                         {% endif %}
@@ -57,12 +57,12 @@
                                 
                                 <div class="col-lg-6">
                                     <div class="form-group">
-                                        <label class="form-label" for="{{ form.numero.id_for_label }}">{{ form.numero.label }}</label>
+                                        <label class="form-label" for="{{ form.numero.id_for_label }}">{{ form.numero.label }} <span class="text-danger">*</span></label>
                                         {{ form.numero }}
                                         {% if form.numero.errors %}
                                             <div class="form-note-error">
                                                 {% for error in form.numero.errors %}
-                                                    <span>{{ error }}</span>
+                                                    <span class='text-danger'>{{ error }}</span>
                                                 {% endfor %}
                                             </div>
                                         {% endif %}
@@ -76,7 +76,7 @@
                                         {% if form.status.errors %}
                                             <div class="form-note-error">
                                                 {% for error in form.status.errors %}
-                                                    <span>{{ error }}</span>
+                                                    <span class='text-danger'>{{ error }}</span>
                                                 {% endfor %}
                                             </div>
                                         {% endif %}
@@ -85,12 +85,12 @@
                                 
                                 <div class="col-lg-12">
                                     <div class="form-group">
-                                        <label class="form-label" for="{{ form.resumo.id_for_label }}">{{ form.resumo.label }}</label>
+                                        <label class="form-label" for="{{ form.resumo.id_for_label }}">{{ form.resumo.label }} <span class="text-danger">*</span></label>
                                         {{ form.resumo }}
                                         {% if form.resumo.errors %}
                                             <div class="form-note-error">
                                                 {% for error in form.resumo.errors %}
-                                                    <span>{{ error }}</span>
+                                                    <span class='text-danger'>{{ error }}</span>
                                                 {% endfor %}
                                             </div>
                                         {% endif %}
@@ -99,6 +99,11 @@
                                 
                                 <div class="col-lg-12">
                                     <div class="form-group">
+                                        
+                                        <a href="{% url 'casos' %}" class="btn btn-lg btn-light">
+                                            <em class="icon ni ni-arrow-left"></em>
+                                            <span>Cancelar</span>
+                                        </a>
                                         <button type="submit" class="btn btn-lg btn-primary">
                                             {% if form.instance.pk %}
                                                 <em class="icon ni ni-edit"></em>
@@ -108,10 +113,12 @@
                                                 <span>Criar Caso</span>
                                             {% endif %}
                                         </button>
-                                        <a href="{% url 'casos' %}" class="btn btn-lg btn-light">
-                                            <em class="icon ni ni-arrow-left"></em>
-                                            <span>Cancelar</span>
+                                        {% if form.instance.pk %}
+                                        <a href="{% url 'excluir_caso' form.instance.pk %}" class="btn btn-lg btn-danger">
+                                            <em class="icon ni ni-trash"></em>
+                                            <span>Excluir Caso</span>
                                         </a>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>

@@ -188,7 +188,7 @@ Para desenvolvimento das análises e elaboração do presente relatório foram u
 A partir dessa investigação, de onde identificamos provir o dinheiro objeto de lavagem, requisitamos ao COAF a elaboração do(s) relatório(s) de inteligência financeira, que é(são) objeto desta análise:
 {% for rif in rifs %}
 RIF nº {{rif.numero}}{% endfor %}
-Cada RIF é composto por um arquivo em formato PDF e três arquivos em formato CSV contendo informações de comunicações, envolvidos e ocorrências. Esses arquivos foram importados e analisados automaticamente com o uso da Plataforma IAF, onde foram gerados os hashes de verificação dos arquivos, bem como sanitizados os dados. Após, foram processados com outros softwares de análise, como o TraceVirtus, I2 e PowerBI. O uso conjunto dessas tecnologias permitiu a produção do presente relatório de forma automatizada, sob supervisão do analista.
+Cada RIF é composto por um arquivo em formato PDF e três arquivos em formato CSV contendo informações de comunicações, envolvidos e ocorrências. Esses arquivos foram importados e analisados automaticamente com o uso da Plataforma IAF, onde foram gerados os hashes de verificação dos arquivos, bem como sanitizados os dados. Após, foram processados com outros softwares de análise, como o Trace, I2 e PowerBI. O uso conjunto dessas tecnologias permitiu a produção do presente relatório de forma automatizada, sob supervisão do analista.
 Na primeira parte desse relatório foram evidenciados os valores totais a débito e a crédito vinculados aos titulares das contas. Na segunda parte foram detalhadas as movimentações sobre os demais envolvidos (que não são titulares). É importante salientar, nessa segunda parte, que os titulares das contas podem não figurar imediatamente na investigação em curso, mas eles se relacionaram diretamente com um – ou mais – dos investigados, seja recebendo ou enviando dinheiro. Em razão disso, sugerimos a inclusão desses titulares, também, na investigação, a fim de comprovar que a transação financeira pode ter a natureza de lavagem do dinheiro de origem criminosa.
 É preciso destacar que as movimentações aqui relacionadas não representam a integralidade das movimentações financeiras envolvendo essas partes, uma vez que as instituições financeiras só são obrigadas a comunicar ao COAF as transações que obedeçam aos critérios legais. Portanto, somente com a quebra do sigilo bancário é que poderão ser identificadas todas as transações financeiras, e o montante de dinheiro transacionados entre cada uma das partes.
 CONCEITOS RELEVANTES
@@ -205,7 +205,7 @@ PEP: pessoa exposta politicamente.
 Segmento 41: Movimentações atípicas
 Segmento 42: Movimentações em espécie
 INFORMAÇÕES GERAIS
-Foi realizada a importação dos arquivos do RIF com o uso dos softwares TraceVirtus e i2 Analyst’s Notebook, ferramenta que realiza a análise de vínculos entre entidades (pessoas físicas e/ou pessoas jurídicas) que possuam elementos em comum ou que tiveram algum relacionamento. Segue o diagrama geral resultado dessa importação.
+Foi realizada a importação dos arquivos do RIF com o uso dos softwares Trace e i2 Analyst’s Notebook, ferramenta que realiza a análise de vínculos entre entidades (pessoas físicas e/ou pessoas jurídicas) que possuam elementos em comum ou que tiveram algum relacionamento. Segue o diagrama geral resultado dessa importação.
 AQUI O ANALISTA DEVE INSERIR A VISUALIZAÇÃO DE DADOS DO I2.
 Análise de RIF > Exportar Dados
 4.1 Movimentações financeiras dos titulares

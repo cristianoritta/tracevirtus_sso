@@ -2,6 +2,11 @@ from django.db import models
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from core.validators import validate_cpf
+from django.core.exceptions import ValidationError
+
+def validate_mpce_email(value):
+    if not value.endswith('@mpce.mp.br'):
+        raise ValidationError('O email deve ser do domínio @mpce.mp.br')
 
 class CategoriaInstituicao(models.Model):
     categoria_instituicao = models.CharField(max_length=255)
@@ -118,7 +123,7 @@ class CustomUser(AbstractUser):
     nome_completo = models.CharField(max_length=100)
     cpf = models.BigIntegerField(primary_key=True, unique=True, validators=[validate_cpf])
     data_nascimento = models.DateField(null=True, blank=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, validators=[validate_mpce_email])
     telefone = models.CharField(max_length=15)
     instituicao = models.ForeignKey(Instituicao, on_delete=models.SET_NULL, null=True, 
                                     blank=True, related_name='instituicao_usuario')

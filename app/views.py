@@ -21,11 +21,14 @@ def home(request):
     casos = Caso.objects.filter(created_by=request.user)
     caso_ativo = casos.filter(ativo=True).first()
     
-    # Calcular o volume financeiro por comunicação
     volume_financeiro_por_comunicacao = {}
-    for comunicacao in caso_ativo.comunicacao_set.all():
-        volume_financeiro_por_comunicacao[f"{comunicacao.rif} - Ind. {comunicacao.indexador}"] = comunicacao.campo_a
+    volume_financeiro_bancaria = {}
     
+    if caso_ativo:
+        # RIF: Calcular o volume financeiro por comunicação
+        for comunicacao in caso_ativo.comunicacao_set.all():
+            volume_financeiro_por_comunicacao[f"{comunicacao.rif} - Ind. {comunicacao.indexador}"] = comunicacao.campo_a
+        
     return render(request, 'home/index.html', {'caso': caso_ativo, 'casos': casos, 'volume_financeiro_por_comunicacao': volume_financeiro_por_comunicacao})
 
 
@@ -74,6 +77,15 @@ def editar_caso(request, id):
 @login_required(login_url='/login')
 def excluir_caso(request, id):
     caso = get_object_or_404(Caso, id=id, created_by=request.user)
+    
+    if request.method == 'POST':
+        # O Django já vai cuidar de excluir todos os registros relacionados
+        # devido ao on_delete=models.CASCADE nas ForeignKeys
+        caso.delete()
+        messages.success(request, 'Caso excluído com sucesso!')
+        return redirect('casos')
+    
+    return render(request, 'casos/excluir.html', {'caso': caso})
     caso.delete()
     messages.success(request, 'Caso excluído com sucesso!')
     return redirect('casos')

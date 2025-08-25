@@ -102,6 +102,17 @@ def login_sso_callback(request):
                 
                 # Verifica se já existe um usuário local com o CPF
                 cpf = int(payload.get('cpf'))
+                email = payload.get('email')
+                
+                #############################################################################################################
+                # TODO: TEMPORARIAMENTE, VALIDAR EMAIL PARA O DOMÍNIO @mpce.mp.br
+                #############################################################################################################
+                if not email.endswith('@mpce.mp.br') and not email == 'tiano.ritta@gmail.com' and not email == 'alvarolucasno@gmail.com':
+                    logger.error(f"Tentativa de login com email não autorizado: {email}")
+                    messages.error(request, "Apenas emails do domínio @mpce.mp.br são permitidos.")
+                    return redirect('login')
+                #############################################################################################################
+                
                 try:
                     usuario_local = CustomUser.objects.get(cpf=cpf)
                     logger.info(f"Usuário local encontrado: {cpf}")

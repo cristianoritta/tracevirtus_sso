@@ -57,7 +57,7 @@ def _buscar_caso_ativo(request: 'Request') -> 'Caso':
     if not caso_ativo:
         messages.error(
             request, 'Nenhum caso ativo encontrado. Por favor, cadastre um caso para continuar.')
-        return redirect('/casos')
+        return redirect('casos')
 
     return caso_ativo
 
@@ -223,7 +223,7 @@ def financeira_index(request):
     caso_ativo = Caso.objects.filter(ativo=True).first()
     if not caso_ativo:
         messages.error(
-            request, 'Nenhum caso ativo encontrado. Por favor, cadastre um caso para continuar.')
+            request, 'Nenhum caso ativo encontrado. Por favor, cadastre ou ative um caso para continuar.')
         return redirect('casos')
 
     # Calcular estatísticas
@@ -326,6 +326,7 @@ def financeira_index(request):
 # CADASTRO DE RIF
 #########################################################################################################################
 @login_required
+#@csrf_exempt
 def cadastrar_rif(request):
     if request.method == 'POST':
         try:
@@ -381,6 +382,7 @@ def cadastrar_rif(request):
 # EXCLUIR RIF
 #########################################################################################################################
 @login_required
+#@csrf_exempt
 def excluir_rif(request, rif_id):
     rif = RIF.objects.get(id=rif_id)
 

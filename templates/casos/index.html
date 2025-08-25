@@ -60,142 +60,113 @@
                         </div>
 
                         <div class="card-inner p-0">
-                            <div class="nk-tb-list nk-tb-ulist">
-                                <div class="nk-tb-item nk-tb-head">
-                                    <div class="nk-tb-col"><span class="sub-text">Id</span></div>
-                                    <div class="nk-tb-col"><span class="sub-text">Número</span></div>
-                                    <div class="nk-tb-col tb-col-mb"><span class="sub-text">Nome</span></div>
-                                    <div class="nk-tb-col tb-col-md"><span class="sub-text">Status</span></div>
-                                    <div class="nk-tb-col tb-col-md"><span class="sub-text">Investigados</span></div>
-                                    <div class="nk-tb-col tb-col-md"><span class="sub-text">Ativo</span></div>
-                                    <div class="nk-tb-col tb-col-lg"><span class="sub-text">Criado em</span></div>
-                                    <div class="nk-tb-col tb-col-md"><span class="sub-text">Criado por</span></div>
-                                    <div class="nk-tb-col nk-tb-col-tools text-right">
-                                        <div class="dropdown">
-                                            <a href="#" class="btn btn-xs btn-outline-light btn-icon dropdown-toggle"
-                                                data-toggle="dropdown" data-offset="0,5">
-                                                <em class="icon ni ni-plus"></em>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Id</th>
+                                        <th>Número</th>
+                                        <th>Nome</th>
+                                        <th>Status</th>
+                                        <th>Investigados</th>
+                                        <th>Ativo</th>
+                                        <th>Criado em</th>
+                                        <th>Criado por</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for caso in casos %}
+                                    <tr>
+                                        <td>#{{ caso.id }}</td>
+                                        <td>{{ caso.numero }}</td>
+                                        <td>{{ caso.nome|truncatechars:50 }}</td>
+                                        <td>
+                                            <span
+                                                class="tb-status text-{% if caso.status == 'andamento' %}warning{% else %}success{% endif %}">
+                                                {{ caso.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'investigados' caso.id %}" class="btn btn-icon btn-trigger"
+                                                data-bs-toggle="tooltip" data-bs-placement="top" title="Investigados">
+                                                <i class="icon fas fa-users"></i>
+                                                <span class="tb-amount">{{ caso.investigados.count }}</span>
                                             </a>
-                                            <div class="dropdown-menu dropdown-menu-xs dropdown-menu-right">
-                                                <ul class="link-check">
-                                                    <li><span>Mostrar</span></li>
-                                                    <li class="active"><a href="#">10</a></li>
-                                                    <li><a href="#">20</a></li>
-                                                    <li><a href="#">50</a></li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {% for caso in casos %}
-                                <div class="nk-tb-item">
-                                    <div class="nk-tb-col">
-                                        <span class="tb-amount">#{{ caso.id }}</span>
-                                    </div>
-                                    <div class="nk-tb-col">
-                                        <a href="#" class="project-title">
-                                            <div class="project-info">
-                                                <h6 class="title">{{ caso.numero }}</h6>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div class="nk-tb-col tb-col-mb">
-                                        <span class="tb-amount">{{ caso.nome|truncatechars:50 }}</span>
-                                    </div>
-                                    <div class="nk-tb-col tb-col-md">
-                                        <span
-                                            class="tb-status text-{% if caso.status == 'andamento' %}warning{% else %}success{% endif %}">
-                                            {{ caso.get_status_display }}
-                                        </span>
-                                    </div>
-                                    <div class="nk-tb-col tb-col-md">
-                                        <a href="{% url 'investigados' caso.id %}" class="btn btn-icon btn-trigger"
-                                            data-bs-toggle="tooltip" data-bs-placement="top" title="Investigados">
-                                            <i class="icon fas fa-users"></i>
-                                            <span class="tb-amount">{{ caso.investigados.count }}</span>
-                                        </a>
-                                    </div>
-                                    <div class="nk-tb-col tb-col-md">
-                                        <span class="tb-status">
-                                            {% if caso.ativo %}
-                                            <a href="{% url 'caso_ativo' caso.id %}" class="btn btn-icon btn-trigger"
-                                                data-bs-toggle="tooltip" data-bs-placement="top" title="Ativar/Desativar">
-                                                <em class="icon fas fa-star text-warning"></em>
-                                            </a>
-                                            {% else %}
-                                            <a href="{% url 'caso_ativo' caso.id %}" class="btn btn-icon btn-trigger"
-                                                data-bs-toggle="tooltip" data-bs-placement="top" title="Ativar/Desativar">
-                                                <em class="icon far fa-star text-muted"></em>
-                                            </a>
-                                            {% endif %}
-                                        </span>
-                                    </div>
-                                    <div class="nk-tb-col tb-col-lg">
-                                        <span class="tb-date">{{ caso.created_at|date:"d/m/Y H:i" }}</span>
-                                    </div>
-                                    <div class="nk-tb-col tb-col-md">
-                                        <span class="tb-lead">
-                                            {{caso.created_by.get_full_name|default:caso.created_by.username}}
-                                        </span>
-                                    </div>
-                                    <div class="nk-tb-col nk-tb-col-tools">
-                                        <ul class="nk-tb-actions gx-1">
-                                            <li class="nk-tb-action-hidden">
-                                                <a href="#" class="btn btn-trigger btn-icon" data-bs-toggle="tooltip"
-                                                    data-bs-placement="top" title="Ver">
-                                                    <em class="icon ni ni-eye"></em>
+                                        </td>
+                                        <td>
+                                            <span class="tb-status">
+                                                {% if caso.ativo %}
+                                                <a href="{% url 'caso_ativo' caso.id %}"
+                                                    class="btn btn-icon btn-trigger" data-bs-toggle="tooltip"
+                                                    data-bs-placement="top" title="Ativar/Desativar">
+                                                    <em class="icon fas fa-star text-warning"></em>
                                                 </a>
-                                            </li>
-                                            {% if caso.created_by == request.user %}
-                                            <li class="nk-tb-action-hidden">
-                                                <a href="{% url 'editar_caso' caso.id %}"
-                                                    class="btn btn-trigger btn-icon" data-bs-toggle="tooltip"
-                                                    data-bs-placement="top" title="Editar">
-                                                    <em class="icon ni ni-edit"></em>
+                                                {% else %}
+                                                <a href="{% url 'caso_ativo' caso.id %}"
+                                                    class="btn btn-icon btn-trigger" data-bs-toggle="tooltip"
+                                                    data-bs-placement="top" title="Ativar/Desativar">
+                                                    <em class="icon far fa-star text-muted"></em>
                                                 </a>
-                                            </li>
-                                            {% endif %}
-                                            <li>
-                                                <div class="drodown">
-                                                    <a href="#" class="dropdown-toggle btn btn-icon btn-trigger"
-                                                        data-bs-toggle="dropdown">
-                                                        <em class="icon ni ni-more-h"></em>
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                        <td>{{ caso.created_at|date:"d/m/Y H:i" }}</td>
+                                        <td>{{ caso.created_by.get_full_name|default:caso.created_by.username }}</td>
+                                        <td>
+                                            <ul class="nk-tb-actions gx-1">
+                                                <li class="nk-tb-action-hidden">
+                                                    <a href="#" class="btn btn-trigger btn-icon"
+                                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Ver">
+                                                        <em class="icon ni ni-eye"></em>
                                                     </a>
-                                                    <div class="dropdown-menu dropdown-menu-right">
-                                                        <ul class="link-list-opt no-bdr">
-                                                            <li><a href="#"><em class="icon ni ni-eye"></em><span>Ver
-                                                                        Detalhes</span></a></li>
-                                                            {% if caso.created_by == request.user %}
-                                                            <li><a href="{% url 'editar_caso' caso.id %}"><em
-                                                                        class="icon ni ni-edit"></em><span>Editar</span></a>
-                                                            </li>
-                                                            {% endif %}
-                                                        </ul>
+                                                </li>
+                                                {% if caso.created_by == request.user %}
+                                                <li class="nk-tb-action-hidden">
+                                                    <a href="{% url 'editar_caso' caso.id %}"
+                                                        class="btn btn-trigger btn-icon" data-bs-toggle="tooltip"
+                                                        data-bs-placement="top" title="Editar">
+                                                        <em class="icon ni ni-edit"></em>
+                                                    </a>
+                                                </li>
+                                                {% endif %}
+                                                <li>
+                                                    <div class="drodown">
+                                                        <a href="#" class="dropdown-toggle btn btn-icon btn-trigger"
+                                                            data-bs-toggle="dropdown">
+                                                            <em class="icon ni ni-more-h"></em>
+                                                        </a>
+                                                        <div class="dropdown-menu dropdown-menu-right">
+                                                            <ul class="link-list-opt no-bdr">
+                                                                <li><a href="#"><em
+                                                                            class="icon ni ni-eye"></em><span>Ver
+                                                                            Detalhes</span></a></li>
+                                                                {% if caso.created_by == request.user %}
+                                                                <li><a href="{% url 'editar_caso' caso.id %}"><em
+                                                                            class="icon ni ni-edit"></em><span>Editar</span></a>
+                                                                </li>
+                                                                {% endif %}
+                                                            </ul>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                {% empty %}
-                                <div class="nk-tb-item">
-                                    <div class="nk-tb-col" style="text-align: center; padding: 2rem;">
-                                        <div class="text-center p-4">
-                                            <div class="text-muted">
-                                                <em class="icon ni ni-inbox" style="font-size: 3rem;"></em>
-                                                <h5 class="mt-2">Nenhum caso encontrado</h5>
-                                                <p>Crie seu primeiro caso clicando no botão "Novo Caso"</p>
-                                                <a href="{% url 'novo_caso' %}" class="btn btn-primary">
-                                                    <em class="icon ni ni-plus"></em>
-                                                    <span>Criar Primeiro Caso</span>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
+                                                </li>
+                                            </ul>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="9" align="center">
+                                            <em class="icon ni ni-inbox" style="font-size: 3rem;"></em>
+                                            <h5 class="mt-2">Nenhum caso encontrado</h5>
+                                            <p>Crie seu primeiro caso clicando no botão "Novo Caso"</p>
+                                            <a href="{% url 'novo_caso' %}" class="btn btn-primary">
+                                                <em class="icon ni ni-plus"></em>
+                                                <span>Criar Primeiro Caso</span>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
