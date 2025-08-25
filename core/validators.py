@@ -5,6 +5,8 @@ import re
 def validate_cpf(value):
     cpf = CPF()
     
+    value = str(value)
+    
     value = ''.join(filter(str.isdigit, value))
 
     if not cpf.validate(value):
