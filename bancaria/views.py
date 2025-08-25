@@ -1370,8 +1370,12 @@ def calendario(request):
 
 @login_required
 def calendario_eventos(request):
+    caso_ativo = _buscar_caso_ativo(request)
+    if not caso_ativo:
+        return JsonResponse({'data': [], 'pessoas': []})
+    
     # Para cada data e pessoa, calcular crédito e débito
-    eventos = ExtratoDetalhado.objects.values('data_lancamento', 'nome_titular').annotate(
+    eventos = ExtratoDetalhado.objects.filter(caso=caso_ativo).values('data_lancamento', 'nome_titular').annotate(
         total_credito=Sum(Case(When(natureza_lancamento='C', then='valor_transacao'), default=Value(0), output_field=FloatField())),
         total_debito=Sum(Case(When(natureza_lancamento='D', then='valor_transacao'), default=Value(0), output_field=FloatField()))
     ).order_by('data_lancamento', 'nome_titular')
@@ -1393,6 +1397,13 @@ def calendario_eventos(request):
 
 @login_required
 def transacoes_dia(request):
+    
+    caso_ativo = _buscar_caso_ativo(request)
+    if not caso_ativo:
+        return JsonResponse({'data': [], 'pessoas': []})
+    
+    print("[DEBUG] Caso ativo", caso_ativo)
+    
     data_str = request.GET.get('data')
     if not data_str:
         return JsonResponse({'data': [], 'pessoas': []})
@@ -1400,7 +1411,7 @@ def transacoes_dia(request):
     data = datetime.strptime(data_str, '%Y-%m-%d').date()
     
     # Agrupa transações por pessoa
-    pessoas = ExtratoDetalhado.objects.filter(data_lancamento=data).values(
+    pessoas = ExtratoDetalhado.objects.filter(caso=caso_ativo, data_lancamento=data).values(
         'nome_titular', 'cpf_cnpj_titular'
     ).annotate(
         total_credito=Sum(Case(When(natureza_lancamento='C', then=F('valor_transacao')), default=0, output_field=FloatField())),
@@ -1413,7 +1424,7 @@ def transacoes_dia(request):
         pessoas[i]['saldo'] = moeda(pessoas[i]['total_credito'] - pessoas[i]['total_debito'])
     
     # Todas as transações para a tabela
-    transacoes = ExtratoDetalhado.objects.filter(data_lancamento=data).values(
+    transacoes = ExtratoDetalhado.objects.filter(caso=caso_ativo, data_lancamento=data).values(
         'nome_titular',
         'cpf_cnpj_titular',
         'descricao_lancamento',
