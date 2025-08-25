@@ -108,6 +108,7 @@ def importar_arquivos(request):
             return JsonResponse({'error': 'Nenhum arquivo recebido'}, status=400)
 
         arquivo = request.FILES['arquivo']
+        print("[DEBUG] Arquivo recebido:", arquivo.name)
         
         cooperacao_id = request.POST.get('cooperacao')
         cooperacao = Cooperacao.objects.get(id=cooperacao_id)
@@ -126,15 +127,16 @@ def importar_arquivos(request):
             return JsonResponse({'error': 'Nenhum caso ativo encontrado'}, status=400)
 
         # DESCOMPACTA O ARQUIVO .ZIP E PROCURA OS ARQUIVOS _EXTRATO e _ORIGEM_DESTINO.txt
-        with zipfile.ZipFile(arquivo, 'r') as zip_ref:
-            # Extrair para a pasta de uploads de dados
-            zip_ref.extractall(os.path.join(settings.MEDIA_ROOT, 'uploads', 'dados'))
-            print("[DEBUG] Arquivo descompactado com sucesso")
-        
-            # Procura os arquivos que terminam com _EXTRATO e _ORIGEM_DESTINO.txt
-            arquivos = [f for f in zip_ref.namelist()]
-            if len(arquivos) < 5:
-                return JsonResponse({'error': 'Arquivo .zip inválido.'}, status=400)
+        if arquivo.name.lower().endswith('.zip'):
+            with zipfile.ZipFile(arquivo, 'r') as zip_ref:
+                # Extrair para a pasta de uploads de dados
+                zip_ref.extractall(os.path.join(settings.MEDIA_ROOT, 'uploads', 'dados'))
+                print("[DEBUG] Arquivo descompactado com sucesso")
+            
+                # Procura os arquivos que terminam com _EXTRATO e _ORIGEM_DESTINO.txt
+                arquivos = [f for f in zip_ref.namelist()]
+                if len(arquivos) < 5:
+                    return JsonResponse({'error': 'Arquivo .zip inválido.'}, status=400)
         
         # Salva o arquivo
         file_hash = hashlib.sha256(arquivo.read()).hexdigest()
@@ -146,9 +148,39 @@ def importar_arquivos(request):
 
         # Processa o arquivo com pandas
         if arquivo.name.endswith('.csv'):
-            df = pd.read_csv(arquivo, sep=';')
+            # Testa os encodings possíveis com diferentes separadores
+            df = None
+            sep = ";"
+            
+            for encoding in ['utf-8-sig', 'utf-8', 'latin1', 'iso-8859-1', 'cp1252']:
+                try:
+                    # Tenta ler as primeiras linhas para detectar o formato
+                    df = pd.read_csv(arquivo, sep=sep, encoding=encoding, nrows=5)
+                    # Se chegou aqui, encontrou a combinação correta
+                    print(f"[DEBUG] Formato detectado - encoding: {encoding}, separador: {sep}")
+                    # Agora lê o arquivo completo com os parâmetros corretos
+                    arquivo.seek(0)
+                    df = pd.read_csv(arquivo, sep=sep, encoding=encoding)
+                    break
+                except Exception as e:
+                    print(f"[DEBUG] Tentativa falhou - encoding: {encoding}, sep: {sep}, erro: {e}")
+                    arquivo.seek(0)
+                    continue
+                
+                if df is not None:
+                    break
+            
+            if df is None:
+                raise Exception("Não foi possível ler o arquivo CSV com nenhuma combinação de encoding e separador")
         elif arquivo.name.endswith('.xlsx'):
-            df = pd.read_excel(arquivo)
+            # Testa os encodings possíveis
+            for encoding in ['utf-8', 'latin1', 'iso-8859-1', 'cp1252']:
+                try:
+                    df = pd.read_excel(arquivo, encoding=encoding)
+                    break
+                except Exception as e:
+                    print("[DEBUG] Erro ao ler arquivo XLSX:", e)
+                    continue
         elif arquivo.name.endswith('.zip'):
             # Cria um dataframe vazio
             df = pd.DataFrame()
@@ -404,6 +436,8 @@ def importar_arquivos(request):
             return JsonResponse({'error': 'Formato de arquivo não suportado'}, status=400)
 
         print("[DEBUG] Arquivo lido com sucesso")
+        
+        print(df.head())
 
         # Processa o DataFrame antes de salvar
         # Remove colunas desnecessárias se existirem
@@ -441,7 +475,7 @@ def importar_arquivos(request):
             'numero_conta_od': 'numero_conta_od'
         }
         df = df.rename(columns=mapeamento_colunas)
-        print("[DEBUG] Colunas renomeadas")
+        print("[DEBUG] Colunas renomeadas", df.columns.tolist())
 
         # Converte tipos de dados
         def converter_valor(valor):
@@ -461,6 +495,7 @@ def importar_arquivos(request):
 
         # Converte data_lancamento
         def converter_data(data):
+            print("[DEBUG] Data informada:", data)
             if pd.isna(data):
                 return None
             try:
@@ -472,6 +507,7 @@ def importar_arquivos(request):
                     return None
         
         print("[DEBUG] Convertendo datas")
+        print(df['data_lancamento'].head())
         df['data_lancamento'] = df['data_lancamento'].apply(converter_data)
         print("[DEBUG] Datas convertidas")
         

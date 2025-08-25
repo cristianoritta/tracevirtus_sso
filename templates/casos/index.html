@@ -114,14 +114,14 @@
                                         <td>{{ caso.created_by.get_full_name|default:caso.created_by.username }}</td>
                                         <td>
                                             <ul class="nk-tb-actions gx-1">
-                                                <li class="nk-tb-action-hidden">
+                                                <li>
                                                     <a href="#" class="btn btn-trigger btn-icon"
                                                         data-bs-toggle="tooltip" data-bs-placement="top" title="Ver">
                                                         <em class="icon ni ni-eye"></em>
                                                     </a>
                                                 </li>
                                                 {% if caso.created_by == request.user %}
-                                                <li class="nk-tb-action-hidden">
+                                                <li>
                                                     <a href="{% url 'editar_caso' caso.id %}"
                                                         class="btn btn-trigger btn-icon" data-bs-toggle="tooltip"
                                                         data-bs-placement="top" title="Editar">
@@ -129,26 +129,6 @@
                                                     </a>
                                                 </li>
                                                 {% endif %}
-                                                <li>
-                                                    <div class="drodown">
-                                                        <a href="#" class="dropdown-toggle btn btn-icon btn-trigger"
-                                                            data-bs-toggle="dropdown">
-                                                            <em class="icon ni ni-more-h"></em>
-                                                        </a>
-                                                        <div class="dropdown-menu dropdown-menu-right">
-                                                            <ul class="link-list-opt no-bdr">
-                                                                <li><a href="#"><em
-                                                                            class="icon ni ni-eye"></em><span>Ver
-                                                                            Detalhes</span></a></li>
-                                                                {% if caso.created_by == request.user %}
-                                                                <li><a href="{% url 'editar_caso' caso.id %}"><em
-                                                                            class="icon ni ni-edit"></em><span>Editar</span></a>
-                                                                </li>
-                                                                {% endif %}
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </li>
                                             </ul>
                                         </td>
                                     </tr>
