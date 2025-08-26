@@ -1296,7 +1296,7 @@ def importar_arquivos(request):
                 external_id=rif.id,
                 registros=df.shape[0]
             )
-            print("[DEBUG] Arquivo salvo com sucesso")
+            print("[DEBUG] Arquivo salvo com sucesso", arquivo_salvo, '|', arquivo_salvo.id)
             df['arquivo_id'] = arquivo_salvo.id
 
             # Processa os dados do arquivo e salva no banco de dados
