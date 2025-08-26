@@ -1284,13 +1284,10 @@ def importar_arquivos(request):
             df['rif_id'] = rif.id
             df['caso_id'] = rif.caso_id
 
-            # Caso
-            caso = Caso.objects.get(id=caso_ativo.id)
-            
             # Salva os dados do arquivo no banco de dados para não processar duas vezes
             hash_arquivo = sha256_dataframe(df.to_csv())
             arquivo = pd.DataFrame([{
-                "caso": caso,
+                "caso_id": rif.caso_id,
                 "external_id": rif.id,
                 "tipo": tipo,
                 "nome": arquivo.name,
