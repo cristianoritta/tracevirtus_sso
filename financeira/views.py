@@ -1286,17 +1286,18 @@ def importar_arquivos(request):
 
             # Salva os dados do arquivo no banco de dados para não processar duas vezes
             hash_arquivo = sha256_dataframe(df.to_csv())
-            arquivo = pd.DataFrame([{
-                "caso_id": rif.caso_id,
-                "external_id": rif.id,
-                "tipo": tipo,
-                "nome": arquivo.name,
-                "hash": hash_arquivo,
-                "registros": df.shape[0],
-                "created_at": timezone.now()
-            }])
-            ids_arquivos = save_dataframe(arquivo, 'app_arquivo')
-            df['arquivo_id'] = ids_arquivos[0]
+            caso = Caso.objects.get(id=rif.caso_id)
+            # Salva o arquivo no sistema
+            arquivo_salvo = Arquivo.objects.create(
+                caso=caso,
+                nome=arquivo,
+                hash=hash_arquivo,
+                tipo=tipo,
+                external_id=rif.id,
+                registros=df.shape[0]
+            )
+            print("[DEBUG] Arquivo salvo com sucesso")
+            df['arquivo_id'] = arquivo_salvo.id
 
             # Processa os dados do arquivo e salva no banco de dados
             try:
