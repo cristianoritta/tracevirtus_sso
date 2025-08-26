@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -11,6 +11,8 @@ from .forms import CasoForm, InvestigadoForm, AdicionarInvestigadoForm
 from django.utils import timezone
 from .forms import RelatorioForm
 from app.utils import _buscar_caso_ativo
+import os
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +24,12 @@ def home(request):
     casos = Caso.objects.filter(created_by=request.user)
     caso_ativo = _buscar_caso_ativo(request)
     
+    print(f"[DEBUG] home - Caso ativo: {caso_ativo}")
+    
     volume_financeiro_por_comunicacao = {}
     volume_financeiro_bancaria = {}
     
-    if caso_ativo:
+    if caso_ativo is not None and not isinstance(caso_ativo, HttpResponseRedirect):
         # RIF: Calcular o volume financeiro por comunicação
         for comunicacao in caso_ativo.comunicacao_set.all():
             volume_financeiro_por_comunicacao[f"{comunicacao.rif} - Ind. {comunicacao.indexador}"] = comunicacao.campo_a
@@ -35,7 +39,15 @@ def home(request):
 
 @login_required(login_url='/login')
 def casos(request):
+    
     casos = Caso.objects.all()
+    
+    # Caso ativo para o usuario
+    caso_ativo = CasoAtivoUsuario.objects.filter(usuario=request.user).first()
+    
+    # Adiciona informação de caso ativo para cada caso
+    for caso in casos:
+        caso.is_ativo = caso_ativo and caso_ativo.caso == caso
 
     return render(request, 'casos/index.html', {'casos': casos})
 
@@ -60,7 +72,7 @@ def novo_caso(request):
 
 @login_required(login_url='/login')
 def editar_caso(request, id):
-    caso = get_object_or_404(Caso, id=id, created_by=request.user)
+    caso = get_object_or_404(Caso, id=id)
     if request.method == 'POST':
         form = CasoForm(request.POST, instance=caso)
         if form.is_valid():
@@ -78,7 +90,7 @@ def editar_caso(request, id):
 
 @login_required(login_url='/login')
 def excluir_caso(request, id):
-    caso = get_object_or_404(Caso, id=id, created_by=request.user)
+    caso = get_object_or_404(Caso, id=id)
     
     if request.method == 'POST':
         # O Django já vai cuidar de excluir todos os registros relacionados
@@ -88,27 +100,29 @@ def excluir_caso(request, id):
         return redirect('casos')
     
     return render(request, 'casos/excluir.html', {'caso': caso})
-    caso.delete()
-    messages.success(request, 'Caso excluído com sucesso!')
-    return redirect('casos')
 
 
 @login_required(login_url='/login')
 def caso_ativo(request, id):
-    caso = get_object_or_404(Caso, id=id, created_by=request.user)
+    print(f"[DEBUG] caso_ativo - ID: {id}")
+    caso = get_object_or_404(Caso, id=id)
     
     # Apaga todos os casos ativos para o usuario
+    print(f"[DEBUG] caso_ativo - Apagando casos ativos para o usuario: {request.user}")
     CasoAtivoUsuario.objects.filter(usuario=request.user).delete()
     
     # Cria um novo caso ativo para o usuario
-    CasoAtivoUsuario.objects.create(usuario=request.user, caso=caso)
+    print(f"[DEBUG] caso_ativo - Criando caso ativo para o usuario: {request.user}")
+    ca = CasoAtivoUsuario.objects.create(usuario=request.user, caso=caso)
+    
+    print(f"[DEBUG] caso_ativo - Caso ativo criado: {ca}")
     
     return redirect('casos')
 
 
 @login_required(login_url='/login')
 def investigados(request, id):
-    caso = get_object_or_404(Caso, id=id, created_by=request.user)
+    caso = get_object_or_404(Caso, id=id)
     investigados = caso.investigados.all()  # Agora funciona com o related_name
     return render(request, 'casos/investigados.html', {
         'caso': caso,
@@ -118,7 +132,7 @@ def investigados(request, id):
 
 @login_required(login_url='/login')
 def adicionar_investigado(request, caso_id):
-    caso = get_object_or_404(Caso, id=caso_id, created_by=request.user)
+    caso = get_object_or_404(Caso, id=caso_id)
 
     if request.method == 'POST':
         # Verificar se é busca de investigado existente ou criação de novo
@@ -195,7 +209,7 @@ def buscar_investigado(request):
 
 @login_required(login_url='/login')
 def editar_investigado(request, caso_id, investigado_id):
-    caso = get_object_or_404(Caso, id=caso_id, created_by=request.user)
+    caso = get_object_or_404(Caso, id=caso_id)
     caso_investigado = get_object_or_404(
         CasoInvestigado, caso=caso, investigado_id=investigado_id)
 
@@ -228,7 +242,7 @@ def editar_investigado(request, caso_id, investigado_id):
 
 @login_required(login_url='/login')
 def remover_investigado(request, caso_id, investigado_id):
-    caso = get_object_or_404(Caso, id=caso_id, created_by=request.user)
+    caso = get_object_or_404(Caso, id=caso_id)
     caso_investigado = get_object_or_404(
         CasoInvestigado, caso=caso, investigado_id=investigado_id)
 
@@ -257,7 +271,7 @@ def remover_investigado(request, caso_id, investigado_id):
 @login_required(login_url='/login')
 def detalhes_investigado(request, caso_id, investigado_id):
     """View para carregar detalhes do investigado no modal"""
-    caso = get_object_or_404(Caso, id=caso_id, created_by=request.user)
+    caso = get_object_or_404(Caso, id=caso_id)
     caso_investigado = get_object_or_404(
         CasoInvestigado, caso=caso, investigado_id=investigado_id)
 
@@ -425,6 +439,31 @@ def relatorio_download(request, pk):
     else:
         messages.error(request, 'Arquivo não encontrado!')
         return redirect('relatorio_detail', pk=pk)
+
+@login_required
+def relatorio_template_download(request, template_name):
+    """Faz download dos templates de relatórios"""
+    # Mapeia os nomes dos templates para os arquivos
+    templates = {
+        'rif': 'rif.docx',
+        'simba': 'simba.docx'
+    }
+    
+    if template_name not in templates:
+        messages.error(request, 'Template não encontrado!')
+        return redirect('relatorios_list')
+    
+    file_name = templates[template_name]
+    file_path = os.path.join(settings.BASE_DIR, 'templates', 'documentos', file_name)
+    
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as file:
+            response = HttpResponse(file.read(), content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+            return response
+    else:
+        messages.error(request, 'Arquivo do template não encontrado!')
+        return redirect('relatorios_list')
 
 def relatorio_documentacao(request):
     """Exibe a documentação de dados dos relatórios"""

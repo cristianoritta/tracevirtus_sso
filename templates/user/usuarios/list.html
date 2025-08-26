@@ -1,0 +1,133 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="nk-content-inner">
+        <div class="nk-content-body">
+            <div class="nk-block-head nk-block-head-sm">
+                <div class="nk-block-between">
+                    <div class="nk-block-head-content">
+                        <h3 class="nk-block-title page-title">Usuários</h3>
+                    </div>
+                    <div class="nk-block-head-content">
+                        <div class="toggle-wrap nk-block-tools-toggle">
+                            <a href="{% url 'usuario_create' %}" class="btn btn-primary">
+                                <em class="icon ni ni-plus"></em>
+                                <span>Novo Usuário</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nk-block">
+                <div class="card card-bordered card-preview">
+                    <div class="card-inner">
+                        <table class="table" data-toggle="table" data-search="true" data-show-columns="true"
+                            data-show-toggle="true" data-detail-view="true" data-pagination="true"
+                            data-show-export="true" data-id-field="id" data-page-list="[10, 25, 50, 100, all]">
+                            <thead>
+                                <tr class="nk-tb-item nk-tb-head">
+                                    <th>Nome</th>
+                                    <th>CPF</th>
+                                    <th>Email</th>
+                                    <th>Instituição</th>
+                                    <th>Cargo</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for usuario in usuarios %}
+                                <tr>
+                                    <td>{{ usuario.nome_completo }}</td>
+                                    <td>{{ usuario.cpf }}</td>
+                                    <td>{{ usuario.email }}</td>
+                                    <td>{{ usuario.instituicao|default:"-" }}</td>
+                                    <td>{{ usuario.cargo|default:"-" }}</td>
+                                    <td>
+                                        {% if usuario.is_active %}
+                                        <span class="badge badge-success">Ativo</span>
+                                        {% else %}
+                                        <span class="badge badge-danger">Inativo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <a class="dropdown-toggle btn btn-icon btn-trigger" data-toggle="dropdown">
+                                                <em class="icon ni ni-more-h"></em>
+                                            </a>
+                                            <div class="dropdown-menu dropdown-menu-right">
+                                                <ul class="link-list-opt no-bdr">
+                                                    <li>
+                                                        <a href="{% url 'usuario_detail' usuario.cpf %}">
+                                                            <em class="icon ni ni-eye"></em>
+                                                            <span>Visualizar</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="{% url 'usuario_edit' usuario.cpf %}">
+                                                            <em class="icon ni ni-edit"></em>
+                                                            <span>Editar</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" class="text-danger"
+                                                            onclick="confirmarExclusao('{% url 'usuario_delete' usuario.cpf %}')">
+                                                            <em class="icon ni ni-trash"></em>
+                                                            <span>Excluir</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-table@1.24.2/dist/bootstrap-table.min.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.24.2/dist/bootstrap-table.min.js"></script>
+<script>
+    function confirmarExclusao(url) {
+        Swal.fire({
+            title: 'Tem certeza?',
+            text: "Esta ação não poderá ser revertida!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sim, excluir!',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = url;
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        $('#tabela-usuarios').bootstrapTable({
+            columns: [{
+                field: 'nome_completo',
+                title: 'Nome'
+            }, {
+                field: 'cpf',
+                title: 'CPF'
+            }, {
+                field: 'email',
+                title: 'Email'
+            }]
+        });
+    });
+</script>
+{% endblock %}

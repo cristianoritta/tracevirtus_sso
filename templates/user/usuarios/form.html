@@ -1,0 +1,217 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="nk-content-inner">
+        <div class="nk-content-body">
+            <div class="nk-block-head nk-block-head-sm">
+                <div class="nk-block-between">
+                    <div class="nk-block-head-content">
+                        <h3 class="nk-block-title page-title">{{ title }}</h3>
+                    </div>
+                    <div class="nk-block-head-content">
+                        <div class="toggle-wrap nk-block-tools-toggle">
+                            <a href="{% url 'usuario_list' %}" class="btn btn-outline-primary">
+                                <em class="icon ni ni-arrow-left"></em>
+                                <span>Voltar</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nk-block">
+                <div class="card card-bordered">
+                    <div class="card-inner">
+                        <form method="post" class="form-validate">
+                            {% csrf_token %}
+                            
+                            {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <h6>Por favor, corrija os erros abaixo:</h6>
+                                <ul class="mb-0">
+                                    {% for field, errors in form.errors.items %}
+                                        {% for error in errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+
+                            <div class="row g-4">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.nome_completo.id_for_label }}">Nome Completo *</label>
+                                        {{ form.nome_completo }}
+                                        {% if form.nome_completo.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.nome_completo.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.cpf.id_for_label }}">CPF *</label>
+                                        {{ form.cpf }}
+                                        {% if form.cpf.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.cpf.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.email.id_for_label }}">Email *</label>
+                                        {{ form.email }}
+                                        {% if form.email.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.email.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.telefone.id_for_label }}">Telefone *</label>
+                                        {{ form.telefone }}
+                                        {% if form.telefone.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.telefone.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% if not form.instance.pk %}
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.password1.id_for_label }}">Senha *</label>
+                                        {{ form.password1 }}
+                                        {% if form.password1.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.password1.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.password2.id_for_label }}">Confirmar Senha *</label>
+                                        {{ form.password2 }}
+                                        {% if form.password2.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.password2.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.instituicao.id_for_label }}">Instituição</label>
+                                        {{ form.instituicao }}
+                                        {% if form.instituicao.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.instituicao.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.cargo.id_for_label }}">Cargo</label>
+                                        {{ form.cargo }}
+                                        {% if form.cargo.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.cargo.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.cidade.id_for_label }}">Cidade</label>
+                                        {{ form.cidade }}
+                                        {% if form.cidade.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.cidade.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.uf_residencia.id_for_label }}">UF</label>
+                                        {{ form.uf_residencia }}
+                                        {% if form.uf_residencia.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.uf_residencia.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="custom-control custom-switch">
+                                        {{ form.is_admin }}
+                                        <label class="custom-control-label" for="{{ form.is_admin.id_for_label }}">Administrador</label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="custom-control custom-switch">
+                                        {{ form.is_active }}
+                                        <label class="custom-control-label" for="{{ form.is_active.id_for_label }}">Ativo</label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <button type="submit" class="btn btn-primary">{{ button_text }}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#id_cpf').mask('000.000.000-00');
+    $('#id_telefone').mask('(00) 00000-0000');
+
+    // Select2 para os campos de seleção
+    $('.form-select').select2({
+        placeholder: "Selecione uma opção",
+        allowClear: true
+    });
+});
+</script>
+{% endblock %}

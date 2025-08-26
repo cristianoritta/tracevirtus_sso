@@ -7,7 +7,7 @@
     <div class="dashboard-header d-flex justify-content-between align-items-center">
         <div>
             <h1 class="dashboard-title">Análise Financeira</h1>
-            <p class="dashboard-subtitle">Bem-vindo ao painel de análise de RIFs</p>
+            <p class="dashboard-subtitle">Caso: {{ caso }}</p>
         </div>
         <!-- Action Buttons -->
         <div class="action-buttons">
@@ -19,10 +19,29 @@
                 <i class="icon fas fa-upload"></i>
                 <span>Importar Arquivos</span>
             </a>
+
+            {% if relatorios|length < 1 %}
             <a href="/financeira/relatorio_documento" class="btn btn-secondary" target="_blank">
                 <i class="icon fas fa-file-pdf"></i>
                 <span>Gerar Relatório</span>
             </a>
+            {% else %}
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="relatoriosDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-file-pdf me-1"></i>
+                    Selecione um Relatório
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="relatoriosDropdown">
+                    {% for relatorio in relatorios %}
+                    <li>
+                        <a class="dropdown-item" href="/financeira/relatorio_documento?id={{ relatorio.id }}" target="_blank">
+                            <i class="fas fa-file-pdf me-2"></i>{{ relatorio.nome }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
         </div>
     </div>
 

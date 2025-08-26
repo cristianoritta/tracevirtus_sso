@@ -37,7 +37,10 @@ class AuthMiddleware:
         token_created_at = request.session.get('token_created_at', 0)
 
         if not access_token:
-            return redirect('login')
+            # Se não há token e não está na página de login, redireciona
+            if not request.path.startswith('/login'):
+                return redirect('login')
+            return self.get_response(request)
 
         # Calcula tempo restante para expiração
         tempo_atual = int(time.time())

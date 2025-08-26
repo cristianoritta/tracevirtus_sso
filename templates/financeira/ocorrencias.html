@@ -41,6 +41,7 @@
                         <th>Nº RIF</th>
                         <th>Indexador</th>
                         <th>ID Ocorrência</th>
+                        <th>Titular</th>
                         <th>Ocorrência</th>
                         <th><i class="fas fa-question-circle"></i></th>
                     </tr>
@@ -48,6 +49,7 @@
                         <th><input type="text" class="form-control form-control-sm column-filter" placeholder="Filtrar RIF"></th>
                         <th><input type="text" class="form-control form-control-sm column-filter" placeholder="Filtrar Indexador"></th>
                         <th><input type="text" class="form-control form-control-sm column-filter" placeholder="Filtrar ID"></th>
+                        <th><input type="text" class="form-control form-control-sm column-filter" placeholder="Filtrar Titular"></th>
                         <th><input type="text" class="form-control form-control-sm column-filter" placeholder="Filtrar Ocorrência"></th>
                         <th></th>
                     </tr>
@@ -58,6 +60,7 @@
                         <td nowrap>{{ o.rif.numero }}</td>
                         <td width="1%">{{ o.indexador }}</td>
                         <td>{{ o.id_ocorrencia }}</td>
+                        <td>{{ o.titular }}</td>
                         <td>
                             {{ o.ocorrencia }}
                         </td>

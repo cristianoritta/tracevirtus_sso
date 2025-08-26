@@ -50,7 +50,7 @@
                                 <td>{{ arquivo.nome }}</td>
                                 <td>{{ arquivo.created_at|date:"d/m/Y H:i" }}</td>
                                 <td>{{ arquivo.total_registros }}</td>
-                                <td><small class="text-muted">{{ arquivo.hash|truncatechars:20 }}</small></td>
+                                <td>{{ arquivo.hash }}</td>
                                 <td class="text-end">
                                     <button class="btn btn-danger btn-sm" hx-delete="{% url 'bancaria:delete_arquivo' arquivo.id %}"
                                         hx-target="closest tr" hx-swap="outerHTML swap:1s"

@@ -1,0 +1,112 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="nk-content-inner">
+        <div class="nk-content-body">
+            <div class="nk-block-head nk-block-head-sm">
+                <div class="nk-block-between">
+                    <div class="nk-block-head-content">
+                        <h3 class="nk-block-title page-title">Detalhes do Usuário</h3>
+                    </div>
+                    <div class="nk-block-head-content">
+                        <div class="toggle-wrap nk-block-tools-toggle">
+                            <a href="{% url 'usuario_list' %}" class="btn btn-outline-primary">
+                                <em class="icon ni ni-arrow-left"></em>
+                                <span>Voltar</span>
+                            </a>
+                            <a href="{% url 'usuario_edit' usuario.cpf %}" class="btn btn-primary ml-2">
+                                <em class="icon ni ni-edit"></em>
+                                <span>Editar</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nk-block">
+                <div class="card card-bordered">
+                    <div class="card-inner">
+                        <div class="nk-block">
+                            <div class="profile-ud-list">
+                                <div class="profile-ud-item">
+                                    <div class="profile-ud wider">
+                                        <span class="profile-ud-label">Nome Completo</span>
+                                        <span class="profile-ud-value">{{ usuario.nome_completo }}</span>
+                                    </div>
+                                </div>
+                                <div class="profile-ud-item">
+                                    <div class="profile-ud wider">
+                                        <span class="profile-ud-label">CPF</span>
+                                        <span class="profile-ud-value">{{ usuario.cpf }}</span>
+                                    </div>
+                                </div>
+                                <div class="profile-ud-item">
+                                    <div class="profile-ud wider">
+                                        <span class="profile-ud-label">Email</span>
+                                        <span class="profile-ud-value">{{ usuario.email }}</span>
+                                    </div>
+                                </div>
+                                <div class="profile-ud-item">
+                                    <div class="profile-ud wider">
+                                        <span class="profile-ud-label">Telefone</span>
+                                        <span class="profile-ud-value">{{ usuario.telefone }}</span>
+                                    </div>
+                                </div>
+                                <div class="profile-ud-item">
+                                    <div class="profile-ud wider">
+                                        <span class="profile-ud-label">Instituição</span>
+                                        <span class="profile-ud-value">{{ usuario.instituicao|default:"-" }}</span>
+                                    </div>
+                                </div>
+                                <div class="profile-ud-item">
+                                    <div class="profile-ud wider">
+                                        <span class="profile-ud-label">Cargo</span>
+                                        <span class="profile-ud-value">{{ usuario.cargo|default:"-" }}</span>
+                                    </div>
+                                </div>
+                                <div class="profile-ud-item">
+                                    <div class="profile-ud wider">
+                                        <span class="profile-ud-label">Cidade</span>
+                                        <span class="profile-ud-value">{{ usuario.cidade|default:"-" }}</span>
+                                    </div>
+                                </div>
+                                <div class="profile-ud-item">
+                                    <div class="profile-ud wider">
+                                        <span class="profile-ud-label">UF</span>
+                                        <span class="profile-ud-value">{{ usuario.uf_residencia|default:"-" }}</span>
+                                    </div>
+                                </div>
+                                <div class="profile-ud-item">
+                                    <div class="profile-ud wider">
+                                        <span class="profile-ud-label">Status</span>
+                                        <span class="profile-ud-value">
+                                            {% if usuario.is_active %}
+                                            <span class="badge badge-success">Ativo</span>
+                                            {% else %}
+                                            <span class="badge badge-danger">Inativo</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="profile-ud-item">
+                                    <div class="profile-ud wider">
+                                        <span class="profile-ud-label">Administrador</span>
+                                        <span class="profile-ud-value">
+                                            {% if usuario.is_admin %}
+                                            <span class="badge badge-primary">Sim</span>
+                                            {% else %}
+                                            <span class="badge badge-light">Não</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

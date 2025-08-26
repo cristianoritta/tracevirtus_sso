@@ -2,414 +2,553 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    Documentação de Dados dos Relatórios
+    <!-- Navigation Cards -->
+    <div class="row mb-4 g-3">
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm hover-lift">
+                <div class="card-body text-center">
+                    <i class="fas fa-database text-primary fa-2x mb-3"></i>
+                    <h6 class="card-title">Estrutura de Dados</h6>
+                    <p class="card-text small text-muted">Organização completa dos dados retornados</p>
                 </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm hover-lift">
+                <div class="card-body text-center">
+                    <i class="fas fa-code text-success fa-2x mb-3"></i>
+                    <h6 class="card-title">Casos de Uso</h6>
+                    <p class="card-text small text-muted">Exemplos práticos de implementação</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm hover-lift">
+                <div class="card-body text-center">
+                    <i class="fas fa-lightbulb text-warning fa-2x mb-3"></i>
+                    <h6 class="card-title">Melhores Práticas</h6>
+                    <p class="card-text small text-muted">Dicas e insights para desenvolvimento</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm hover-lift">
+                <div class="card-body text-center">
+                    <i class="fas fa-download text-info fa-2x mb-3"></i>
+                    <h6 class="card-title">Exportação</h6>
+                    <p class="card-text small text-muted">Formatos de saída de dados</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Main Content -->
+    <div class="row">
+        <div class="col-lg-3">
+            <!-- Sidebar Navigation -->
+            <div class="card border-0 shadow-sm sticky-top">
+                <div class="card-header bg-light border-0">
+                    <h6 class="mb-0"><i class="fas fa-list-ul me-2"></i>Índice</h6>
+                </div>
+                <div class="card-body p-0">
+                    <nav class="nav flex-column">
+                        <a class="nav-link py-3 border-bottom" href="#estrutura"><i
+                                class="fas fa-sitemap me-2"></i>Estrutura de Dados</a>
+                        <a class="nav-link py-3 border-bottom" href="#rifs"><i
+                                class="fas fa-file-invoice me-2"></i>RIFs</a>
+                        <a class="nav-link py-3 border-bottom" href="#titulares"><i
+                                class="fas fa-user me-2"></i>Titulares</a>
+                        <a class="nav-link py-3 border-bottom" href="#titulares-extratos"><i
+                                class="fas fa-chart-line me-2"></i>Titulares Extratos</a>
+                        <a class="nav-link py-3 border-bottom" href="#envolvidos"><i
+                                class="fas fa-users me-2"></i>Envolvidos</a>
+                        <a class="nav-link py-3 border-bottom" href="#arquivos"><i
+                                class="fas fa-file me-2"></i>Arquivos</a>
+                        <a class="nav-link py-3 border-bottom" href="#casos-uso"><i class="fas fa-cogs me-2"></i>Casos
+                            de Uso</a>
+                        <a class="nav-link py-3" href="#praticas"><i class="fas fa-star me-2"></i>Melhores Práticas</a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <!-- Estrutura de Dados Section -->
+            <div id="estrutura" class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-gradient-info text-white">
+                    <h4 class="mb-0"><i class="fas fa-sitemap me-2"></i>📊 Estrutura de Dados Retornados</h4>
+                </div>
                 <div class="card-body">
+                    <p class="lead mb-4">O dicionário <code class="bg-light px-2 py-1 rounded">data</code> retornado
+                        pela função <code class="bg-light px-2 py-1 rounded">relatorio_documento</code> contém as
+                        seguintes chaves principais:</p>
 
+                    <!-- RIFs -->
+                    <div id="rifs" class="mb-5">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-primary rounded-circle p-2 me-3">
+                                <i class="fas fa-file-invoice text-white"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">1. RIFs (QuerySet de objetos RIF)</h5>
+                                <span class="badge bg-primary">Relatórios de Inteligência Financeira</span>
+                            </div>
+                        </div>
 
-                    <pre style="white-space: pre-wrap; font-size: 1.2em;">
-                    # Documentação - Relatório Financeiro do Caso
+                        <div class="alert alert-light border-start border-4 border-primary">
+                            <p class="mb-2"><strong>Descrição:</strong> Lista de todos os RIFs associados ao caso.</p>
+                            <p class="mb-0"><strong>Campos disponíveis:</strong></p>
+                            <ul class="mb-0">
+                                <li><code>id</code> - Identificador único do RIF</li>
+                                <li><code>numero</code> - Número do RIF</li>
+                                <li><code>caso</code> - Referência ao caso associado</li>
+                            </ul>
+                        </div>
 
-                    ## 📊 Estrutura de Dados Retornados
-                    
-                    O dicionário `data` retornado pela função `relatorio_documento` contém as seguintes chaves principais:
-                    
-                    ### 1. **rifs** (QuerySet de objetos RIF)
-                    **Descrição:** Lista de todos os RIFs (Relatórios de Inteligência Financeira) associados ao caso.
-                    
-                    **Campos disponíveis:**
-                    - `id`: Identificador único do RIF
-                    - `numero`: Número do RIF
-                    - `caso`: Referência ao caso associado
-                    
-                    **Como acessar:**
-                    ```django
-                    {% for rif in rifs %}
-                        RIF nº { { rif.numero } } - ID: { { rif.id } }
-                    {% endfor %}
-                    ```
-                    
-                    ---
-                    
-                    ### 2. **comunicacoes** (QuerySet de objetos Comunicacao)
-                    **Descrição:** Todas as comunicações financeiras registradas no caso.
-                    
-                    **Campos principais:**
-                    - `campo_a`: Valor monetário principal
-                    - `campo_b`: Créditos
-                    - `campo_c`: Débitos
-                    - `informacoes_adicionais`: Detalhes textuais
-                    - `indexador`: CPF/CNPJ do envolvido
-                    
-                    **Como acessar:**
-                    ```django
-                    { { % for com in comunicacoes % } }
-                        Valor: { { com.campo_a } }
-                        Informações: { { com.informacoes_adicionais } }
-                    { { % endfor % } }
-                    ```
-                    
-                    ---
-                    
-                    ### 3. **envolvidos** (QuerySet de objetos Envolvido)
-                    **Descrição:** Pessoas físicas ou jurídicas envolvidas no caso.
-                    
-                    **Campos disponíveis:**
-                    - `cpf_cnpj_envolvido`: Documento de identificação
-                    - `nome_envolvido`: Nome completo
-                    - `tipo_envolvido`: "Titular" ou "Representante"
-                    - `indexador`: Chave de indexação
-                    
-                    **Como acessar:**
-                    ```django
-                    { { % for envolvido in envolvidos % } }
-                        { { envolvido.nome_envolvido } } ({ { envolvido.tipo_envolvido } })
-                        CPF/CNPJ: { { envolvido.cpf_cnpj_envolvido } }
-                    { { % endfor % } }
-                    ```
-                    
-                    ---
-                    
-                    ### 4. **investigados** (QuerySet)
-                    **Descrição:** Lista de pessoas sob investigação no caso.
-                    
-                    **Como acessar:**
-                    ```django
-                    { { % for investigado in investigados % } }
-                        Investigado: { { investigado.nome } }
-                    { { % endfor % } }
-                    ```
-                    
-                    ---
-                    
-                    ### 5. **titulares** (Lista de dicionários)
-                    **Descrição:** Envolvidos do tipo "Titular" com dados agregados de movimentação financeira.
-                    
-                    **Campos por titular:**
-                    - `cpf_cnpj_envolvido`: Documento
-                    - `nome_envolvido`: Nome
-                    - `movimentacao`: Total movimentado (formatado)
-                    - `creditos`: Total de créditos (formatado)
-                    - `debitos`: Total de débitos (formatado)
-                    
-                    **Como acessar:**
-                    ```django
-                    { { % for titular in titulares % } }
-                        { { titular.nome_envolvido } }
-                        CPF/CNPJ: { { titular.cpf_cnpj_envolvido } }
-                        Movimentação Total: { { titular.movimentacao } }
-                        Créditos: { { titular.creditos } } | Débitos: { { titular.debitos } }
-                    { { % endfor % } }
-                    ```
-                    
-                    ---
-                    
-                    ### 6. **representantes** (Lista de dicionários)
-                    **Descrição:** Envolvidos do tipo "Representante".
-                    
-                    **Estrutura similar aos titulares**
-                    
-                    **Como acessar:**
-                    ```django
-                    { { % for rep in representantes % } }
-                        Representante: { { rep.nome_envolvido } }
-                    { { % endfor % } }
-                    ```
-                    
-                    ---
-                    
-                    ### 7. **ocorrencias** (QuerySet de objetos Ocorrencia)
-                    **Descrição:** Eventos ou ocorrências registradas no caso.
-                    
-                    **Campos:**
-                    - `ocorrencia`: Descrição da ocorrência
-                    - `rif`: RIF associado
-                    
-                    **Como acessar:**
-                    ```django
-                    { { % for ocor in ocorrencias % } }
-                        { { ocor.ocorrencia } }
-                    { { % endfor % } }
-                    ```
-                    
-                    ---
-                    
-                    ### 8. **movimentacao** (String formatada)
-                    **Descrição:** Valor total movimentado em todo o caso (soma de todas as comunicações).
-                    
-                    **Como acessar:**
-                    ```django
-                    Total Movimentado no Caso: { { movimentacao } }
-                    ```
-                    
-                    ---
-                    
-                    ### 9. **titulares_extratos** (Lista de dicionários complexos)
-                    **Descrição:** Análise detalhada por titular com extrato completo de movimentações.
-                    
-                    **Estrutura por titular:**
-                    ```python
-                    {
-                        'nome': str,                    # Nome do titular
-                        'investigado': bool,             # Se é investigado
-                        'cpf': str,                      # CPF/CNPJ
-                        'kyc': str,                      # Análise KYC (Know Your Client)
-                        'movimentacao_total': str,       # Total movimentado formatado
-                        'creditos': str,                 # Total de créditos formatado
-                        'debitos': str,                  # Total de débitos formatado
-                        'comunicacoes': list,            # Lista de comunicações do titular
-                        'comunicacoes_nao_suspeitas': list,  # Comunicações não suspeitas
-                        'outras_informacoes': list,      # Informações adicionais
-                        'observacoes_analista': str,     # Observações do analista
-                        'ocorrencias': list              # Ocorrências relacionadas
-                    }
-                    ```
-                    
-                    **Como acessar:**
-                    ```django
-                    { { % for extrato in titulares_extratos % } }
-                        
-                            { { extrato.nome } }
-                            CPF: { { extrato.cpf } }
-                            Movimentação Total: { { extrato.movimentacao_total } }
-                            
-                            Comunicações:
-                            { { % for com in extrato.comunicacoes % } }
-                                RIF { { com.numero_rif } }: { { com.campo_a } }
-                            { { % endfor % } }
-                            
-                            Ocorrências:
-                            { { % for ocor in extrato.ocorrencias % } }
-                                { { ocor.ocorrencia } }
-                            { { % endfor % } }
-                        
-                    { { % endfor % } }
-                    ```
-                    
-                    ---
-                    
-                    ## 🎯 Casos de Uso Comuns
-                    
-                    ### 1. **Relatório Resumido do Caso**
-                    ```django
-                    
-                        Relatório do Caso
-                        Total de RIFs: { { rifs|length } }
-                        Total de Comunicações: { { comunicacoes|length } }
-                        Movimentação Total: { { movimentacao } }
-                        
-                        
-                        Principais Envolvidos
-                        { { % for titular in titulares % } }
-                            
-                                { { titular.nome_envolvido } }
-                                { { titular.movimentacao } }
-                            
-                        { { % endfor % } }
-                    
-                    ```
-                    
-                    ### 2. **Extrato Detalhado por Titular**
-                    ```django
-                    { { % for extrato in titulares_extratos % } }
-                                { { extrato.nome } }
-                                { { % if extrato.investigado % } }
-                                    INVESTIGADO
-                                { { % endif % } }
-                            
-                            
-                                    Movimentação Total
-                                    { { extrato.movimentacao_total } }
-                                
-                                
-                                    Créditos
-                                    { { extrato.creditos } }
-                                
-                                
-                                    Débitos
-                                    { { extrato.debitos } }
-                                
-                            
-                            
-                            { { % if extrato.kyc % } }
-                                
-                                    Análise KYC
-                                    { { extrato.kyc } }
-                                
-                            { { % endif % } }
-                            
-                            { { % if extrato.observacoes_analista % } }
-                                    Observações do Analista
-                                    { { extrato.observacoes_analista } }
-                                
-                            { { % endif % } }
-                    { { % endfor % } }
-                    ```
-                    
-                    ### 3. **Dashboard de RIFs**
-                    ```django
-                        RIFs do Caso
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Número</th>
-                                    <th>Comunicações</th>
-                                    <th>Envolvidos</th>
-                                    <th>Ocorrências</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                { { % for rif in rifs % } }
-                                <tr>
-                                    <td>{ { rif.numero } }</td>
-                                    <td>
-                                        { { % for com in comunicacoes % } }
-                                            { { % if com.rif.id == rif.id % } }
-                                                +1
-                                            { { % endif % } }
-                                        { { % endfor % } }
-                                    </td>
-                                    <td>
-                                        { { % for env in envolvidos % } }
-                                            { { % if env.rif.id == rif.id % } }
-                                                { { env.nome_envolvido } }<br>
-                                            { { % endif % } }
-                                        { { % endfor % } }
-                                    </td>
-                                    <td>
-                                        { { % for ocor in ocorrencias % } }
-                                            { { % if ocor.rif.id == rif.id % } }
-                                                • { { ocor.ocorrencia|truncatewords:10 } }<br>
-                                            { { % endif % } }
-                                        { { % endfor % } }
-                                    </td>
-                                </tr>
-                                { { % endfor % } }
-                            </tbody>
-                        </table>
-                    
-                    ```
-                    
-                    ### 4. **Análise de Rede de Relacionamentos**
-                    ```django
-                        Rede de Relacionamentos Financeiros
-                        
-                        { { % for extrato in titulares_extratos % } }
-                                { { extrato.nome } }
-                                
-                                Transações com:
-                                { { % for info in extrato.outras_informacoes % } }
-                                    { { info|truncatewords:20 } }
-                                { { % endfor % } }
-                            
-                        { { % endfor % } }
-                    
-                    ```
-                    
-                    ### 5. **Relatório de Ocorrências por RIF**
-                    ```django
-                        { { % regroup ocorrencias by rif.numero as ocorrencias_agrupadas % } }
-                        
-                        { { % for grupo in ocorrencias_agrupadas % } }
-                                RIF nº { { grupo.grouper } }
-                                    { { % for ocor in grupo.list % } }
-                                        { { ocor.ocorrencia } }
-                                    { { % endfor % } }
-                        { { % endfor % } }
-                    
-                    ```
-                    
-                    ---
-                    
-                    ## 💡 Insights e Melhores Práticas
-                    
-                    ### 1. **Filtros Úteis**
-                    ```django
-                    Apenas titulares com movimentação acima de R$ 100.000
-                    { { % for titular in titulares % } }
-                        { { % if titular.movimentacao|slice:"3:"|remove:"." > 100000 % } }
-                            Alta movimentação: { { titular.nome_envolvido } }
-                        { { % endif % } }
-                    { { % endfor % } }
-                    
-                    Contar comunicações suspeitas
-                    { { % for extrato in titulares_extratos % } }
-                        Comunicações suspeitas: 
-                        { { extrato.comunicacoes|length|sub:extrato.comunicacoes_nao_suspeitas|length } }
-                    { { % endfor % } }
-                    ```
-                    
-                    ### 2. **Agregações e Totalizações**
-                    ```django
-                    Somar todos os créditos
-                    { { % with total_creditos=0 % } }
-                        { { % for titular in titulares % } }
-                            Lógica de soma aqui
-                        { { % endfor % } }
-                    { { % endwith % } }
-                    
-                    Percentual de participação
-                    { { % for titular in titulares % } }
-                        Participação: { { % widthratio titular.movimentacao movimentacao 100 % } }%
-                    { { % endfor % } }
-                    ```
-                    
-                    ### 3. **Formatação Condicional**
-                    ```django
-                    { { % for extrato in titulares_extratos % } }
-                        <div class="titular { { % if extrato.investigado % } }destaque-investigado{ { % endif % } }">
-                            { { extrato.nome } }
-                            
-                            { { % if extrato.ocorrencias|length > 5 % } }
-                                <span class="alerta">⚠️ Múltiplas ocorrências
-                            { { % endif % } }
-                        
-                    { { % endfor % } }
-                    ```
-                    
-                    ### 4. **Exportação de Dados**
-                    ```django
-                    Formato CSV
-                    { { % for titular in titulares % } }
-                    { { titular.nome_envolvido } };{ { titular.cpf_cnpj_envolvido } };{ { titular.movimentacao } }
-                    { { % endfor % } }
-                    
-                    Formato JSON simplificado
-                    {
-                        "caso": {
-                            "total_movimentado": "{ { movimentacao } }",
-                            "total_rifs": { { rifs|length } },
-                            "titulares": [
-                                { { % for t in titulares % } }
-                                {
-                                    "nome": "{ { t.nome_envolvido } }",
-                                    "cpf": "{ { t.cpf_cnpj_envolvido } }",
-                                    "valor": "{ { t.movimentacao } }"
-                                }{ { % if not forloop.last % } },{ { % endif % } }
-                                { { % endfor % } }
-                            ]
-                        }
-                    }
-                    ```
-                    
-                    ## 📝 Notas Importantes
-                    
-                    - A formatação monetária é feita pela função `moeda()` - certifique-se de que está configurada corretamente
-                    </pre>
+                        <div class="bg-dark rounded">
+                            <pre class="text-light">
+                                <code>
+                                    {% templatetag openblock %} for rif in rifs {% templatetag openblock %}
+                                        RIF nº &#123;&#123; rif.numero &#125;&#125; - ID: &#123;&#123; rif.id &#125;&#125;
+                                    {% templatetag openblock %} endfor {% templatetag closeblock %}
+                                </code>
+                            </pre>
+                        </div>
+                    </div>
 
+                    <!-- Titulares -->
+                    <div id="titulares" class="mb-5">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-success rounded-circle p-2 me-3">
+                                <i class="fas fa-user text-white"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">2. Titulares (Lista de objetos Titular)</h5>
+                                <span class="badge bg-success">Pessoas Físicas/Jurídicas Principais</span>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-light border-start border-4 border-success">
+                            <p class="mb-2"><strong>Descrição:</strong> Lista dos titulares principais das contas
+                                bancárias analisadas.</p>
+                            <p class="mb-0"><strong>Campos principais:</strong></p>
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <ul class="mb-0">
+                                        <li><code>nome_envolvido</code> - Nome completo</li>
+                                        <li><code>tipo_envolvido</code> - "Titular" ou "Representante"</li>
+                                        <li><code>creditos</code> - Total de créditos</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="mb-0">
+                                        <li><code>debitos</code> - Total de débitos</li>
+                                        <li><code>cpf_cnpj_titular</code> - Documento do titular</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-dark rounded p-3">
+                            <pre class="text-light mb-0"><code>{% templatetag openblock %} for titular in titulares {% templatetag closeblock %}
+    {{ titular.nome_envolvido }}, {{ titular.tipo_envolvido }}
+    Créditos: R$ {{ titular.creditos }}
+    Débitos: R$ {{ titular.debitos }}
+{% templatetag openblock %} endfor {% templatetag closeblock %}</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Titulares Extratos -->
+                    <div id="titulares-extratos" class="mb-5">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-warning rounded-circle p-2 me-3">
+                                <i class="fas fa-chart-line text-white"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">3. Titulares Extratos (Lista Complexa)</h5>
+                                <span class="badge bg-warning text-dark">Análise Detalhada por Titular</span>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info border-0">
+                            <h6><i class="fas fa-info-circle me-2"></i>Estrutura Complexa</h6>
+                            <p class="mb-0">Cada titular contém dados agregados com análise completa de movimentações
+                                financeiras.</p>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="card border-primary">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-primary">Dados Básicos</h6>
+                                        <small class="text-muted">nome, cpf, investigado</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-success">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-success">Financeiros</h6>
+                                        <small class="text-muted">movimentacao_total, creditos, debitos</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-warning">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-warning">Análises</h6>
+                                        <small class="text-muted">kyc, observacoes_analista, ocorrencias</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-dark rounded p-3 mt-3">
+                            <pre class="text-light mb-0">
+                                <code>
+                                {% templatetag openblock %} for alvo in titulares_extratos {% templatetag closeblock %}
+    {{ alvo.nome }}
+    CPF: {{ alvo.cpf }}
+    Movimentação Total: {{ alvo.movimentacao_total }}
+    
+    {% templatetag openblock %} for antecedente in alvo.antecedentes {% templatetag closeblock %}
+        {{ antecedente.data_comunicacao }} | {{ antecedente.ocorrencia }}
+    {% templatetag openblock %} endfor {% templatetag closeblock %}
+    
+    {% templatetag openblock %} for comunicacao in alvo.envolvimentos {% templatetag closeblock %}
+        {{ comunicacao.nomeEnvolvido }} - {{ comunicacao.tipoEnvolvido }}
+    {% templatetag openblock %} endfor {% templatetag closeblock %}
+{% templatetag openblock %} endfor {% templatetag closeblock %}
+</code>
+</pre>
+                        </div>
+                    </div>
+
+                    <!-- Envolvidos -->
+                    <div id="envolvidos" class="mb-5">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-info rounded-circle p-2 me-3">
+                                <i class="fas fa-users text-white"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">4. Envolvidos (QuerySet de objetos Envolvido)</h5>
+                                <span class="badge bg-info">Pessoas Relacionadas</span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="alert alert-light border-start border-4 border-info">
+                                    <p class="mb-2"><strong>Descrição:</strong> Pessoas físicas ou jurídicas envolvidas
+                                        no caso.</p>
+                                    <p class="mb-0"><strong>Campos disponíveis:</strong></p>
+                                    <ul class="mb-0">
+                                        <li><code>cpf_cnpj_envolvido</code> - Documento</li>
+                                        <li><code>nome_envolvido</code> - Nome completo</li>
+                                        <li><code>tipo_envolvido</code> - "Titular" ou "Representante"</li>
+                                        <li><code>cpf_cnpj_titular</code> - Documento do titular relacionado</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Tipos de Envolvidos</h6>
+                                        <span class="badge bg-primary me-1">Titular</span>
+                                        <span class="badge bg-secondary">Representante</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-dark rounded p-3">
+                            <pre class="text-light mb-0"><code>{% templatetag openblock %} for envolvido in envolvidos {% templatetag closeblock %}
+    {{ envolvido.nome_envolvido }} ({{ envolvido.tipo_envolvido }})
+    CPF/CNPJ: {{ envolvido.cpf_cnpj_envolvido }}
+{% templatetag openblock %} endfor {% templatetag closeblock %}</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Arquivos -->
+                    <div id="arquivos" class="mb-5">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-secondary rounded-circle p-2 me-3">
+                                <i class="fas fa-file text-white"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">5. Arquivos (Lista de objetos Arquivo)</h5>
+                                <span class="badge bg-secondary">Arquivos Importados</span>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-light border-start border-4 border-secondary">
+                            <p class="mb-2"><strong>Descrição:</strong> Lista dos arquivos importados com seus hashes de
+                                verificação.</p>
+                            <p class="mb-0"><strong>Campos disponíveis:</strong></p>
+                            <ul class="mb-0">
+                                <li><code>nome</code> - Nome do arquivo</li>
+                                <li><code>hash</code> - Hash de verificação do arquivo</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-dark rounded p-3">
+                            <pre class="text-light mb-0"><code>{% templatetag openblock %} for arquivo in arquivos {% templatetag closeblock %}
+    {{ arquivo.nome }} - Hash: {{ arquivo.hash }}
+{% templatetag openblock %} endfor {% templatetag closeblock %}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Casos de Uso -->
+            <div id="casos-uso" class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-gradient-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-cogs me-2"></i>🎯 Casos de Uso Comuns</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card border-primary h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-file-alt me-2"></i>Cabeçalho do Relatório</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="bg-dark rounded p-3">
+                                        <pre
+                                            class="text-light mb-0 small"><code>RELATÓRIO TÉCNICO DE INTELIGÊNCIA FINANCEIRA
+{% templatetag openblock %} for rif in rifs {% templatetag closeblock %}RIF: nº {{rif.numero}}{% templatetag openblock %} endfor {% templatetag closeblock %}
+
+Suspeitos de Lavagem de Dinheiro:
+{% templatetag openblock %} for titular in titulares{% templatetag closeblock %}
+• {{titular.nome_envolvido}}, {{titular.tipo_envolvido}}{% templatetag openblock %} endfor {% templatetag closeblock %}</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card border-success h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="fas fa-table me-2"></i>Tabela de Movimentações</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="bg-dark rounded p-3">
+                                        <pre class="text-light mb-0 small"><code>{% templatetag openblock %}tr for alvo in titulares {% templatetag closeblock %}
+{{alvo.nome_envolvido}}	R$ {{alvo.creditos}}	R$ {{alvo.debitos}}
+{% templatetag openblock %}tr endfor {% templatetag closeblock %}</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card border-warning h-100">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0"><i class="fas fa-user me-2"></i>Análise por Titular</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="bg-dark rounded p-3">
+                                        <pre class="text-light mb-0 small"><code>{% templatetag openblock %}p for alvo in titulares_extratos {% templatetag closeblock %}
+{{ alvo.nome}}
+Movimentação total: {{alvo.movimentacao_total}}
+Créditos: {{alvo.creditos}}
+Débitos: {{alvo.debitos}}
+
+{% templatetag openblock %} for antecedente in alvo.antecedentes {% templatetag closeblock %}
+• {{antecedente.data_comunicacao}} | {{antecedente.ocorrencia}}
+{% templatetag openblock %} endfor {% templatetag closeblock %}
+{% templatetag openblock %} endfor {% templatetag closeblock %}</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card border-info h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="fas fa-list me-2"></i>Lista de Envolvidos</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="bg-dark rounded p-3">
+                                        <pre class="text-light mb-0 small"><code>{% templatetag openblock %} for titular in titulares {% templatetag closeblock %} 
+• Titular: {{ titular.nome_envolvido }} 
+{% templatetag openblock %} for envolvido in envolvidos if envolvido['cpf_cnpj_titular'] == titular['cpf_cnpj_titular'] {% templatetag closeblock %}
+o {{ envolvido.tipo_envolvido }}: {{ envolvido.nome_envolvido }} 
+{% templatetag openblock %} endfor {% templatetag closeblock %} 
+{% templatetag openblock %} endfor {% templatetag closeblock %}</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Melhores Práticas -->
+            <div id="praticas" class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-gradient-warning text-dark">
+                    <h4 class="mb-0"><i class="fas fa-star me-2"></i>💡 Insights e Melhores Práticas</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-primary"><i class="fas fa-filter me-2"></i>Tags Especiais
+                                    </h6>
+                                    <p class="card-text small">Tags específicas para tabelas e parágrafos.</p>
+                                    <div class="bg-dark rounded p-2">
+                                        <pre class="text-light mb-0" style="font-size: 10px;"><code>{% templatetag openblock %}tr {% templatetag closeblock %} - Para linhas de tabela
+{% templatetag openblock %}p {% templatetag closeblock %} - Para parágrafos
+{% templatetag openblock %} if {% templatetag closeblock %} - Para condicionais
+{% templatetag openblock %} for {% templatetag closeblock %} - Para loops</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-success"><i class="fas fa-calculator me-2"></i>Formatação
+                                        Monetária</h6>
+                                    <p class="card-text small">Formatação adequada de valores financeiros.</p>
+                                    <div class="bg-dark rounded p-2">
+                                        <pre class="text-light mb-0" style="font-size: 10px;"><code>R$ {{ valor }}
+{{ valor|floatformat:2 }}
+{{ valor }}</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-info"><i class="fas fa-check me-2"></i>Validações</h6>
+                                    <p class="card-text small">Verificações importantes nos dados.</p>
+                                    <div class="bg-dark rounded p-2">
+                                        <pre class="text-light mb-0"
+                                            style="font-size: 10px;"><code>{% templatetag openblock %} if alvo['comunicacoes'] is not none {% templatetag closeblock %}
+{% templatetag openblock %} if alvo['outras_informacoes']|length > 0 {% templatetag closeblock %}
+{% templatetag openblock %} if envolvido['cpf_cnpj_titular'] == titular['cpf_cnpj_titular'] {% templatetag closeblock %}</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notas Importantes -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-danger text-white">
+                    <h4 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>📝 Notas Importantes</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning border-0 d-flex align-items-center">
+                        <i class="fas fa-info-circle fa-2x me-3"></i>
+                        <div>
+                            <h6 class="mb-1">Tags Personalizadas</h6>
+                            <p class="mb-0">As tags
+                                <code>{% templatetag openblock %}tr {% templatetag closeblock %}</code> e
+                                <code>{% templatetag openblock %}p {% templatetag closeblock %}</code> são tags
+                                personalizadas que devem estar registradas no sistema Django.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info border-0 d-flex align-items-center">
+                        <i class="fas fa-code fa-2x me-3"></i>
+                        <div>
+                            <h6 class="mb-1">Estrutura de Dados</h6>
+                            <p class="mb-0">Os dados são organizados hierarquicamente: RIFs → Titulares → Titulares
+                                Extratos → Envolvidos → Comunicações.</p>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-success border-0 d-flex align-items-center">
+                        <i class="fas fa-database fa-2x me-3"></i>
+                        <div>
+                            <h6 class="mb-1">Campos Condicionais</h6>
+                            <p class="mb-0">Alguns campos como <code>comunicacoes</code>,
+                                <code>outras_informacoes</code> e <code>antecedentes</code> podem ser None ou vazios -
+                                sempre verifique antes de usar.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
 
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+    }
 
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+    }
 
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%);
+    }
+
+    .bg-gradient-danger {
+        background: linear-gradient(135deg, #e17055 0%, #d63031 100%);
+    }
+
+    .hover-lift {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .nav-link {
+        transition: all 0.3s ease;
+    }
+
+    .nav-link:hover {
+        background-color: #f8f9fa;
+        padding-left: 1.5rem !important;
+    }
+
+    .card {
+        transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+    }
+
+    pre {
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .sticky-top {
+        top: 20px;
+    }
+
+    @media (max-width: 768px) {
+        .display-4 {
+            font-size: 2rem;
+        }
+
+        .sticky-top {
+            position: relative !important;
+            top: auto !important;
+        }
+    }
+</style>
 
 {% endblock %}

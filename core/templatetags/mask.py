@@ -131,22 +131,26 @@ def mask(value, mask):
                 try:
                     # Converte para float
                     valor = float(value)
+                    
                     # Formata com 2 casas decimais
                     valor_str = f"{valor:.2f}"
+                    
                     # Separa parte inteira e decimal
                     partes = valor_str.split('.')
                     parte_inteira = partes[0]
                     parte_decimal = partes[1] if len(partes) > 1 else "00"
                     
-                    # Adiciona separadores de milhares
-                    if len(parte_inteira) > 3:
-                        parte_inteira = re.sub(r'(\d)(?=(\d{3})+(?!\d))', r'\1.', parte_inteira[::-1])[::-1]
+                    # Adiciona separador de milhar na parte inteira
+                    parte_inteira_formatada = ""
+                    for i, digito in enumerate(reversed(parte_inteira)):
+                        if i > 0 and i % 3 == 0:
+                            parte_inteira_formatada = "." + parte_inteira_formatada
+                        parte_inteira_formatada = digito + parte_inteira_formatada
                     
-                    string = f"R$ {parte_inteira},{parte_decimal}"
+                    
+                    string = f"R$ {parte_inteira_formatada},{parte_decimal}"
                 except:
                     string = "R$ 0,00"
-
-
 
     elif mask == 'tratar_none':
         string = value if value != None or "None" else ''

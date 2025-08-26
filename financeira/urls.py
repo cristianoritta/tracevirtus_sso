@@ -69,4 +69,8 @@ urlpatterns = [
     path('custom_queries/', views.custom_queries_dashboard, name='custom_queries_dashboard'),
     path('api/custom_query/', views.execute_custom_query_api, name='execute_custom_query_api'),
     path('api/create_query/', views.create_query_api, name='create_query_api'),
+    
+    # Segmentos
+    path('segmentos/', views.financeira_segmentos, name='financeira_segmentos'),
+    path('api/segmentos/dados/', views.segmentos_dados_api, name='segmentos_dados_api'),
 ]

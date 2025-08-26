@@ -13,6 +13,7 @@ import os
 import tempfile
 import locale
 from django.db import connection
+from django.db.models import Count
 from django.views.decorators.csrf import csrf_exempt
 from app.functions import sha256_dataframe
 from utils.ia import executar_prompt
@@ -282,7 +283,11 @@ def financeira_index(request):
     for comunicacao in caso_ativo.comunicacao_set.all():
         volume_financeiro_por_comunicacao[f"{comunicacao.rif} - Ind. {comunicacao.indexador}"] = comunicacao.campo_a
 
+    # Modelos de Relatórios
+    relatorios = Relatorio.objects.filter(tipo='financeiro', status='ativo')
+
     context = {
+        'caso': caso_ativo,
         'total_rifs': total_rifs,
         'total_comunicacoes': total_comunicacoes,
         'total_envolvidos': total_envolvidos,
@@ -293,6 +298,7 @@ def financeira_index(request):
         # Serializa para JSON
         'valores_por_titular': json.dumps(valores_por_titular_list),
         'volume_financeiro_por_comunicacao': json.dumps(volume_financeiro_por_comunicacao),
+        'relatorios': relatorios,
     }
 
     return render(request, 'financeira/index.html', context)
@@ -398,6 +404,7 @@ def financeira_comunicacoes(request):
 
     titulares_distintos = []    
     for comunicacao in comunicacoes:
+        """
         texto = comunicacao.informacoes_adicionais
         if texto:
             for envolvido in envolvidos:
@@ -410,7 +417,7 @@ def financeira_comunicacoes(request):
                         texto, envolvido.nome_envolvido, replacer)
 
             comunicacao.informacoes_adicionais = texto
-
+        """
         titular = _buscar_titular_ocorrencia(comunicacao)
         comunicacao.titular = titular.nome_envolvido
         titulares_distintos.append(titular.nome_envolvido)
@@ -535,6 +542,136 @@ def ocorrencia_ajuda(request, id):
 
     # Retorna a ajuda em formato markdown
     return HttpResponse(ajuda, content_type="text/markdown; charset=utf-8")
+
+
+
+########################################################################################
+# SEGMENTOS
+########################################################################################
+@login_required
+def financeira_segmentos(request):
+    caso_ativo = _buscar_caso_ativo(request)
+    if not caso_ativo:
+        messages.error(
+            request, 'Nenhum caso ativo encontrado. Por favor, cadastre um caso para continuar.')
+        return redirect('casos')
+
+    # Busca todos os segmentos únicos das comunicações
+    segmentos = Comunicacao.objects.filter(
+        caso_id=caso_ativo.id
+    ).values('codigo_segmento').distinct().order_by('codigo_segmento')
+
+    # Busca todos os RIFs do caso
+    rifs = RIF.objects.filter(caso_id=caso_ativo.id).order_by('-created_at')
+
+    # Mapeamento de códigos de segmento para descrições
+    SEGMENTOS = {
+        1: 'Bancos',
+        2: 'Seguradoras',
+        3: 'Corretoras',
+        4: 'Cartões de Crédito',
+        5: 'Consórcios',
+        6: 'Câmbio',
+        7: 'Previdência',
+        8: 'Capitalização',
+        9: 'Fintechs',
+        10: 'Outros'
+    }
+
+    context = {
+        'segmentos': [{'codigo': s['codigo_segmento'], 'descricao': SEGMENTOS.get(s['codigo_segmento'], f'Segmento {s["codigo_segmento"]}')} for s in segmentos],
+        'rifs': rifs,
+        'caso': caso_ativo,
+    }
+    return render(request, 'financeira/segmentos.html', context)
+
+@login_required
+def segmentos_dados_api(request):
+    # Mapeamento de códigos de segmento para descrições
+    SEGMENTOS = {
+        1: 'Bancos',
+        2: 'Seguradoras',
+        3: 'Corretoras',
+        4: 'Cartões de Crédito',
+        5: 'Consórcios',
+        6: 'Câmbio',
+        7: 'Previdência',
+        8: 'Capitalização',
+        9: 'Fintechs',
+        10: 'Outros'
+    }
+
+    caso_ativo = _buscar_caso_ativo(request)
+    if not caso_ativo:
+        return JsonResponse({'error': 'Nenhum caso ativo encontrado'}, status=400)
+    
+    segmento_filtro = request.GET.get('segmento', '')
+    
+    # Query base
+    comunicacoes = Comunicacao.objects.filter(caso_id=caso_ativo.id).select_related('rif')
+    
+    # Aplicar filtros
+    rif_filtro = request.GET.get('rif', '')
+    if rif_filtro and rif_filtro.isdigit():
+        comunicacoes = comunicacoes.filter(rif_id=int(rif_filtro))
+    
+    if segmento_filtro and segmento_filtro.isdigit():
+        comunicacoes = comunicacoes.filter(codigo_segmento=int(segmento_filtro))
+    
+    # Dados para a tabela
+    dados_tabela = []
+    for com in comunicacoes:
+        titular = _buscar_titular_ocorrencia(com)
+        dados_tabela.append({
+            'id': com.id,
+            'rif': com.rif.numero,
+            'indexador': str(com.indexador).zfill(6),
+            'titular': titular.nome_envolvido if titular else 'N/A',
+            'campo_a': 'R$ ' + moeda(float(com.campo_a)) if com.campo_a else 'R$ 0,00',
+            'campo_b': 'R$ ' + moeda(float(com.campo_b)) if com.campo_b else 'R$ 0,00',
+            'campo_c': 'R$ ' + moeda(float(com.campo_c)) if com.campo_c else 'R$ 0,00',
+            'segmento': SEGMENTOS.get(com.codigo_segmento, f'Segmento {com.codigo_segmento}'),
+            'acao': f'<a href="/financeira/comunicacao/{com.id}/" class="btn btn-outline-primary btn-sm"><em class="icon fas fa-folder"></em></a>'
+        })
+    
+    # Dados para o gráfico de barras
+    dados_barras = comunicacoes.values('codigo_segmento').annotate(
+        total=Count('id')
+    ).order_by('-total')
+    
+    # Dados para o gráfico de pizza - Top 5 titulares por valor do campo_a
+    titulares_valores = {}
+    for com in comunicacoes:
+        titular = _buscar_titular_ocorrencia(com)
+        if titular:
+            nome = titular.nome_envolvido
+            if nome not in titulares_valores:
+                titulares_valores[nome] = 0
+            try:
+                valor_str = com.campo_a if com.campo_a else '0'
+                valor_limpo = valor_str.replace('.', '').replace(',', '')
+                if valor_limpo.isdigit():
+                    valor = float(valor_limpo) / 100
+                else:
+                    valor = 0
+            except (ValueError, AttributeError):
+                valor = 0
+            titulares_valores[nome] += valor
+    
+    # Ordenar e pegar top 5
+    top_titulares = sorted(titulares_valores.items(), key=lambda x: x[1], reverse=True)[:5]
+    
+    return JsonResponse({
+        'tabela': dados_tabela,
+        'barras': {
+            'labels': [SEGMENTOS.get(d['codigo_segmento'], f'Segmento {d["codigo_segmento"]}') for d in dados_barras],
+            'dados': [d['total'] for d in dados_barras]
+        },
+        'pizza': {
+            'labels': [t[0] for t in top_titulares],
+            'dados': [t[1] for t in top_titulares]
+        }
+    })
 
 
 ########################################################################################
@@ -1634,8 +1771,6 @@ def relatorio_documento(request):
     # Testa se tem um caso ativo.
     caso = _buscar_caso_ativo(request)
     
-    
-
     # Buscar RIFs do caso
     rifs = RIF.objects.filter(caso=caso)
     comunicacoes = Comunicacao.objects.filter(caso=caso)
@@ -1893,42 +2028,46 @@ def relatorio_documento(request):
     }
     
     try:
-        # Carrega todos os relatórios com tipo 'financeiro'
-        relatorios = Relatorio.objects.filter(tipo='financeiro')
-
-        for relatorio in relatorios:
-            print(relatorio.tipo)
+        
+        if request.GET.get('id'):
+            # Buscar o relatorio
+            relatorio = Relatorio.objects.get(id=request.GET.get('id'))
             if relatorio.tipo == 'financeiro':
                 doc = DocxTemplate(relatorio.arquivo.path)
                 doc.render(data)
 
-                # Cria um arquivo temporário com nome único
-                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.docx')
-                temp_path = temp_file.name
-                temp_file.close()
+        else:
+            # Carrega o template padrão
+            doc = DocxTemplate(f"templates/documentos/rif.docx")
+            doc.render(data)
 
-                # Salva o documento no arquivo temporário
-                doc.save(temp_path)
+        # Cria um arquivo temporário com nome único
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.docx')
+        temp_path = temp_file.name
+        temp_file.close()
 
-                # Coloca em um .zip e manda para o cliente
-                zip_buffer = BytesIO()
-                with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-                    zip_file.write(temp_path, 'Relatorio Inteligência Financeira.docx')
-                    
-                    for alvo in titulares_extratos:
-                        envolvimentos_alvo = alvo.get('envolvimentos')
-                        if envolvimentos_alvo:
-                            df_env_alvo = pd.DataFrame(envolvimentos_alvo)
-                            excel_buffer = BytesIO()
-                            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-                                df_env_alvo.to_excel(writer, index=False)
-                            zip_file.writestr(f'{alvo["nome"]}.xlsx', excel_buffer.getvalue())
+        # Salva o documento no arquivo temporário
+        doc.save(temp_path)
 
-                # Remove o arquivo temporário
-                try:
-                    os.unlink(temp_path)
-                except:
-                    pass
+        # Coloca em um .zip e manda para o cliente
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+            zip_file.write(temp_path, 'Relatorio Inteligência Financeira.docx')
+            
+            for alvo in titulares_extratos:
+                envolvimentos_alvo = alvo.get('envolvimentos')
+                if envolvimentos_alvo:
+                    df_env_alvo = pd.DataFrame(envolvimentos_alvo)
+                    excel_buffer = BytesIO()
+                    with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                        df_env_alvo.to_excel(writer, index=False)
+                    zip_file.writestr(f'{alvo["nome"]}.xlsx', excel_buffer.getvalue())
+
+        # Remove o arquivo temporário
+        try:
+            os.unlink(temp_path)
+        except:
+            pass
 
         # Envia o arquivo para o cliente
         response = HttpResponse(zip_buffer.getvalue(),

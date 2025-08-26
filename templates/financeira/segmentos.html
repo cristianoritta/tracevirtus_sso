@@ -1,0 +1,326 @@
+{% extends 'layout/base.html' %}
+
+{% block extra_css %}
+<link href="https://unpkg.com/bootstrap-table@1.22.3/dist/bootstrap-table.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="dashboard-title">Análise por Segmentos</h3>
+            <p class="dashboard-subtitle">Segmentos do caso: {{ caso.numero }}</p>
+        </div>
+    </div>
+    <div class="card card-bordered">
+        <div class="card card-bordered card-preview">
+            <div class="card-inner">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label" for="filtro-rif">Filtrar por RIF</label>
+                            <select class="form-select" id="filtro-rif">
+                                <option value="">Todos os RIFs</option>
+                                {% for rif in rifs %}
+                                <option value="{{ rif.id }}">{{ rif.numero }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label" for="filtro-segmento">Filtrar por Segmento</label>
+                            <select class="form-select" id="filtro-segmento">
+                                <option value="">Todos os Segmentos</option>
+                                {% for segmento in segmentos %}
+                                <option value="{{ segmento.codigo }}">{{ segmento.descricao }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card card-bordered h-100">
+                            <div class="card-inner">
+                                <div class="card-title-group align-start mb-2">
+                                    <div class="card-title">
+                                        <h6 class="title">Comunicações por Segmento</h6>
+                                    </div>
+                                </div>
+                                <canvas id="graficoBarras"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card card-bordered h-100">
+                            <div class="card-inner">
+                                <div class="card-title-group align-start mb-2">
+                                    <div class="card-title">
+                                        <h6 class="title">Distribuição por Titular</h6>
+                                    </div>
+                                </div>
+                                <canvas id="graficoPizza"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <table 
+                    id="tabela-comunicacoes"
+                    data-toggle="bootstrap-table"
+                    data-search="true"
+                    data-pagination="true"
+                    data-page-size="10"
+                    data-show-columns="true"
+                    data-show-refresh="true"
+                    data-show-toggle="true"
+                    data-show-export="true"
+                    data-show-fullscreen="true"
+                    data-toolbar="#toolbar"
+                    data-sticky-header="true"
+                    data-sticky-header-offset-left="0"
+                    data-sticky-header-offset-right="0"
+                    data-search-highlight="true"
+                    data-show-jump-to="true"
+                    data-show-pagination-switch="true"
+                    data-minimum-count-columns="2"
+                    data-show-footer="true"
+                    data-height="600">
+                    <thead>
+                        <tr>
+                            <th data-field="id" data-sortable="true" data-width="60">ID</th>
+                            <th data-field="rif" data-sortable="true" data-width="120">RIF</th>
+                            <th data-field="indexador" data-sortable="true" data-width="100">Indexador</th>
+                            <th data-field="titular" data-sortable="true" data-width="250">Titular</th>
+                            <th data-field="campo_a" data-sortable="true" data-width="120" data-align="right">Campo A</th>
+                            <th data-field="campo_b" data-sortable="true" data-width="120">Campo B</th>
+                            <th data-field="campo_c" data-sortable="true" data-width="120">Campo C</th>
+                            <th data-field="segmento" data-sortable="true" data-width="150">Segmento</th>
+                            <th data-field="acao" data-sortable="true" data-width="150">Ação</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-table@1.24.2/dist/bootstrap-table.min.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.24.2/dist/bootstrap-table.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.24.2/dist/extensions/export/bootstrap-table-export.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.24.2/dist/locale/bootstrap-table-pt-BR.min.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+
+<script>
+let graficoBarras = null;
+let graficoPizza = null;
+
+function inicializarGraficos(dados) {
+    if (graficoBarras) graficoBarras.destroy();
+    if (graficoPizza) graficoPizza.destroy();
+
+    // Gráfico de Barras
+    const ctxBarras = document.getElementById('graficoBarras').getContext('2d');
+    graficoBarras = new Chart(ctxBarras, {
+        type: 'bar',
+        data: {
+            labels: dados.barras.labels,
+            datasets: [{
+                label: 'Quantidade de Comunicações',
+                data: dados.barras.dados,
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Gráfico de Pizza
+    const ctxPizza = document.getElementById('graficoPizza').getContext('2d');
+    graficoPizza = new Chart(ctxPizza, {
+        type: 'doughnut',
+        data: {
+            labels: dados.pizza.labels,
+            datasets: [{
+                data: dados.pizza.dados,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 206, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function mostrarErro(mensagem) {
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro',
+        text: mensagem
+    });
+}
+
+let table;
+
+function inicializarTabela() {
+    console.log('Inicializando tabela...');
+    table = $('#tabela-comunicacoes').bootstrapTable({
+        locale: 'pt-BR',
+        height: 600,
+        search: true,
+        pagination: true,
+        pageSize: 10,
+        showColumns: true,
+        showRefresh: true,
+        showToggle: true,
+        showFullscreen: true,
+        showExport: true,
+        columns: [{
+            field: 'id',
+            title: 'ID',
+            sortable: true,
+            width: 60
+        }, {
+            field: 'rif',
+            title: 'RIF',
+            sortable: true,
+            width: 120
+        }, {
+            field: 'indexador',
+            title: 'Indexador',
+            sortable: true,
+            width: 100
+        }, {
+            field: 'titular',
+            title: 'Titular',
+            sortable: true,
+            width: 250
+        }, {
+            field: 'campo_a',
+            title: 'Campo A',
+            sortable: true,
+            width: 120,
+            align: 'right'
+        }, {
+            field: 'campo_b',
+            title: 'Campo B',
+            sortable: true,
+            width: 120
+        }, {
+            field: 'campo_c',
+            title: 'Campo C',
+            sortable: true,
+            width: 120
+        }, {
+            field: 'segmento',
+            title: 'Segmento',
+            sortable: true,
+            width: 150
+        }, {
+            field: 'acao',
+            title: 'Ação',
+            sortable: false,
+            width: 80,
+            align: 'center',
+            formatter: function(value, row, index) {
+                return value;
+            },
+            escape: false
+        }]
+    });
+    console.log('Tabela inicializada');
+}
+
+function atualizarDados() {
+    console.log('Iniciando atualização dos dados...');
+    
+    if (!table) {
+        inicializarTabela();
+    }
+    
+    table.bootstrapTable('showLoading');
+    
+    const rif = $('#filtro-rif').val();
+    const segmento = $('#filtro-segmento').val();
+    console.log('Filtros:', { rif, segmento });
+    
+    const url = `/financeira/api/segmentos/dados/?rif=${rif}&segmento=${segmento}`;
+    console.log('URL da requisição:', url);
+    
+    fetch(url)
+        .then(response => {
+            console.log('Status da resposta:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Dados recebidos:', data);
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            console.log('Carregando dados na tabela...');
+            console.log('Quantidade de registros:', data.tabela.length);
+            
+            table.bootstrapTable('load', data.tabela);
+            inicializarGraficos(data);
+            
+            console.log('Dados atualizados com sucesso');
+        })
+        .catch(error => {
+            console.error('Erro ao carregar dados:', error);
+            mostrarErro('Erro ao carregar os dados. Por favor, tente novamente.');
+        })
+        .finally(() => {
+            console.log('Finalizando atualização...');
+            table.bootstrapTable('hideLoading');
+        });
+}
+
+$(document).ready(function() {
+    atualizarDados();
+
+    $('#filtro-rif, #filtro-segmento').change(function() {
+        atualizarDados();
+    });
+});
+</script>
+{% endblock %}

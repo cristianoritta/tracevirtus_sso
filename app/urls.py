@@ -27,6 +27,7 @@ urlpatterns = [
     path('relatorios/<int:pk>/editar/', views.relatorio_update, name='relatorio_update'),
     path('relatorios/<int:pk>/remover/', views.relatorio_delete, name='relatorio_delete'),
     path('relatorios/<int:pk>/download/', views.relatorio_download, name='relatorio_download'),
+    path('relatorios/template/<str:template_name>/download/', views.relatorio_template_download, name='relatorio_template_download'),
     path('relatorios/documentacao/', views.relatorio_documentacao, name='relatorio_documentacao'),
 ]
 

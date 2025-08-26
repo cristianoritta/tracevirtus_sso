@@ -150,6 +150,17 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.nome_completo
     
+    def save(self, *args, **kwargs):
+        print(f"[DEBUG] CustomUser.save - CPF antes de salvar: {self.cpf} (tipo: {type(self.cpf)})")
+        
+        # Define o username como o CPF
+        if self.cpf is not None:
+            self.username = str(self.cpf)
+            print(f"[DEBUG] CustomUser.save - Username definido como: {self.username}")
+        
+        print(f"[DEBUG] CustomUser.save - Chamando super().save()")
+        super().save(*args, **kwargs)
+        print(f"[DEBUG] CustomUser.save - Save concluído")
 
 class UserLogs(models.Model):
     usuario = models.ForeignKey(CustomUser, on_delete=models.CASCADE, 

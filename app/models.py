@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 
+
 ########################################################################
 #
 # TABELAS QUE SERVEM VÁRIOS MÓDULOS
@@ -46,8 +47,6 @@ class Agencia(models.Model):
         verbose_name = 'Agência'
         verbose_name_plural = 'Agências'
 
-
-
 ########################################################################
 #
 # TABELAS DO MÓDULO DE CASOS
@@ -75,9 +74,7 @@ class Caso(models.Model):
     class Meta:
         verbose_name = 'Caso'
         verbose_name_plural = 'Casos'
-    
-    def get_ativo(self):
-        return CasoAtivoUsuario.objects.filter(caso=self).first()
+        
 
 # Usuários autorizados a acessar um caso
 class CasoUsuario(models.Model):

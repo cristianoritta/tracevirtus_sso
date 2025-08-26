@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Planos, Assinatura, CustomUser, CategoriaInstituicao, 
-    Instituicao, Cargo, UFs, Cidades, UserLogs, TermosUso
+    Instituicao, Cargo, UFs, Cidades, UserLogs, TermosUso, Unidade
 )
 
 @admin.register(CustomUser)
@@ -60,3 +60,10 @@ class TermosUsoAdmin(admin.ModelAdmin):
     search_fields = ('usuario__nome_completo', 'ip')
     readonly_fields = ('created_at', 'updated_at')
     ordering = ('-created_at',)
+
+@admin.register(Unidade)
+class UnidadeAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'instituicao', 'parent', 'created_at', 'updated_at')
+    list_filter = ('instituicao',)
+    search_fields = ('nome',)
+    readonly_fields = ('created_at', 'updated_at')

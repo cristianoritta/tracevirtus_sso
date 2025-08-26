@@ -13,6 +13,11 @@ urlpatterns = [
     
     #ROTA DE ADMIN
     path('logs/', views.logs, name='logs'),
+    path('usuarios/', views.usuario_list, name='usuario_list'),
+    path('usuarios/criar/', views.usuario_create, name='usuario_create'),
+    path('usuarios/<str:cpf>/', views.usuario_detail, name='usuario_detail'),
+    path('usuarios/<str:cpf>/editar/', views.usuario_edit, name='usuario_edit'),
+    path('usuarios/<str:cpf>/excluir/', views.usuario_delete, name='usuario_delete'),
 
     #ROTA DE USUÁRIO
     path('dados/', views.dados_usuario, name='dados_usuario'),
