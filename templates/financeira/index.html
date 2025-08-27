@@ -175,7 +175,8 @@
                         <td>
                             <button class="btn btn-danger" hx-delete="{% url 'financeira:excluir_rif' rif.id %}"
                                 hx-target="closest tr" hx-swap="outerHTML swap:1s"
-                                hx-confirm="Tem certeza que deseja excluir este RIF?">
+                                hx-confirm="Tem certeza que deseja excluir este RIF?"
+                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
                                 Excluir
                             </button>
                         </td>

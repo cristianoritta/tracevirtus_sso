@@ -16,7 +16,7 @@ from django.db.models import Count
 from django.views.decorators.csrf import csrf_exempt
 from app.functions import sha256_dataframe
 from utils.ia import executar_prompt
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_http_methods
 from docxtpl import DocxTemplate
 from docx import Document
 import zipfile
@@ -363,7 +363,7 @@ def cadastrar_rif(request):
 # EXCLUIR RIF
 #########################################################################################################################
 @login_required
-#@csrf_exempt
+@require_http_methods(["DELETE"])
 def excluir_rif(request, rif_id):
     rif = RIF.objects.get(id=rif_id)
 
@@ -3826,6 +3826,7 @@ def gerar_relatorio_estatisticas_caso(caso_id):
 
 
 @login_required
+@require_http_methods(["DELETE"])
 def informacoes_adicionais_delete(request, info_id):
     """
     Exclui uma informação adicional específica.

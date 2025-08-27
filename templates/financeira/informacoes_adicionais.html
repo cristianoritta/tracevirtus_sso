@@ -169,7 +169,8 @@
                             <button class="btn btn-danger"
                                 hx-delete="{% url 'financeira:informacoes_adicionais_delete' info.id %}"
                                 hx-confirm="Tem certeza que deseja excluir esta informação adicional?"
-                                hx-swap="outerHTML swap:1s">
+                                hx-swap="outerHTML swap:1s"
+                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
                                 <i class="fas fa-trash"></i>
                             </button>
                         </td>
