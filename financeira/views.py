@@ -8,7 +8,6 @@ from app.models import Caso, Arquivo, Relatorio, CasoAtivoUsuario
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 import pandas as pd
-import sqlite3
 import os
 import tempfile
 import locale
@@ -1299,17 +1298,15 @@ def importar_arquivos(request):
             print("[DEBUG] Arquivo salvo com sucesso", arquivo_salvo, '|', arquivo_salvo.id)
             df['arquivo_id'] = arquivo_salvo.id
 
-            # Processa os dados do arquivo e salva no banco de dados
+            # Processa os dados do arquivo e salva no banco de dados usando os modelos Django
             try:
-                conn = sqlite3.connect('db.sqlite3')
-
                 if tipo == 'comunicacoes':
                     # Ajusta colunas
                     df = df.rename(
                         columns={'informacoesAdicionais': 'informacoes_adicionais'})
                     df = df.rename(columns={'CampoA': 'campo_a', 'CampoB': 'campo_b', 'CampoC': 'campo_c', 'CampoD': 'campo_d', 'CampoE': 'campo_e'})
                     
-                    # Converte o campo_a para float
+                    # Converte os campos monetários para float
                     df['campo_a'] = df['campo_a'].apply(converter_valores)
                     df['campo_b'] = df['campo_b'].apply(converter_valores)
                     df['campo_c'] = df['campo_c'].apply(converter_valores)
@@ -1331,10 +1328,40 @@ def importar_arquivos(request):
                                 print(f"Erro ao converter {col}: {e}")
                                 df[col] = df[col].astype(str)
 
-                    # Salva os dados do arquivo no banco de dados
-                    df.to_sql('financeira_comunicacao', con=conn,
-                              if_exists='append', index=False)
-                    resultado['comunicacoes'] = len(df)
+                    # Salva os dados usando o modelo Django
+                    comunicacoes_criadas = []
+                    for index, row in df.iterrows():
+                        try:
+                            comunicacao = Comunicacao.objects.create(
+                                rif_id=row['rif_id'],
+                                caso_id=row['caso_id'],
+                                arquivo_id=row['arquivo_id'],
+                                indexador=row['indexador'],
+                                id_comunicacao=row['id_comunicacao'],
+                                numero_ocorrencia_bc=str(row['numero_ocorrencia_bc']),
+                                data_recebimento=str(row['data_recebimento']),
+                                data_operacao=str(row['data_operacao']),
+                                data_fim_fato=str(row['data_fim_fato']),
+                                cpf_cnpj_comunicante=int(row['cpf_cnpj_comunicante']) if pd.notna(row['cpf_cnpj_comunicante']) else 0,
+                                nome_comunicante=str(row['nome_comunicante']),
+                                cidade_agencia=str(row['cidade_agencia']),
+                                uf_agencia=str(row['uf_agencia']),
+                                nome_agencia=str(row['nome_agencia']),
+                                numero_agencia=int(row['numero_agencia']) if pd.notna(row['numero_agencia']) else 0,
+                                informacoes_adicionais=str(row['informacoes_adicionais']),
+                                campo_a=str(row['campo_a']),
+                                campo_b=str(row['campo_b']),
+                                campo_c=str(row['campo_c']),
+                                campo_d=str(row['campo_d']),
+                                campo_e=str(row['campo_e']),
+                                codigo_segmento=int(row['codigo_segmento']) if pd.notna(row['codigo_segmento']) else 0
+                            )
+                            comunicacoes_criadas.append(comunicacao)
+                        except Exception as e:
+                            print(f"Erro ao criar comunicação na linha {index}: {e}")
+                            continue
+                    
+                    resultado['comunicacoes'] = len(comunicacoes_criadas)
 
                 elif tipo == 'envolvidos':
                     # Formata CPF/CNPJ
@@ -1359,12 +1386,51 @@ def importar_arquivos(request):
                                 print(f"Erro ao converter {col}: {e}")
                                 df[col] = df[col].astype(str)
                                         
-                    # Remove todas as linhas que o  Indexador não é um número
+                    # Remove todas as linhas que o Indexador não é um número
                     df = df[df['indexador'].astype(str).str.isnumeric()]
 
-                    df.to_sql('financeira_envolvido', con=conn,
-                              if_exists='append', index=False)
-                    resultado['envolvidos'] = len(df)
+                    # Salva os dados usando o modelo Django
+                    envolvidos_criados = []
+                    for index, row in df.iterrows():
+                        try:
+                            # Processa datas
+                            data_abertura = None
+                            data_atualizacao = None
+                            
+                            if pd.notna(row['data_abertura_conta']) and str(row['data_abertura_conta']).strip():
+                                try:
+                                    data_abertura = pd.to_datetime(row['data_abertura_conta']).date()
+                                except:
+                                    data_abertura = None
+                            
+                            if pd.notna(row['data_atualizacao_conta']) and str(row['data_atualizacao_conta']).strip():
+                                try:
+                                    data_atualizacao = pd.to_datetime(row['data_atualizacao_conta']).date()
+                                except:
+                                    data_atualizacao = None
+
+                            envolvido = Envolvido.objects.create(
+                                rif_id=row['rif_id'],
+                                caso_id=row['caso_id'],
+                                arquivo_id=row['arquivo_id'],
+                                indexador=row['indexador'],
+                                cpf_cnpj_envolvido=int(row['cpf_cnpj_envolvido']) if pd.notna(row['cpf_cnpj_envolvido']) and str(row['cpf_cnpj_envolvido']).strip() else None,
+                                nome_envolvido=str(row['nome_envolvido']),
+                                tipo_envolvido=str(row['tipo_envolvido']),
+                                agencia_envolvido=int(row['agencia_envolvido']) if pd.notna(row['agencia_envolvido']) else None,
+                                conta_envolvido=int(row['conta_envolvido']) if pd.notna(row['conta_envolvido']) else None,
+                                data_abertura_conta=data_abertura,
+                                data_atualizacao_conta=data_atualizacao,
+                                bit_pep_citado=str(row['bit_pep_citado']) if pd.notna(row['bit_pep_citado']) else None,
+                                bit_pessoa_obrigada_citado=str(row['bit_pessoa_obrigada_citado']) if pd.notna(row['bit_pessoa_obrigada_citado']) else None,
+                                int_servidor_citado=str(row['int_servidor_citado']) if pd.notna(row['int_servidor_citado']) else None
+                            )
+                            envolvidos_criados.append(envolvido)
+                        except Exception as e:
+                            print(f"Erro ao criar envolvido na linha {index}: {e}")
+                            continue
+                    
+                    resultado['envolvidos'] = len(envolvidos_criados)
 
                 elif tipo == 'ocorrencias':
                     # Corrige colunas de data com tratamento de erro
@@ -1377,21 +1443,35 @@ def importar_arquivos(request):
                                 print(f"Erro ao converter {col}: {e}")
                                 df[col] = df[col].astype(str)
                     
-                    # Remove todas as linhas que o  Indexador não é um número
+                    # Remove todas as linhas que o Indexador não é um número
                     df = df[df['indexador'].astype(str).str.isnumeric()]
                     
-                    df.to_sql('financeira_ocorrencia', con=conn,
-                              if_exists='append', index=False)
-                    resultado['ocorrencias'] = len(df)
+                    # Salva os dados usando o modelo Django
+                    ocorrencias_criadas = []
+                    for index, row in df.iterrows():
+                        try:
+                            ocorrencia = Ocorrencia.objects.create(
+                                rif_id=row['rif_id'],
+                                caso_id=row['caso_id'],
+                                arquivo_id=row['arquivo_id'],
+                                indexador=row['indexador'],
+                                id_ocorrencia=int(row['id_ocorrencia']) if pd.notna(row['id_ocorrencia']) else 0,
+                                ocorrencia=str(row['ocorrencia'])
+                            )
+                            ocorrencias_criadas.append(ocorrencia)
+                        except Exception as e:
+                            print(f"Erro ao criar ocorrência na linha {index}: {e}")
+                            continue
+                    
+                    resultado['ocorrencias'] = len(ocorrencias_criadas)
 
             except Exception as e:
-                print(e)
+                print(f"Erro geral ao processar {tipo}: {e}")
                 return JsonResponse({
                     'success': False,
                     'message': f'Erro ao salvar {tipo}: {str(e)}'
                 }, status=500)
 
-            conn.close()
             registros_totais += len(df)
 
         # Atualiza contadores na RIF
@@ -1448,8 +1528,19 @@ def converter_valores(valor):
 
 
 def save_dataframe(df, table_name, if_exists='append', index=False):
+    """
+    Salva um DataFrame no banco de dados usando os modelos Django.
+    
+    Args:
+        df: DataFrame pandas com os dados
+        table_name: Nome da tabela (usado apenas para identificar o tipo de modelo)
+        if_exists: Não usado, mantido para compatibilidade
+        index: Não usado, mantido para compatibilidade
+    
+    Returns:
+        list: Lista com os IDs dos registros criados
+    """
     try:
-
         # Testa se existe a coluna CPF no df
         coluna_cpf = next((col for col in ['cpf', 'CPF', 'cnpj', 'CNPJ', 'cpf_cnpj',
                           'cpfCnpjTitular', 'cpfCnpjEnvolvido'] if col in df.columns), None)
@@ -1457,7 +1548,7 @@ def save_dataframe(df, table_name, if_exists='append', index=False):
             # Somente digitos (com RE)
             df[coluna_cpf] = df[coluna_cpf].str.replace(r'\D', '', regex=True)
 
-        # Testa se existe a coluna de valor financeiro]
+        # Testa se existe a coluna de valor financeiro
         for col in df.columns:
             if col in ['campo_a', 'campo_b', 'campo_c', 'campo_d', 'campo_e', 'valor']:
                 df[col] = df[col].apply(converter_valores)
@@ -1482,29 +1573,108 @@ def save_dataframe(df, table_name, if_exists='append', index=False):
                     # Se falhar, mantém como string
                     df[col] = df[col].astype(str)
 
-        #
-        # SALVA NO BANCO DE DADOS
-        #
-        conn = sqlite3.connect('db.sqlite3')
+        # Salva os dados usando os modelos Django baseado no nome da tabela
+        ids = []
         
-        # Configurar pandas para não converter datas automaticamente
-        df.to_sql(table_name, con=conn, if_exists='append', index=False, 
-                  dtype={col: 'text' for col in df.columns if 'data' in col.lower()})
+        if 'comunicacao' in table_name.lower():
+            # Salva comunicações
+            for index, row in df.iterrows():
+                try:
+                    comunicacao = Comunicacao.objects.create(
+                        rif_id=row['rif_id'],
+                        caso_id=row['caso_id'],
+                        arquivo_id=row['arquivo_id'],
+                        indexador=row['indexador'],
+                        id_comunicacao=row['id_comunicacao'],
+                        numero_ocorrencia_bc=str(row['numero_ocorrencia_bc']),
+                        data_recebimento=str(row['data_recebimento']),
+                        data_operacao=str(row['data_operacao']),
+                        data_fim_fato=str(row['data_fim_fato']),
+                        cpf_cnpj_comunicante=int(row['cpf_cnpj_comunicante']) if pd.notna(row['cpf_cnpj_comunicante']) else 0,
+                        nome_comunicante=str(row['nome_comunicante']),
+                        cidade_agencia=str(row['cidade_agencia']),
+                        uf_agencia=str(row['uf_agencia']),
+                        nome_agencia=str(row['nome_agencia']),
+                        numero_agencia=int(row['numero_agencia']) if pd.notna(row['numero_agencia']) else 0,
+                        informacoes_adicionais=str(row['informacoes_adicionais']),
+                        campo_a=str(row['campo_a']),
+                        campo_b=str(row['campo_b']),
+                        campo_c=str(row['campo_c']),
+                        campo_d=str(row['campo_d']),
+                        campo_e=str(row['campo_e']),
+                        codigo_segmento=int(row['codigo_segmento']) if pd.notna(row['codigo_segmento']) else 0
+                    )
+                    ids.append(comunicacao.id)
+                except Exception as e:
+                    print(f"Erro ao criar comunicação na linha {index}: {e}")
+                    continue
+                    
+        elif 'envolvido' in table_name.lower():
+            # Salva envolvidos
+            for index, row in df.iterrows():
+                try:
+                    # Processa datas
+                    data_abertura = None
+                    data_atualizacao = None
+                    
+                    if pd.notna(row['data_abertura_conta']) and str(row['data_abertura_conta']).strip():
+                        try:
+                            data_abertura = pd.to_datetime(row['data_abertura_conta']).date()
+                        except:
+                            data_abertura = None
+                    
+                    if pd.notna(row['data_atualizacao_conta']) and str(row['data_atualizacao_conta']).strip():
+                        try:
+                            data_atualizacao = pd.to_datetime(row['data_atualizacao_conta']).date()
+                        except:
+                            data_atualizacao = None
 
-        # Obtém os IDs dos registros recém-inseridos
-        result = conn.execute(
-            f"SELECT id FROM {table_name} ORDER BY id DESC LIMIT :num", {'num': len(df)})
-        ids = [row[0] for row in result]
-
-        conn.close()
+                    envolvido = Envolvido.objects.create(
+                        rif_id=row['rif_id'],
+                        caso_id=row['caso_id'],
+                        arquivo_id=row['arquivo_id'],
+                        indexador=row['indexador'],
+                        cpf_cnpj_envolvido=int(row['cpf_cnpj_envolvido']) if pd.notna(row['cpf_cnpj_envolvido']) and str(row['cpf_cnpj_envolvido']).strip() else None,
+                        nome_envolvido=str(row['nome_envolvido']),
+                        tipo_envolvido=str(row['tipo_envolvido']),
+                        agencia_envolvido=int(row['agencia_envolvido']) if pd.notna(row['agencia_envolvido']) else None,
+                        conta_envolvido=int(row['conta_envolvido']) if pd.notna(row['conta_envolvido']) else None,
+                        data_abertura_conta=data_abertura,
+                        data_atualizacao_conta=data_atualizacao,
+                        bit_pep_citado=str(row['bit_pep_citado']) if pd.notna(row['bit_pep_citado']) else None,
+                        bit_pessoa_obrigada_citado=str(row['bit_pessoa_obrigada_citado']) if pd.notna(row['bit_pessoa_obrigada_citado']) else None,
+                        int_servidor_citado=str(row['int_servidor_citado']) if pd.notna(row['int_servidor_citado']) else None
+                    )
+                    ids.append(envolvido.id)
+                except Exception as e:
+                    print(f"Erro ao criar envolvido na linha {index}: {e}")
+                    continue
+                    
+        elif 'ocorrencia' in table_name.lower():
+            # Salva ocorrências
+            for index, row in df.iterrows():
+                try:
+                    ocorrencia = Ocorrencia.objects.create(
+                        rif_id=row['rif_id'],
+                        caso_id=row['caso_id'],
+                        arquivo_id=row['arquivo_id'],
+                        indexador=row['indexador'],
+                        id_ocorrencia=int(row['id_ocorrencia']) if pd.notna(row['id_ocorrencia']) else 0,
+                        ocorrencia=str(row['ocorrencia'])
+                    )
+                    ids.append(ocorrencia.id)
+                except Exception as e:
+                    print(f"Erro ao criar ocorrência na linha {index}: {e}")
+                    continue
+        else:
+            print(f"Tipo de tabela não reconhecido: {table_name}")
+            return []
 
         return ids
 
     except Exception as e:
         print(f'Erro ao salvar o dataframe: {e}')
-        insert_dataframe = False
-
-    return insert_dataframe
+        return []
 
 
 def ler_arquivo(uploaded_file):
