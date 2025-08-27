@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -88,7 +89,7 @@ def editar_caso(request, id):
 
     return render(request, 'casos/novo.html', {'form': form})
 
-
+@csrf_exempt
 @login_required(login_url='/login')
 def excluir_caso(request, id):
     caso = get_object_or_404(Caso, id=id)
@@ -299,6 +300,7 @@ def detalhes_investigado(request, caso_id, investigado_id):
 
 @login_required(login_url='/login')
 @require_POST
+@csrf_exempt
 def excluir_investigado(request, investigado_id):
     """Exclui completamente um investigado do sistema"""
     investigado = get_object_or_404(Investigado, id=investigado_id)

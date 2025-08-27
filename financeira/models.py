@@ -27,7 +27,7 @@ class Comunicacao(models.Model):
     data_recebimento = models.CharField(max_length=254)         # registra a data e hora em que a comunicação foi recebida pelo Siscoaf.    
     data_operacao = models.CharField(max_length=254)            # data inicial da análise da movimentação financeira feita pelo comunicante.
     data_fim_fato = models.CharField(max_length=254)            # data final da análise da movimentação financeira feita pelo comunicante.
-    cpf_cnpj_comunicante = models.IntegerField()                # CPF/CNPJ do Comunicante.
+    cpf_cnpj_comunicante = models.BigIntegerField()                # CPF/CNPJ do Comunicante.
     nome_comunicante = models.CharField(max_length=254)         # nome da Instituição Financeira/Obrigado legal que fez a comunicação.
     cidade_agencia = models.CharField(max_length=254)           # cidade da agência bancária a que pertence a conta bancária objeto da comunicação, quando aplicável.
     uf_agencia = models.CharField(max_length=2)                 # UF da agência bancária a que pertence a conta bancária objeto da comunicação, quando aplicável.
@@ -60,7 +60,7 @@ class Envolvido(models.Model):
     caso = models.ForeignKey('app.Caso', on_delete=models.CASCADE)
     arquivo = models.ForeignKey('app.Arquivo', on_delete=models.CASCADE)
     indexador = models.IntegerField()
-    cpf_cnpj_envolvido = models.IntegerField(null=True, blank=True)
+    cpf_cnpj_envolvido = models.BigIntegerField(null=True, blank=True)
     nome_envolvido = models.CharField(max_length=254)
     tipo_envolvido = models.CharField(max_length=254)
     agencia_envolvido = models.IntegerField(null=True, blank=True)

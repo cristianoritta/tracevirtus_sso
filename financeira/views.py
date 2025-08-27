@@ -1342,7 +1342,7 @@ def importar_arquivos(request):
                                 data_recebimento=str(row['data_recebimento']),
                                 data_operacao=str(row['data_operacao']),
                                 data_fim_fato=str(row['data_fim_fato']),
-                                cpf_cnpj_comunicante=int(row['cpf_cnpj_comunicante']) if pd.notna(row['cpf_cnpj_comunicante']) else 0,
+                                cpf_cnpj_comunicante=safe_cpf_cnpj_converter(row['cpf_cnpj_comunicante']),
                                 nome_comunicante=str(row['nome_comunicante']),
                                 cidade_agencia=str(row['cidade_agencia']),
                                 uf_agencia=str(row['uf_agencia']),
@@ -1414,7 +1414,7 @@ def importar_arquivos(request):
                                 caso_id=row['caso_id'],
                                 arquivo_id=row['arquivo_id'],
                                 indexador=row['indexador'],
-                                cpf_cnpj_envolvido=safe_int_converter(row['cpf_cnpj_envolvido']),
+                                cpf_cnpj_envolvido=safe_cpf_cnpj_converter(row['cpf_cnpj_envolvido']),
                                 nome_envolvido=str(row['nome_envolvido']),
                                 tipo_envolvido=str(row['tipo_envolvido']),
                                 agencia_envolvido=safe_int_converter(row['agencia_envolvido']),
@@ -1545,7 +1545,11 @@ def safe_int_converter(valor):
         return None
     
     try:
-        return int(valor_str)
+        valor_int = int(valor_str)
+        # Verifica se o valor não excede o limite de um IntegerField (2147483647)
+        if valor_int > 2147483647:
+            return None
+        return valor_int
     except (ValueError, TypeError):
         return None
 
@@ -1568,6 +1572,33 @@ def safe_str_converter(valor):
         return None
     
     return valor_str
+
+
+def safe_cpf_cnpj_converter(valor):
+    """
+    Converte um valor para string de CPF/CNPJ de forma segura.
+    
+    Args:
+        valor: O valor a ser convertido
+        
+    Returns:
+        str ou None: O valor convertido ou None se inválido
+    """
+    if pd.isna(valor) or valor is None:
+        return None
+    
+    valor_str = str(valor).strip()
+    if valor_str == '' or valor_str == '-' or valor_str == 'nan':
+        return None
+    
+    # Remove caracteres não numéricos
+    valor_limpo = re.sub(r'\D', '', valor_str)
+    
+    # Verifica se tem o tamanho correto (11 para CPF ou 14 para CNPJ)
+    if len(valor_limpo) in [11, 14]:
+        return valor_limpo
+    
+    return None
 
 
 def save_dataframe(df, table_name, if_exists='append', index=False):
@@ -1677,7 +1708,7 @@ def save_dataframe(df, table_name, if_exists='append', index=False):
                                 caso_id=row['caso_id'],
                                 arquivo_id=row['arquivo_id'],
                                 indexador=row['indexador'],
-                                cpf_cnpj_envolvido=safe_int_converter(row['cpf_cnpj_envolvido']),
+                                cpf_cnpj_envolvido=safe_cpf_cnpj_converter(row['cpf_cnpj_envolvido']),
                                 nome_envolvido=str(row['nome_envolvido']),
                                 tipo_envolvido=str(row['tipo_envolvido']),
                                 agencia_envolvido=safe_int_converter(row['agencia_envolvido']),
