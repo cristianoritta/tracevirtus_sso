@@ -5,8 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 import logging
-from .models import Caso, Investigado, CasoInvestigado, Relatorio, CasoAtivoUsuario
+from .models import Caso, Investigado, CasoInvestigado, Relatorio, CasoAtivoUsuario, Arquivo
 from financeira.models import RIF, Comunicacao, Envolvido, InformacaoAdicional, Ocorrencia
+from bancaria.models import Cooperacao, ExtratoDetalhado
 from .forms import CasoForm, InvestigadoForm, AdicionarInvestigadoForm
 from django.utils import timezone
 from .forms import RelatorioForm
@@ -469,3 +470,89 @@ def relatorio_documentacao(request):
     """Exibe a documentação de dados dos relatórios"""
     
     return render(request, 'relatorios/documentacao.html')
+
+
+@login_required(login_url='/login')
+def detalhes_caso(request, id):
+    """Exibe detalhes completos de um caso específico"""
+    caso = get_object_or_404(Caso, id=id)
+    
+    # Dados dos RIFs (Financeira)
+    rifs = RIF.objects.filter(caso=caso).order_by('-created_at')
+    for rif in rifs:
+        rif.total_comunicacoes = Comunicacao.objects.filter(rif=rif).count()
+        rif.total_envolvidos = Envolvido.objects.filter(rif=rif).count()
+        rif.total_ocorrencias = Ocorrencia.objects.filter(rif=rif).count()
+        rif.arquivos = Arquivo.objects.filter(caso=caso, external_id=rif.id).count()
+    
+    # Estatísticas gerais dos RIFs
+    total_rifs = rifs.count()
+    total_comunicacoes = Comunicacao.objects.filter(caso=caso).count()
+    total_envolvidos = Envolvido.objects.filter(caso=caso).count()
+    total_ocorrencias = Ocorrencia.objects.filter(caso=caso).count()
+    total_info_adicionais = InformacaoAdicional.objects.filter(caso=caso).count()
+    
+    # Dados bancários (Bancária)
+    cooperacoes = Cooperacao.objects.filter(caso=caso).order_by('-created_at')
+    for cooperacao in cooperacoes:
+        cooperacao.total_titulares = ExtratoDetalhado.objects.filter(
+            cooperacao=cooperacao
+        ).values('cpf_cnpj_titular').distinct().count()
+        cooperacao.total_registros = ExtratoDetalhado.objects.filter(
+            cooperacao=cooperacao
+        ).count()
+        cooperacao.arquivos = Arquivo.objects.filter(
+            caso=caso, 
+            external_id=cooperacao.id, 
+            tipo='cooperacao_bancaria'
+        ).count()
+    
+    # Estatísticas gerais bancárias
+    total_cooperacoes = cooperacoes.count()
+    total_titulares_unicos = ExtratoDetalhado.objects.filter(
+        caso=caso
+    ).values('cpf_cnpj_titular').distinct().count()
+    total_registros_extrato = ExtratoDetalhado.objects.filter(caso=caso).count()
+    
+    # Arquivos importados
+    arquivos_financeira = Arquivo.objects.filter(
+        caso=caso, 
+        tipo__in=['comunicacoes', 'envolvidos', 'ocorrencias']
+    ).order_by('-created_at')
+    
+    arquivos_bancaria = Arquivo.objects.filter(
+        caso=caso, 
+        tipo='cooperacao_bancaria'
+    ).order_by('-created_at')
+    
+    # Investigados
+    investigados = caso.investigados.all()
+    
+    # Relatórios
+    relatorios = Relatorio.objects.filter(tipo='financeiro', status='ativo')
+    
+    context = {
+        'caso': caso,
+        'rifs': rifs,
+        'cooperacoes': cooperacoes,
+        'investigados': investigados,
+        'relatorios': relatorios,
+        
+        # Estatísticas financeiras
+        'total_rifs': total_rifs,
+        'total_comunicacoes': total_comunicacoes,
+        'total_envolvidos': total_envolvidos,
+        'total_ocorrencias': total_ocorrencias,
+        'total_info_adicionais': total_info_adicionais,
+        
+        # Estatísticas bancárias
+        'total_cooperacoes': total_cooperacoes,
+        'total_titulares_unicos': total_titulares_unicos,
+        'total_registros_extrato': total_registros_extrato,
+        
+        # Arquivos
+        'arquivos_financeira': arquivos_financeira,
+        'arquivos_bancaria': arquivos_bancaria,
+    }
+    
+    return render(request, 'casos/detalhes.html', context)

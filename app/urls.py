@@ -7,6 +7,7 @@ urlpatterns = [
     path('casos/index', views.casos),
     path('casos/novo/', views.novo_caso, name='novo_caso'),
     path('casos/<int:id>/', views.editar_caso, name='editar_caso'),
+    path('casos/<int:id>/detalhes/', views.detalhes_caso, name='detalhes_caso'),
     path('casos/<int:id>/excluir/', views.excluir_caso, name='excluir_caso'),
     path('casos/<int:id>/ativo/', views.caso_ativo, name='caso_ativo'),
     path('casos/<int:id>/investigados/', views.investigados, name='investigados'),

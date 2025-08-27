@@ -1414,16 +1414,16 @@ def importar_arquivos(request):
                                 caso_id=row['caso_id'],
                                 arquivo_id=row['arquivo_id'],
                                 indexador=row['indexador'],
-                                cpf_cnpj_envolvido=int(row['cpf_cnpj_envolvido']) if pd.notna(row['cpf_cnpj_envolvido']) and str(row['cpf_cnpj_envolvido']).strip() else None,
+                                cpf_cnpj_envolvido=safe_int_converter(row['cpf_cnpj_envolvido']),
                                 nome_envolvido=str(row['nome_envolvido']),
                                 tipo_envolvido=str(row['tipo_envolvido']),
-                                agencia_envolvido=int(row['agencia_envolvido']) if pd.notna(row['agencia_envolvido']) else None,
-                                conta_envolvido=int(row['conta_envolvido']) if pd.notna(row['conta_envolvido']) else None,
+                                agencia_envolvido=safe_int_converter(row['agencia_envolvido']),
+                                conta_envolvido=safe_int_converter(row['conta_envolvido']),
                                 data_abertura_conta=data_abertura,
                                 data_atualizacao_conta=data_atualizacao,
-                                bit_pep_citado=str(row['bit_pep_citado']) if pd.notna(row['bit_pep_citado']) else None,
-                                bit_pessoa_obrigada_citado=str(row['bit_pessoa_obrigada_citado']) if pd.notna(row['bit_pessoa_obrigada_citado']) else None,
-                                int_servidor_citado=str(row['int_servidor_citado']) if pd.notna(row['int_servidor_citado']) else None
+                                bit_pep_citado=safe_str_converter(row['bit_pep_citado']),
+                                bit_pessoa_obrigada_citado=safe_str_converter(row['bit_pessoa_obrigada_citado']),
+                                int_servidor_citado=safe_str_converter(row['int_servidor_citado'])
                             )
                             envolvidos_criados.append(envolvido)
                         except Exception as e:
@@ -1525,6 +1525,49 @@ def converter_valores(valor):
         valor = 0
 
     return float(valor)
+
+
+def safe_int_converter(valor):
+    """
+    Converte um valor para inteiro de forma segura, tratando valores vazios ou inválidos.
+    
+    Args:
+        valor: O valor a ser convertido
+        
+    Returns:
+        int ou None: O valor convertido ou None se inválido
+    """
+    if pd.isna(valor) or valor is None:
+        return None
+    
+    valor_str = str(valor).strip()
+    if valor_str == '' or valor_str == '-' or valor_str == 'nan':
+        return None
+    
+    try:
+        return int(valor_str)
+    except (ValueError, TypeError):
+        return None
+
+
+def safe_str_converter(valor):
+    """
+    Converte um valor para string de forma segura, tratando valores vazios ou inválidos.
+    
+    Args:
+        valor: O valor a ser convertido
+        
+    Returns:
+        str ou None: O valor convertido ou None se inválido
+    """
+    if pd.isna(valor) or valor is None:
+        return None
+    
+    valor_str = str(valor).strip()
+    if valor_str == '' or valor_str == '-' or valor_str == 'nan':
+        return None
+    
+    return valor_str
 
 
 def save_dataframe(df, table_name, if_exists='append', index=False):
@@ -1629,22 +1672,22 @@ def save_dataframe(df, table_name, if_exists='append', index=False):
                         except:
                             data_atualizacao = None
 
-                    envolvido = Envolvido.objects.create(
-                        rif_id=row['rif_id'],
-                        caso_id=row['caso_id'],
-                        arquivo_id=row['arquivo_id'],
-                        indexador=row['indexador'],
-                        cpf_cnpj_envolvido=int(row['cpf_cnpj_envolvido']) if pd.notna(row['cpf_cnpj_envolvido']) and str(row['cpf_cnpj_envolvido']).strip() else None,
-                        nome_envolvido=str(row['nome_envolvido']),
-                        tipo_envolvido=str(row['tipo_envolvido']),
-                        agencia_envolvido=int(row['agencia_envolvido']) if pd.notna(row['agencia_envolvido']) else None,
-                        conta_envolvido=int(row['conta_envolvido']) if pd.notna(row['conta_envolvido']) else None,
-                        data_abertura_conta=data_abertura,
-                        data_atualizacao_conta=data_atualizacao,
-                        bit_pep_citado=str(row['bit_pep_citado']) if pd.notna(row['bit_pep_citado']) else None,
-                        bit_pessoa_obrigada_citado=str(row['bit_pessoa_obrigada_citado']) if pd.notna(row['bit_pessoa_obrigada_citado']) else None,
-                        int_servidor_citado=str(row['int_servidor_citado']) if pd.notna(row['int_servidor_citado']) else None
-                    )
+                            envolvido = Envolvido.objects.create(
+                                rif_id=row['rif_id'],
+                                caso_id=row['caso_id'],
+                                arquivo_id=row['arquivo_id'],
+                                indexador=row['indexador'],
+                                cpf_cnpj_envolvido=safe_int_converter(row['cpf_cnpj_envolvido']),
+                                nome_envolvido=str(row['nome_envolvido']),
+                                tipo_envolvido=str(row['tipo_envolvido']),
+                                agencia_envolvido=safe_int_converter(row['agencia_envolvido']),
+                                conta_envolvido=safe_int_converter(row['conta_envolvido']),
+                                data_abertura_conta=data_abertura,
+                                data_atualizacao_conta=data_atualizacao,
+                                bit_pep_citado=safe_str_converter(row['bit_pep_citado']),
+                                bit_pessoa_obrigada_citado=safe_str_converter(row['bit_pessoa_obrigada_citado']),
+                                int_servidor_citado=safe_str_converter(row['int_servidor_citado'])
+                            )
                     ids.append(envolvido.id)
                 except Exception as e:
                     print(f"Erro ao criar envolvido na linha {index}: {e}")
@@ -1759,19 +1802,23 @@ def ler_arquivo(uploaded_file):
         indice_parada = indices[0]
         df = df.iloc[:indice_parada]
 
-    # Limpa colunas de data
-    if 'data_abertura_conta' in df.columns:
-        df['data_abertura_conta'] = df['data_abertura_conta'].replace(
-            '-', None)
-    if 'data_atualizacao_conta' in df.columns:
-        df['data_atualizacao_conta'] = df['data_atualizacao_conta'].replace(
-            '-', None)
-    if 'data_recebimento' in df.columns:
-        df['data_recebimento'] = df['data_recebimento'].replace('-', None)
-    if 'data_operacao' in df.columns:
-        df['data_operacao'] = df['data_operacao'].replace('-', None)
-    if 'data_fim_fato' in df.columns:
-        df['data_fim_fato'] = df['data_fim_fato'].replace('-', None)
+    # Limpa colunas de data e outros campos
+    date_columns = ['data_abertura_conta', 'data_atualizacao_conta', 'data_recebimento', 'data_operacao', 'data_fim_fato']
+    for col in date_columns:
+        if col in df.columns:
+            df[col] = df[col].replace('-', None)
+    
+    # Limpa campos numéricos que podem ter '-'
+    numeric_columns = ['cpf_cnpj_envolvido', 'agencia_envolvido', 'conta_envolvido', 'cpf_cnpj_comunicante', 'numero_agencia']
+    for col in numeric_columns:
+        if col in df.columns:
+            df[col] = df[col].replace('-', None)
+    
+    # Limpa campos de texto que podem ter '-'
+    text_columns = ['bit_pep_citado', 'bit_pessoa_obrigada_citado', 'int_servidor_citado']
+    for col in text_columns:
+        if col in df.columns:
+            df[col] = df[col].replace('-', None)
 
     return df
 

@@ -1,0 +1,465 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="nk-content-inner">
+        <div class="nk-content-body">
+            <!-- Cabeçalho -->
+            <div class="nk-block-head nk-block-head-sm">
+                <div class="nk-block-between">
+                    <div class="nk-block-head-content">
+                        <h3 class="nk-block-title page-title">Detalhes do Caso</h3>
+                        <div class="nk-block-des text-soft">
+                            <p>{{ caso.numero }} - {{ caso.nome }}</p>
+                        </div>
+                    </div>
+                    <div class="nk-block-head-content">
+                        <div class="toggle-wrap nk-block-tools-toggle">
+                            <a href="{% url 'casos' %}" class="btn btn-outline-primary">
+                                <em class="icon ni ni-arrow-left"></em>
+                                <span>Voltar</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações Gerais do Caso -->
+            <div class="nk-block">
+                <div class="card card-bordered">
+                    <div class="card-inner">
+                        <div class="card-title-group align-start mb-3">
+                            <div class="card-title">
+                                <h6 class="title">Informações Gerais</h6>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Número do Caso</label>
+                                    <div class="form-control-plaintext">{{ caso.numero }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Nome</label>
+                                    <div class="form-control-plaintext">{{ caso.nome }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Status</label>
+                                    <div class="form-control-plaintext">
+                                        <span class="badge badge-{% if caso.status == 'andamento' %}warning{% else %}success{% endif %}">
+                                            {{ caso.get_status_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Criado em</label>
+                                    <div class="form-control-plaintext">{{ caso.created_at|date:"d/m/Y H:i" }}</div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label">Descrição</label>
+                                    <div class="form-control-plaintext">{{ caso.descricao|default:"Não informado" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estatísticas Gerais -->
+            <div class="nk-block">
+                <div class="row g-gs">
+                    <!-- Estatísticas Financeiras -->
+                    <div class="col-lg-6">
+                        <div class="card card-bordered">
+                            <div class="card-inner">
+                                <div class="card-title-group align-start mb-3">
+                                    <div class="card-title">
+                                        <h6 class="title">Estatísticas Financeiras (RIFs)</h6>
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <div class="stat">
+                                            <div class="stat-num">{{ total_rifs }}</div>
+                                            <div class="stat-text">RIFs Cadastrados</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="stat">
+                                            <div class="stat-num">{{ total_comunicacoes }}</div>
+                                            <div class="stat-text">Comunicações</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="stat">
+                                            <div class="stat-num">{{ total_envolvidos }}</div>
+                                            <div class="stat-text">Envolvidos</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="stat">
+                                            <div class="stat-num">{{ total_ocorrencias }}</div>
+                                            <div class="stat-text">Ocorrências</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="stat">
+                                            <div class="stat-num">{{ total_info_adicionais }}</div>
+                                            <div class="stat-text">Inf. Adicionais</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estatísticas Bancárias -->
+                    <div class="col-lg-6">
+                        <div class="card card-bordered">
+                            <div class="card-inner">
+                                <div class="card-title-group align-start mb-3">
+                                    <div class="card-title">
+                                        <h6 class="title">Estatísticas Bancárias</h6>
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <div class="stat">
+                                            <div class="stat-num">{{ total_cooperacoes }}</div>
+                                            <div class="stat-text">Cooperações</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="stat">
+                                            <div class="stat-num">{{ total_titulares_unicos }}</div>
+                                            <div class="stat-text">Titulares Únicos</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="stat">
+                                            <div class="stat-num">{{ total_registros_extrato }}</div>
+                                            <div class="stat-text">Registros Extrato</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="stat">
+                                            <div class="stat-num">{{ investigados.count }}</div>
+                                            <div class="stat-text">Investigados</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIFs Cadastrados -->
+            {% if rifs %}
+            <div class="nk-block">
+                <div class="card card-bordered">
+                    <div class="card-inner">
+                        <div class="card-title-group align-start mb-3">
+                            <div class="card-title">
+                                <h6 class="title">RIFs Cadastrados</h6>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Número</th>
+                                        <th>Comunicações</th>
+                                        <th>Envolvidos</th>
+                                        <th>Ocorrências</th>
+                                        <th>Arquivos</th>
+                                        <th>Criado em</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for rif in rifs %}
+                                    <tr>
+                                        <td>{{ rif.numero }}</td>
+                                        <td>
+                                            <span class="badge badge-primary">{{ rif.total_comunicacoes }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info">{{ rif.total_envolvidos }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-warning">{{ rif.total_ocorrencias }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-secondary">{{ rif.arquivos }}</span>
+                                        </td>
+                                        <td>{{ rif.created_at|date:"d/m/Y" }}</td>
+                                        <td>
+                                            <a href="{% url 'financeira:financeira_comunicacoes' %}" class="btn btn-sm btn-outline-primary">
+                                                <em class="icon ni ni-eye"></em>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Cooperações Bancárias -->
+            {% if cooperacoes %}
+            <div class="nk-block">
+                <div class="card card-bordered">
+                    <div class="card-inner">
+                        <div class="card-title-group align-start mb-3">
+                            <div class="card-title">
+                                <h6 class="title">Cooperações Bancárias</h6>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Número</th>
+                                        <th>Inquérito</th>
+                                        <th>Processo</th>
+                                        <th>Titulares Únicos</th>
+                                        <th>Registros Extrato</th>
+                                        <th>Arquivos</th>
+                                        <th>Criado em</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cooperacao in cooperacoes %}
+                                    <tr>
+                                        <td>{{ cooperacao.numero }}</td>
+                                        <td>{{ cooperacao.inquerito }}</td>
+                                        <td>{{ cooperacao.processo }}</td>
+                                        <td>
+                                            <span class="badge badge-primary">{{ cooperacao.total_titulares }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info">{{ cooperacao.total_registros }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-secondary">{{ cooperacao.arquivos }}</span>
+                                        </td>
+                                        <td>{{ cooperacao.created_at|date:"d/m/Y" }}</td>
+                                        <td>
+                                            <a href="{% url 'bancaria:listar_arquivos' cooperacao.id %}" class="btn btn-sm btn-outline-primary">
+                                                <em class="icon ni ni-eye"></em>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Investigados -->
+            {% if investigados %}
+            <div class="nk-block">
+                <div class="card card-bordered">
+                    <div class="card-inner">
+                        <div class="card-title-group align-start mb-3">
+                            <div class="card-title">
+                                <h6 class="title">Investigados</h6>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>CPF/CNPJ</th>
+                                        <th>Tipo</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for investigado in investigados %}
+                                    <tr>
+                                        <td>{{ investigado.nome }}</td>
+                                        <td>{{ investigado.cpf_cnpj }}</td>
+                                        <td>
+                                            <span class="badge badge-{% if investigado.tipo == 'pessoa_fisica' %}primary{% else %}success{% endif %}">
+                                                {{ investigado.get_tipo_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'investigados' caso.id %}" class="btn btn-sm btn-outline-primary">
+                                                <em class="icon ni ni-eye"></em>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Arquivos Importados -->
+            <div class="nk-block">
+                <div class="row g-gs">
+                    <!-- Arquivos Financeira -->
+                    {% if arquivos_financeira %}
+                    <div class="col-lg-6">
+                        <div class="card card-bordered">
+                            <div class="card-inner">
+                                <div class="card-title-group align-start mb-3">
+                                    <div class="card-title">
+                                        <h6 class="title">Arquivos Financeira</h6>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Nome</th>
+                                                <th>Tipo</th>
+                                                <th>Registros</th>
+                                                <th>Data</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for arquivo in arquivos_financeira %}
+                                            <tr>
+                                                <td>{{ arquivo.nome }}</td>
+                                                <td>
+                                                    <span class="badge badge-{% if arquivo.tipo == 'comunicacoes' %}primary{% elif arquivo.tipo == 'envolvidos' %}info{% else %}warning{% endif %}">
+                                                        {{ arquivo.tipo|title }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ arquivo.registros }}</td>
+                                                <td>{{ arquivo.created_at|date:"d/m/Y" }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Arquivos Bancária -->
+                    {% if arquivos_bancaria %}
+                    <div class="col-lg-6">
+                        <div class="card card-bordered">
+                            <div class="card-inner">
+                                <div class="card-title-group align-start mb-3">
+                                    <div class="card-title">
+                                        <h6 class="title">Arquivos Bancária</h6>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Nome</th>
+                                                <th>Registros</th>
+                                                <th>Data</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for arquivo in arquivos_bancaria %}
+                                            <tr>
+                                                <td>{{ arquivo.nome }}</td>
+                                                <td>{{ arquivo.registros }}</td>
+                                                <td>{{ arquivo.created_at|date:"d/m/Y" }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Relatórios Disponíveis -->
+            {% if relatorios %}
+            <div class="nk-block">
+                <div class="card card-bordered">
+                    <div class="card-inner">
+                        <div class="card-title-group align-start mb-3">
+                            <div class="card-title">
+                                <h6 class="title">Relatórios Disponíveis</h6>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Tipo</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for relatorio in relatorios %}
+                                    <tr>
+                                        <td>{{ relatorio.nome }}</td>
+                                        <td>{{ relatorio.get_tipo_display }}</td>
+                                        <td>
+                                            <span class="badge badge-success">{{ relatorio.get_status_display }}</span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'financeira:relatorio_documento' %}?id={{ relatorio.id }}" class="btn btn-sm btn-outline-primary">
+                                                <em class="icon ni ni-download"></em>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.stat {
+    text-align: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+}
+.stat-num {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #364a63;
+}
+.stat-text {
+    font-size: 0.875rem;
+    color: #8094ae;
+    margin-top: 0.5rem;
+}
+</style>
+{% endblock %}
